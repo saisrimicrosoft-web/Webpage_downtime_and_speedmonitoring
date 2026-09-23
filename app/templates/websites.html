@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-action">
+    <h1>Monitored Websites</h1>
+    <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary">+ Add URL</a>
+</div>
+
+{% if websites %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>URL</th>
+            <th>Status</th>
+            <th>Response Time</th>
+            <th>Last Checked</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for w in websites %}
+        <tr>
+            <td><a href="{{ url_for('websites.details', url=w.url) }}">{{ w.url }}</a></td>
+            <td>
+                {% if w.is_up == None %}
+                    <span class="badge">PENDING</span>
+                {% elif w.is_up %}
+                    <span class="badge badge-healthy">UP</span>
+                {% else %}
+                    <span class="badge badge-down">DOWN</span>
+                {% endif %}
+            </td>
+            <td>{{ w.response_ms if w.response_ms != None else '-' }} ms</td>
+            <td>{{ w.checked_at.strftime('%Y-%m-%d %H:%M:%S') if w.checked_at else 'Never' }}</td>
+            <td>
+                <a href="{{ url_for('websites.details', url=w.url) }}" class="btn btn-small">View</a>
+                <form action="{{ url_for('websites.remove_url') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="url" value="{{ w.url }}">
+                    <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Remove this URL?');">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card">
+    <p>No websites are being monitored yet. Click "Add URL" to get started.</p>
+</div>
+{% endif %}
+{% endblock %}

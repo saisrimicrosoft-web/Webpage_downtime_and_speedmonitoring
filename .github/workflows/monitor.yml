@@ -1,0 +1,36 @@
+name: Website Monitor
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitoring checks
+        env:
+          DATABASE_URI: ${{ secrets.DATABASE_URI }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python -c "
+          from run import create_app;
+          from app.services.monitor import MonitorService;
+          app = create_app();
+          app.app_context().push();
+          MonitorService.check_all_urls();
+          print('All checks complete.')
+          "

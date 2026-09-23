@@ -1,0 +1,9 @@
+Flask
+SQLAlchemy
+Flask-SQLAlchemy
+alembic
+requests
+APScheduler
+python-dotenv
+pytest
+pytest-mock

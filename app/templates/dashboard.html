@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Websites</h3>
+        <p class="stat-value">{{ summary.total }}</p>
+    </div>
+    <div class="stat-card healthy">
+        <h3>Up</h3>
+        <p class="stat-value">{{ summary.up }}</p>
+    </div>
+    <div class="stat-card down">
+        <h3>Down</h3>
+        <p class="stat-value">{{ summary.down }}</p>
+    </div>
+    <div class="stat-card warning">
+        <h3>SSL Warning</h3>
+        <p class="stat-value">{{ summary.ssl_warning }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Unchecked</h3>
+        <p class="stat-value">{{ summary.unchecked }}</p>
+    </div>
+</div>
+
+<h2>Website Status</h2>
+<table class="table" id="status-table">
+    <thead>
+        <tr>
+            <th>URL</th>
+            <th>Status</th>
+            <th>HTTP Code</th>
+            <th>Response Time</th>
+            <th>SSL Days Left</th>
+            <th>Last Checked</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for w in websites %}
+        <tr>
+            <td><a href="{{ url_for('websites.details', url=w.url) }}">{{ w.url }}</a></td>
+            <td>
+                {% if w.is_up == None %}
+                    <span class="badge">PENDING</span>
+                {% elif w.is_up %}
+                    <span class="badge badge-healthy">UP</span>
+                {% else %}
+                    <span class="badge badge-down">DOWN</span>
+                {% endif %}
+            </td>
+            <td>{{ w.status_code if w.status_code else '-' }}</td>
+            <td>{{ w.response_ms if w.response_ms != None else '-' }} ms</td>
+            <td>
+                {% if w.ssl_days_left != None %}
+                    {% if w.ssl_days_left < 14 %}
+                        <span class="badge badge-down">{{ w.ssl_days_left }}d</span>
+                    {% elif w.ssl_days_left < 30 %}
+                        <span class="badge badge-warning">{{ w.ssl_days_left }}d</span>
+                    {% else %}
+                        <span class="badge badge-healthy">{{ w.ssl_days_left }}d</span>
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>{{ w.checked_at.strftime('%Y-%m-%d %H:%M:%S') if w.checked_at else 'Never' }}</td>
+            <td><a href="{{ url_for('websites.details', url=w.url) }}" class="btn btn-small">Details</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

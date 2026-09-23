@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="header-action">
+    <h1>Details: {{ url }}</h1>
+    <a href="{{ url_for('websites.index') }}" class="btn">Back to List</a>
+</div>
+
+{% if latest %}
+<div class="stats-grid">
+    <div class="stat-card {{ 'healthy' if latest.is_up else 'down' }}">
+        <h3>Current Status</h3>
+        <p class="stat-value">{{ 'UP' if latest.is_up else 'DOWN' }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Response Time</h3>
+        <p class="stat-value">{{ latest.response_ms }} ms</p>
+    </div>
+    <div class="stat-card">
+        <h3>HTTP Status</h3>
+        <p class="stat-value">{{ latest.status_code if latest.status_code else 'N/A' }}</p>
+    </div>
+    <div class="stat-card {{ 'warning' if latest.ssl_days_left != None and latest.ssl_days_left < 30 else '' }}">
+        <h3>SSL Days Left</h3>
+        <p class="stat-value">{{ latest.ssl_days_left if latest.ssl_days_left != None else 'N/A' }}</p>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <p>No checks have been recorded yet for this URL. The scheduler will check it shortly.</p>
+</div>
+{% endif %}
+
+<div class="card mt-4">
+    <h2>Response Time History</h2>
+    <canvas id="responseTimeChart" height="100"></canvas>
+</div>
+
+<div class="card mt-4">
+    <h2>Recent Checks</h2>
+    {% if checks %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Checked At</th>
+                <th>Status</th>
+                <th>HTTP Code</th>
+                <th>Response Time</th>
+                <th>SSL Days Left</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in checks %}
+            <tr>
+                <td>{{ c.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                    {% if c.is_up %}
+                        <span class="badge badge-healthy">UP</span>
+                    {% else %}
+                        <span class="badge badge-down">DOWN</span>
+                    {% endif %}
+                </td>
+                <td>{{ c.status_code if c.status_code else '-' }}</td>
+                <td>{{ c.response_ms }} ms</td>
+                <td>{{ c.ssl_days_left if c.ssl_days_left != None else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No checks recorded yet.</p>
+    {% endif %}
+</div>
+
+<script>
+    const checkUrl = "{{ url }}";
+</script>
+<script src="{{ url_for('static', filename='js/website_details.js') }}"></script>
+{% endblock %}

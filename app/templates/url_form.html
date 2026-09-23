@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Add URL to Monitor</h1>
+
+<form method="POST" class="form">
+    <div class="form-group">
+        <label for="url">Website URL (http:// or https://)</label>
+        <input type="url" id="url" name="url" value="{{ url if url else '' }}" placeholder="https://example.com" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add URL</button>
+    <a href="{{ url_for('websites.index') }}" class="btn">Cancel</a>
+</form>
+{% endblock %}
