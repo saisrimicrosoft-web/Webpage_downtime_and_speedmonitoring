@@ -1,76 +1,180 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <h3>Total Websites</h3>
-        <p class="stat-value">{{ summary.total }}</p>
+<!-- ── Page Hero ── -->
+<section class="page-hero" aria-labelledby="dashboard-heading">
+    <div class="page-hero-text">
+        <h1 id="dashboard-heading">System Dashboard</h1>
+        <p class="page-subtitle">Real-time overview of all monitored websites. Auto-refreshes every 60 seconds.</p>
     </div>
-    <div class="stat-card healthy">
-        <h3>Up</h3>
-        <p class="stat-value">{{ summary.up }}</p>
+    <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary" id="add-url-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Add Website
+    </a>
+</section>
+
+<!-- ── Summary KPI Cards ── -->
+<section class="stats-grid" aria-label="Summary statistics">
+
+    <article class="stat-card" aria-label="Total monitored websites">
+        <div class="stat-card-icon neutral" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>
+        </div>
+        <p class="stat-label">Total Websites</p>
+        <p class="stat-value" id="stat-total">{{ summary.total }}</p>
+    </article>
+
+    <article class="stat-card healthy" aria-label="Websites currently up">
+        <div class="stat-card-icon green" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <p class="stat-label">Online</p>
+        <p class="stat-value" id="stat-up">{{ summary.up }}</p>
+    </article>
+
+    <article class="stat-card down" aria-label="Websites currently down">
+        <div class="stat-card-icon red" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </div>
+        <p class="stat-label">Offline</p>
+        <p class="stat-value" id="stat-down">{{ summary.down }}</p>
+    </article>
+
+    <article class="stat-card warning" aria-label="SSL certificates expiring soon">
+        <div class="stat-card-icon amber" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        </div>
+        <p class="stat-label">SSL Warning</p>
+        <p class="stat-value" id="stat-ssl">{{ summary.ssl_warning }}</p>
+    </article>
+
+    <article class="stat-card" aria-label="Websites not yet checked">
+        <div class="stat-card-icon neutral" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <p class="stat-label">Pending</p>
+        <p class="stat-value" id="stat-pending">{{ summary.unchecked }}</p>
+    </article>
+
+</section>
+
+<!-- ── Uptime percentage bar ── -->
+{% if summary.total > 0 %}
+{% set uptime_pct = ((summary.up / summary.total) * 100) | round(1) %}
+<div class="uptime-bar-wrap" aria-label="Overall uptime {{ uptime_pct }}%">
+    <div class="uptime-bar-header">
+        <span class="uptime-bar-label">Overall Uptime</span>
+        <span class="uptime-bar-pct
+            {% if uptime_pct == 100 %}pct-green
+            {% elif uptime_pct >= 80 %}pct-amber
+            {% else %}pct-red{% endif %}">{{ uptime_pct }}%</span>
     </div>
-    <div class="stat-card down">
-        <h3>Down</h3>
-        <p class="stat-value">{{ summary.down }}</p>
-    </div>
-    <div class="stat-card warning">
-        <h3>SSL Warning</h3>
-        <p class="stat-value">{{ summary.ssl_warning }}</p>
-    </div>
-    <div class="stat-card">
-        <h3>Unchecked</h3>
-        <p class="stat-value">{{ summary.unchecked }}</p>
+    <div class="uptime-track" role="progressbar" aria-valuenow="{{ uptime_pct }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="uptime-fill
+            {% if uptime_pct == 100 %}fill-green
+            {% elif uptime_pct >= 80 %}fill-amber
+            {% else %}fill-red{% endif %}"
+            style="width: {{ uptime_pct }}%">
+        </div>
     </div>
 </div>
+{% endif %}
 
-<h2>Website Status</h2>
-<table class="table" id="status-table">
-    <thead>
-        <tr>
-            <th>URL</th>
-            <th>Status</th>
-            <th>HTTP Code</th>
-            <th>Response Time</th>
-            <th>SSL Days Left</th>
-            <th>Last Checked</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for w in websites %}
-        <tr>
-            <td><a href="{{ url_for('websites.details', url=w.url) }}">{{ w.url }}</a></td>
-            <td>
-                {% if w.is_up == None %}
-                    <span class="badge">PENDING</span>
-                {% elif w.is_up %}
-                    <span class="badge badge-healthy">UP</span>
-                {% else %}
-                    <span class="badge badge-down">DOWN</span>
-                {% endif %}
-            </td>
-            <td>{{ w.status_code if w.status_code else '-' }}</td>
-            <td>{{ w.response_ms if w.response_ms != None else '-' }} ms</td>
-            <td>
-                {% if w.ssl_days_left != None %}
-                    {% if w.ssl_days_left < 14 %}
-                        <span class="badge badge-down">{{ w.ssl_days_left }}d</span>
-                    {% elif w.ssl_days_left < 30 %}
-                        <span class="badge badge-warning">{{ w.ssl_days_left }}d</span>
-                    {% else %}
-                        <span class="badge badge-healthy">{{ w.ssl_days_left }}d</span>
-                    {% endif %}
-                {% else %}
-                    -
-                {% endif %}
-            </td>
-            <td>{{ w.checked_at.strftime('%Y-%m-%d %H:%M:%S') if w.checked_at else 'Never' }}</td>
-            <td><a href="{{ url_for('websites.details', url=w.url) }}" class="btn btn-small">Details</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- ── Websites Table ── -->
+<section class="section-card" aria-labelledby="status-table-heading">
+    <div class="section-card-header">
+        <h2 id="status-table-heading">Website Status</h2>
+        <span class="result-count">{{ websites | length }} site{% if websites | length != 1 %}s{% endif %}</span>
+    </div>
+
+    {% if websites %}
+    <div class="table-wrap" role="region" aria-label="Website status table" tabindex="0">
+        <table class="table" id="status-table">
+            <thead>
+                <tr>
+                    <th scope="col">Website</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">HTTP Code</th>
+                    <th scope="col">Response Time</th>
+                    <th scope="col">SSL Expiry</th>
+                    <th scope="col">Last Checked</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in websites %}
+                <tr class="{% if w.is_up == false %}row-down{% elif w.is_up %}row-up{% endif %}">
+                    <td class="cell-url">
+                        <div class="url-cell">
+                            <span class="status-dot
+                                {% if w.is_up == None %}dot-pending
+                                {% elif w.is_up %}dot-up
+                                {% else %}dot-down{% endif %}"
+                                aria-hidden="true"></span>
+                            <a href="{{ url_for('websites.details', url=w.url) }}" class="url-link" title="{{ w.url }}">
+                                {{ w.url | replace('https://', '') | replace('http://', '') | truncate(45) }}
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        {% if w.is_up == None %}
+                            <span class="badge badge-pending">Pending</span>
+                        {% elif w.is_up %}
+                            <span class="badge badge-healthy">● Online</span>
+                        {% else %}
+                            <span class="badge badge-down">● Offline</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if w.status_code %}
+                            <code class="code-chip {% if w.status_code >= 200 and w.status_code < 300 %}code-ok{% elif w.status_code >= 500 %}code-err{% else %}code-warn{% endif %}">
+                                {{ w.status_code }}
+                            </code>
+                        {% else %}&ndash;{% endif %}
+                    </td>
+                    <td>
+                        {% if w.response_ms is not none %}
+                            <span class="response-time {% if w.response_ms < 300 %}rt-fast{% elif w.response_ms < 1000 %}rt-ok{% else %}rt-slow{% endif %}">
+                                {{ w.response_ms }} ms
+                            </span>
+                        {% else %}&ndash;{% endif %}
+                    </td>
+                    <td>
+                        {% if w.ssl_days_left is not none and w.ssl_days_left >= 0 %}
+                            <span class="ssl-chip {% if w.ssl_days_left < 14 %}ssl-crit{% elif w.ssl_days_left < 30 %}ssl-warn{% else %}ssl-ok{% endif %}">
+                                {{ w.ssl_days_left }}d left
+                            </span>
+                        {% else %}&ndash;{% endif %}
+                    </td>
+                    <td class="cell-time">
+                        {% if w.checked_at %}
+                            <time datetime="{{ w.checked_at.isoformat() }}" title="{{ w.checked_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}">
+                                {{ w.checked_at.strftime('%H:%M:%S') }}
+                            </time>
+                        {% else %}
+                            <span class="muted">Never</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('websites.details', url=w.url) }}" class="btn btn-xs" aria-label="View details for {{ w.url }}">
+                            View Details →
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state" role="status">
+        <div class="empty-icon" aria-hidden="true">🌐</div>
+        <h3>No websites yet</h3>
+        <p>Add your first website URL to start monitoring its uptime, performance, and SSL certificate health.</p>
+        <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary">+ Add Your First Website</a>
+    </div>
+    {% endif %}
+</section>
+
 {% endblock %}

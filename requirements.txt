@@ -2,8 +2,9 @@ Flask
 SQLAlchemy
 Flask-SQLAlchemy
 alembic
-requests
+requests>=2.31.0
 APScheduler
 python-dotenv
+certifi          # up-to-date CA bundle for SSL verification
 pytest
 pytest-mock
