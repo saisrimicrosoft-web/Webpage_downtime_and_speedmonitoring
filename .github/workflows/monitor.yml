@@ -26,6 +26,8 @@ jobs:
         env:
           DATABASE_URI: ${{ secrets.DATABASE_URI }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python -c "
           from run import create_app;
           from app.services.monitor import MonitorService;

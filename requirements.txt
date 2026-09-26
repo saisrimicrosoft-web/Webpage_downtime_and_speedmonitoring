@@ -7,3 +7,4 @@ APScheduler
 python-dotenv
 pytest
 pytest-mock
+supabase
