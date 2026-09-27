@@ -7,6 +7,7 @@ from app.models.check import Check
 from app.models import db
 from app.services.ssl_service import SSLService
 from app.services.discord_service import DiscordService
+from app.services.supabase_service import SupabaseService
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,12 @@ class MonitorService:
         )
         db.session.add(check)
         db.session.commit()
+
+        # ---- Supabase Sync ----
+        try:
+            SupabaseService.send_check(check)
+        except Exception as e:
+            logger.error(f"Error triggering Supabase sync: {e}")
 
         # ---- Discord alerts ----
         # Alert if site is down
