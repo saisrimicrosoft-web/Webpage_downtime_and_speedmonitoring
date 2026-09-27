@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
   Activity, Globe, Clock, Bell, Gauge, ShieldCheck, BarChart3, FileText,
   Users, Settings, ChevronDown, Search, Plus, Menu, X, Zap,
-  AlertTriangle, BellRing
+  AlertTriangle, BellRing, Command
 } from 'lucide-react';
 
 export type NavPage =
@@ -63,16 +63,15 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
         {/* Sidebar Brand */}
         <div className="px-5 py-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-600 rounded-xl shadow-md">
-              <Activity className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex items-center justify-center bg-white border border-zinc-200 dark:border-zinc-700">
+              <img src="/logo.jpg" alt="Nexora Logo" className="w-full h-full object-cover scale-110" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="text-sm font-extrabold tracking-tight text-zinc-900 dark:text-white">PulseGuard</span>
-                <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-gradient-to-r from-purple-500 to-indigo-500 text-white tracking-wider">PRO</span>
+                <span className="text-base font-extrabold tracking-tight text-zinc-900 dark:text-white">Nexora</span>
               </div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                Monitor Fleet
+              <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400">
+                Enterprise
               </span>
             </div>
           </div>
