@@ -7,6 +7,7 @@ import UrlPerformanceChart from '@/components/UrlPerformanceChart';
 import UrlSelector from '@/components/UrlSelector';
 import ChecksTable from '@/components/ChecksTable';
 import MonitorWebsitesContent from '@/components/MonitorWebsitesContent';
+import PerformanceSpeedContent from '@/components/PerformanceSpeedContent';
 import AddWebsiteModal from '@/components/AddWebsiteModal';
 import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -190,7 +191,7 @@ export default function DashboardClient({
         return <PlaceholderScreen title="Downtime Alerts" icon={<Activity className="w-8 h-8" />} />;
 
       case 'performance-speed':
-        return <PlaceholderScreen title="Performance Speed" icon={<Gauge className="w-8 h-8" />} />;
+        return <PerformanceSpeedContent />;
 
       case 'ssl-certificate':
         return <PlaceholderScreen title="SSL Certificate" icon={<ShieldCheck className="w-8 h-8" />} />;
