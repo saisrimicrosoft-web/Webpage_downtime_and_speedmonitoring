@@ -35,16 +35,21 @@
             <tbody>
                 {% for w in websites %}
                 <tr>
-                    <td class="cell-url">
+                    <td class="cell-main">
                         <div class="url-cell">
-                            <span class="status-dot
-                                {% if w.is_up == None %}dot-pending
-                                {% elif w.is_up %}dot-up
-                                {% else %}dot-down{% endif %}"
-                                aria-hidden="true"></span>
-                            <a href="{{ url_for('websites.details', url=w.url) }}" class="url-link" title="{{ w.url }}">
-                                {{ w.url | replace('https://', '') | replace('http://', '') | truncate(50) }}
-                            </a>
+                            <span class="status-indicator">
+                                {% if w.is_up == None %}
+                                    <div class="status-dot dot-unknown"></div>
+                                {% elif w.is_up %}
+                                    <div class="status-dot dot-online"></div>
+                                {% else %}
+                                    <div class="status-dot dot-down"></div>
+                                {% endif %}
+                            </span>
+                            <div style="display:flex; flex-direction:column; margin-left: 8px;">
+                                <span class="url-title">{{ w.url | replace('https://', '') | replace('http://', '') | truncate(50) }}</span>
+                                <a href="{{ url_for('websites.details', url=w.url) }}" class="url-link" title="{{ w.url }}">View Details →</a>
+                            </div>
                         </div>
                     </td>
                     <td>

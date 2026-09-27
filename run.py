@@ -5,6 +5,7 @@ from app.models import db
 from app.routes.dashboard import dashboard_bp
 from app.routes.websites import websites_bp
 from app.routes.api import api_bp
+from app.routes.uptime import uptime_bp
 from app.scheduler.scheduler import start_scheduler
 from app.utils.logging_config import setup_logging
 
@@ -22,6 +23,7 @@ def create_app(config_class=Config):
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(websites_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(uptime_bp)
 
     # Setup database and scheduler
     with app.app_context():
