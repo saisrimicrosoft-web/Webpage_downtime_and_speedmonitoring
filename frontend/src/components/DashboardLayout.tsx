@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
   Activity, Globe, Clock, Bell, Gauge, ShieldCheck, BarChart3, FileText,
   Users, Settings, ChevronDown, Search, Plus, Menu, X, Zap,
-  AlertTriangle, BellRing, Crown
+  AlertTriangle, BellRing
 } from 'lucide-react';
 
 export type NavPage =
@@ -114,16 +114,6 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
           })}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div className="px-4 py-4 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-xl p-3 border border-purple-200/60 dark:border-purple-800/40">
-            <div className="flex items-center space-x-2 mb-2">
-              <Crown className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span className="text-xs font-bold text-purple-700 dark:text-purple-400">Pro Plan Active</span>
-            </div>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">Unlimited monitors, 30s polling, 18 global regions.</p>
-          </div>
-        </div>
       </aside>
 
       {/* ═══════════ MAIN AREA ═══════════ */}

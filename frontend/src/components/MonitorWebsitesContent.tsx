@@ -294,10 +294,8 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
               <thead className="bg-zinc-50/80 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800">
                 <tr>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Website</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Uptime %</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Response Time</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">SSL</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Region</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Last Checked</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Interval</th>
@@ -323,8 +321,6 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                         </div>
                       </div>
                     </td>
-                    {/* Status */}
-                    <td className="px-5 py-3.5"><StatusBadge status={site.status} isPaused={site.isPaused} /></td>
                     {/* Uptime */}
                     <td className="px-5 py-3.5 font-bold font-mono">
                       <span className={site.uptime >= 99.9 ? 'text-emerald-600' : site.uptime >= 95 ? 'text-amber-600' : 'text-rose-600'}>
@@ -335,8 +331,6 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                     <td className="px-5 py-3.5 font-bold font-mono text-zinc-900 dark:text-zinc-100">
                       {site.status === 'Down' ? <span className="text-rose-500">Timeout</span> : `${site.latency}ms`}
                     </td>
-                    {/* SSL */}
-                    <td className="px-5 py-3.5"><SslBadge days={site.sslDaysLeft} /></td>
                     {/* Region */}
                     <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400 font-medium text-[11px]">{site.region}</td>
                     {/* Last Checked */}
@@ -360,7 +354,7 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={9} className="px-5 py-12 text-center text-zinc-500 text-sm">
+                    <td colSpan={7} className="px-5 py-12 text-center text-zinc-500 text-sm">
                       No websites match the current filter.
                     </td>
                   </tr>
