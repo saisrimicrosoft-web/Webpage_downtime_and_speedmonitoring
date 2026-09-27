@@ -354,7 +354,7 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={9} className="px-5 py-12 text-center text-zinc-500 text-sm">
+                    <td colSpan={7} className="px-5 py-12 text-center text-zinc-500 text-sm">
                       No websites match the current filter.
                     </td>
                   </tr>
