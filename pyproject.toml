@@ -1,0 +1,8 @@
+[project]
+name = "pulseguard"
+version = "1.0.0"
+description = "Website uptime monitoring dashboard"
+requires-python = ">=3.10"
+
+[tool.vercel]
+entrypoint = "run:app"
