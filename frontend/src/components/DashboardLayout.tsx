@@ -64,7 +64,7 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
         <div className="px-5 py-5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex items-center justify-center bg-white border border-zinc-200 dark:border-zinc-700">
-              <img src="/logo.jpg" alt="Nexora Logo" className="w-full h-full object-cover scale-110" />
+              <img src="/logo.svg" alt="Nexoxa Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
