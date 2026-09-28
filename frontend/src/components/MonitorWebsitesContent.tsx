@@ -43,7 +43,48 @@ const SAMPLE_WEBSITES: MonitoredSite[] = [
   { id:'10', name:'vercel.com', url:'https://vercel.com', status:'Online', uptime:99.97, latency:56, sslStatus:'Valid', sslDaysLeft:220, region:'US-West California', lastChecked:'10s ago', interval:'30s', ipAddress:'76.76.21.21', lastIncident:'None (Clean)', lastDeployment:'Sep 27, 2026 06:00 UTC', monitoringStarted:'Jan 18, 2026', isPaused:false },
 ];
 
-/* ──────────────── COMPONENT ──────────────── */
+/* ──────────────── ALL DATA CENTRE REGIONS ──────────────── */
+const ALL_REGIONS = [
+  // North America
+  'US-East N.Virginia',
+  'US-East Ohio',
+  'US-West Oregon',
+  'US-West California',
+  'US-Central Iowa',
+  'CA-Central Montreal',
+  'CA-West Vancouver',
+  // South America
+  'SA-East São Paulo',
+  'SA-West Santiago',
+  // Europe
+  'EU-West Frankfurt',
+  'EU-Central Frankfurt',
+  'EU-West Ireland',
+  'EU-West London',
+  'EU-North Stockholm',
+  'EU-South Milan',
+  'EU-South Paris',
+  'EU-East Warsaw',
+  'EU-West Amsterdam',
+  // Asia Pacific
+  'AP-South Mumbai',
+  'AP-South Hyderabad',
+  'AP-Southeast Singapore',
+  'AP-Southeast Jakarta',
+  'AP-Northeast Tokyo',
+  'AP-Northeast Osaka',
+  'AP-Northeast Seoul',
+  'AP-East Hong Kong',
+  'AP-Southeast Sydney',
+  'AP-Southeast Melbourne',
+  // Middle East & Africa
+  'ME-South Bahrain',
+  'ME-Central UAE Dubai',
+  'AF-South Cape Town',
+  'AF-North Cairo',
+];
+
+
 interface Props {
   onOpenAddModal: () => void;
 }
@@ -63,8 +104,8 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
   const maintenanceCount = websites.filter(s => s.status === 'Maintenance').length;
   const avgUptime = (websites.reduce((sum, s) => sum + s.uptime, 0) / websites.length).toFixed(3);
 
-  // Regions for filter dropdown
-  const regions = [...new Set(websites.map(s => s.region))];
+  // Regions for filter dropdown — full global list
+  const regions = ALL_REGIONS;
 
   // Filtered list
   const filtered = websites.filter(site => {
@@ -363,7 +404,12 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                       {site.status === 'Down' ? <span className="text-rose-500">Timeout</span> : `${site.latency}ms`}
                     </td>
                     {/* Region */}
-                    <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400 font-medium text-[11px]">{site.region}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center space-x-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                        <span className="text-zinc-500 dark:text-zinc-400 font-medium text-[11px]">{site.region}</span>
+                      </div>
+                    </td>
                     {/* Last Checked */}
                     <td className="px-5 py-3.5 text-zinc-500 font-mono text-[11px]">{site.lastChecked}</td>
                     {/* Interval */}
