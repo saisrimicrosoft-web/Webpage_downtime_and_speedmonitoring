@@ -141,9 +141,42 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
     );
   };
 
-  /* ─── FAVICON BG ─── */
-  const faviconColors = ['bg-purple-600','bg-blue-600','bg-indigo-600','bg-emerald-600','bg-amber-600','bg-rose-600','bg-teal-600','bg-cyan-600'];
-  const getFaviconBg = (name: string) => faviconColors[name.charCodeAt(0) % faviconColors.length];
+  /* ─── FAVICON ICON ─── */
+  const faviconCache = React.useRef<Record<string, string>>({});
+
+  const getFaviconUrl = (url: string): string => {
+    if (faviconCache.current[url]) return faviconCache.current[url];
+    try {
+      const domain = new URL(url).hostname.replace(/^www\./, '');
+      const src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      faviconCache.current[url] = src;
+      return src;
+    } catch {
+      return '';
+    }
+  };
+
+  const WebsiteFavicon = ({ site }: { site: MonitoredSite }) => {
+    const [failed, setFailed] = React.useState(false);
+    const src = getFaviconUrl(site.url);
+    return (
+      <div className="w-8 h-8 rounded-full bg-white border border-[#E5E7EB] shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+        {!failed && src ? (
+          <img
+            src={src}
+            alt={site.name}
+            width={20}
+            height={20}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="w-5 h-5 object-contain"
+          />
+        ) : (
+          <Globe className="w-4 h-4 text-zinc-400" />
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -312,9 +345,7 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                     {/* Website */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-lg ${getFaviconBg(site.name)} text-white flex items-center justify-center font-bold text-[10px] uppercase shadow-xs group-hover:scale-105 transition-transform`}>
-                          {site.name.slice(0, 2)}
-                        </div>
+                        <WebsiteFavicon site={site} />
                         <div>
                           <p className="font-bold text-zinc-900 dark:text-white text-xs group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{site.name}</p>
                           <p className="text-[10px] text-zinc-400 truncate max-w-[140px]">{site.url}</p>
