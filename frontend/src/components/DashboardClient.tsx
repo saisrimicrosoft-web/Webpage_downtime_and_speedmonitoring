@@ -14,7 +14,7 @@ import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } 
 import { isSupabaseConfigured } from '@/lib/supabase';
 import {
   Activity, RefreshCw, Radio, Database, Clock, Gauge, TrendingUp,
-  ShieldCheck, BarChart3, FileText, Users, Settings, BellRing
+  ShieldCheck, FileText, Settings
 } from 'lucide-react';
 
 interface InitialDataProps {
@@ -197,17 +197,8 @@ export default function DashboardClient({
       case 'ssl-certificate':
         return <PlaceholderScreen title="SSL Certificate" icon={<ShieldCheck className="w-8 h-8" />} />;
 
-      case 'analytics':
-        return <PlaceholderScreen title="Analytics" icon={<BarChart3 className="w-8 h-8" />} />;
-
       case 'reports':
         return <PlaceholderScreen title="Reports" icon={<FileText className="w-8 h-8" />} />;
-
-      case 'notification-center':
-        return <PlaceholderScreen title="Notification Center" icon={<BellRing className="w-8 h-8" />} />;
-
-      case 'team-members':
-        return <PlaceholderScreen title="Team Members" icon={<Users className="w-8 h-8" />} />;
 
       case 'settings':
         return <PlaceholderScreen title="Settings" icon={<Settings className="w-8 h-8" />} />;

@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import {
-  Activity, Globe, Clock, Bell, Gauge, ShieldCheck, BarChart3, FileText,
-  Users, Settings, ChevronDown, Search, Plus, Menu, X, Zap,
-  AlertTriangle, BellRing, Command
+  Activity, Globe, Clock, Bell, Gauge, ShieldCheck, FileText,
+  Settings, ChevronDown, Search, Plus, Menu, X,
+  AlertTriangle
 } from 'lucide-react';
 
 export type NavPage =
@@ -14,10 +14,7 @@ export type NavPage =
   | 'downtime-alerts'
   | 'performance-speed'
   | 'ssl-certificate'
-  | 'analytics'
   | 'reports'
-  | 'notification-center'
-  | 'team-members'
   | 'settings';
 
 interface DashboardLayoutProps {
@@ -34,10 +31,7 @@ const NAV_ITEMS: { id: NavPage; label: string; icon: React.ReactNode; badge?: st
   { id: 'downtime-alerts', label: 'Downtime Alerts', icon: <AlertTriangle className="w-4 h-4" />, badge: '1', badgeColor: 'bg-rose-500' },
   { id: 'performance-speed', label: 'Performance Speed', icon: <Gauge className="w-4 h-4" /> },
   { id: 'ssl-certificate', label: 'SSL Certificate', icon: <ShieldCheck className="w-4 h-4" /> },
-  { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
   { id: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
-  { id: 'notification-center', label: 'Notification Center', icon: <BellRing className="w-4 h-4" />, badge: '3', badgeColor: 'bg-purple-500' },
-  { id: 'team-members', label: 'Team Members', icon: <Users className="w-4 h-4" /> },
   { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
 ];
 
