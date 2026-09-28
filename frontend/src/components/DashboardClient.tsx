@@ -8,6 +8,7 @@ import UrlSelector from '@/components/UrlSelector';
 import ChecksTable from '@/components/ChecksTable';
 import MonitorWebsitesContent from '@/components/MonitorWebsitesContent';
 import PerformanceSpeedContent from '@/components/PerformanceSpeedContent';
+import DowntimeAlertsContent from '@/components/DowntimeAlertsContent';
 import AddWebsiteModal from '@/components/AddWebsiteModal';
 import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -188,7 +189,7 @@ export default function DashboardClient({
         return <PlaceholderScreen title="Uptime Status" icon={<Clock className="w-8 h-8" />} />;
 
       case 'downtime-alerts':
-        return <PlaceholderScreen title="Downtime Alerts" icon={<Activity className="w-8 h-8" />} />;
+        return <DowntimeAlertsContent />;
 
       case 'performance-speed':
         return <PerformanceSpeedContent />;
