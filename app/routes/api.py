@@ -67,6 +67,14 @@ def get_checks(url):
     return jsonify([c.to_dict() for c in checks])
 
 
+@api_bp.route('/logs', methods=['GET'])
+def get_logs():
+    """Get the most recent checks across all URLs."""
+    limit = request.args.get('limit', 50, type=int)
+    checks = CheckRepository.get_all_checks(limit=limit)
+    return jsonify([c.to_dict() for c in checks])
+
+
 @api_bp.route('/dashboard/summary', methods=['GET'])
 def get_summary():
     """Get dashboard summary stats."""

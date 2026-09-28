@@ -15,7 +15,7 @@
     <div class="page-hero-text">
         <h1 id="detail-heading" class="detail-title">
             {% if latest %}
-                <span class="status-dot-lg {% if latest.is_up %}dot-up{% else %}dot-down{% endif %}" aria-hidden="true"></span>
+                <span class="status-dot {% if latest.is_up %}dot-online{% else %}dot-down{% endif %}" style="width: 16px; height: 16px; margin-right: 12px;" aria-hidden="true"></span>
             {% endif %}
             {{ url | replace('https://', '') | replace('http://', '') | truncate(55) }}
         </h1>
