@@ -27,13 +27,13 @@ export interface PerformanceSite {
 
 const SAMPLE_PERFORMANCE: PerformanceSite[] = [
   { id: '1', name: 'google.com', url: 'https://google.com', responseTime: 42, loadTime: 0.8, score: 98, region: 'US-East N.Virginia', lastTested: '2m ago', status: 'Excellent', vitals: { lcp: 1.2, fid: 12, cls: 0.01 } },
-  { id: '2', name: 'github.com', url: 'https://github.com', responseTime: 118, loadTime: 1.2, score: 92, region: 'EU-West Frankfurt', lastTested: '5m ago', status: 'Good', vitals: { lcp: 1.8, fid: 45, cls: 0.04 } },
-  { id: '3', name: 'amazon.in', url: 'https://amazon.in', responseTime: 380, loadTime: 3.5, score: 65, region: 'AP-South Mumbai', lastTested: '1m ago', status: 'Slow', vitals: { lcp: 3.8, fid: 120, cls: 0.12 } },
+  { id: '2', name: 'github.com', url: 'https://github.com', responseTime: 118, loadTime: 1.2, score: 92, region: 'EU-Central Frankfurt', lastTested: '5m ago', status: 'Good', vitals: { lcp: 1.8, fid: 45, cls: 0.04 } },
+  { id: '3', name: 'amazon.in', url: 'https://amazon.in', responseTime: 380, loadTime: 3.5, score: 65, region: 'India - Mumbai', lastTested: '1m ago', status: 'Slow', vitals: { lcp: 3.8, fid: 120, cls: 0.12 } },
   { id: '4', name: 'openai.com', url: 'https://openai.com', responseTime: 88, loadTime: 1.0, score: 95, region: 'US-West California', lastTested: '10m ago', status: 'Excellent', vitals: { lcp: 1.5, fid: 22, cls: 0.02 } },
-  { id: '5', name: 'spotify.com', url: 'https://spotify.com', responseTime: 160, loadTime: 1.8, score: 85, region: 'EU-Central Frankfurt', lastTested: '15m ago', status: 'Good', vitals: { lcp: 2.1, fid: 65, cls: 0.05 } },
-  { id: '6', name: 'netflix.com', url: 'https://netflix.com', responseTime: 92, loadTime: 1.1, score: 94, region: 'US-East N.Virginia', lastTested: '8m ago', status: 'Excellent', vitals: { lcp: 1.6, fid: 28, cls: 0.03 } },
-  { id: '7', name: 'flipkart.com', url: 'https://flipkart.com', responseTime: 680, loadTime: 5.2, score: 42, region: 'AP-South Mumbai', lastTested: '3m ago', status: 'Critical', vitals: { lcp: 5.5, fid: 310, cls: 0.25 } },
-  { id: '8', name: 'myntra.com', url: 'https://myntra.com', responseTime: 135, loadTime: 1.5, score: 88, region: 'AP-South Mumbai', lastTested: '12m ago', status: 'Good', vitals: { lcp: 1.9, fid: 55, cls: 0.06 } },
+  { id: '5', name: 'spotify.com', url: 'https://spotify.com', responseTime: 160, loadTime: 1.8, score: 85, region: 'EU-West London', lastTested: '15m ago', status: 'Good', vitals: { lcp: 2.1, fid: 65, cls: 0.05 } },
+  { id: '6', name: 'netflix.com', url: 'https://netflix.com', responseTime: 92, loadTime: 1.1, score: 94, region: 'US-East Ohio', lastTested: '8m ago', status: 'Excellent', vitals: { lcp: 1.6, fid: 28, cls: 0.03 } },
+  { id: '7', name: 'flipkart.com', url: 'https://flipkart.com', responseTime: 680, loadTime: 5.2, score: 42, region: 'India - Delhi NCR', lastTested: '3m ago', status: 'Critical', vitals: { lcp: 5.5, fid: 310, cls: 0.25 } },
+  { id: '8', name: 'myntra.com', url: 'https://myntra.com', responseTime: 135, loadTime: 1.5, score: 88, region: 'India - Bengaluru', lastTested: '12m ago', status: 'Good', vitals: { lcp: 1.9, fid: 55, cls: 0.06 } },
 ];
 
 const TREND_DATA = [
@@ -79,6 +79,36 @@ export default function PerformanceSpeedContent() {
     if (score >= 70) return 'text-blue-500';
     if (score >= 50) return 'text-amber-500';
     return 'text-rose-500';
+  };
+
+  const WebsiteFavicon = ({ url, name }: { url: string; name: string }) => {
+    const [failed, setFailed] = React.useState(false);
+    const domain = React.useMemo(() => {
+      try {
+        return new URL(url).hostname.replace(/^www\./, '');
+      } catch {
+        return name;
+      }
+    }, [url, name]);
+    const src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+    return (
+      <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xs flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+        {!failed ? (
+          <img
+            src={src}
+            alt={name}
+            width={20}
+            height={20}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="w-5 h-5 object-contain"
+          />
+        ) : (
+          <Globe className="w-4 h-4 text-zinc-400" />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -297,9 +327,7 @@ export default function PerformanceSpeedContent() {
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center space-x-3">
-                        <div className="w-7 h-7 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 flex items-center justify-center font-bold text-[10px] uppercase group-hover:bg-purple-100 dark:group-hover:bg-purple-900/40 group-hover:text-purple-600 transition-colors">
-                          {site.name.slice(0, 2)}
-                        </div>
+                        <WebsiteFavicon url={site.url} name={site.name} />
                         <div>
                           <p className="font-bold text-zinc-900 dark:text-white text-xs group-hover:text-purple-600 dark:group-hover:text-purple-400">{site.name}</p>
                           <p className="text-[10px] text-zinc-400">{site.url}</p>

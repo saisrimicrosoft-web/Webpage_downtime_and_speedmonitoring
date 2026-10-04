@@ -99,8 +99,17 @@ export default function WebsiteDetailsDrawer({ website, isOpen, onClose, onToggl
           <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-purple-50/50 via-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-900 sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md">
-                  {website.name.charAt(0).toUpperCase()}
+                <div className="w-11 h-11 rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shadow-md overflow-hidden flex-shrink-0">
+                  <img
+                    src={`https://www.google.com/s2/favicons?domain=${website.name.replace(/^www\./, '')}&sz=128`}
+                    alt={website.name}
+                    width={26}
+                    height={26}
+                    className="w-7 h-7 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
                 </div>
                 <div>
                   <h3 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center">

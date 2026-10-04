@@ -252,12 +252,18 @@ export default function WebsitesTable({
                   {/* Website & Favicon */}
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
-                      <div
-                        className={`w-9 h-9 rounded-xl ${getFaviconBg(
-                          site.name
-                        )} text-white flex items-center justify-center font-black text-xs shadow-xs uppercase group-hover:scale-105 transition-transform`}
-                      >
-                        {site.name.slice(0, 2)}
+                      <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xs flex items-center justify-center flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+                        <img
+                          src={`https://www.google.com/s2/favicons?domain=${site.name.replace(/^www\./, '')}&sz=128`}
+                          alt={site.name}
+                          width={20}
+                          height={20}
+                          loading="lazy"
+                          className="w-5 h-5 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
                       </div>
                       <div>
                         <p className="font-extrabold text-zinc-900 dark:text-white text-xs group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">

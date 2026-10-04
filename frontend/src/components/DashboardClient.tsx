@@ -9,6 +9,9 @@ import ChecksTable from '@/components/ChecksTable';
 import MonitorWebsitesContent from '@/components/MonitorWebsitesContent';
 import PerformanceSpeedContent from '@/components/PerformanceSpeedContent';
 import DowntimeAlertsContent from '@/components/DowntimeAlertsContent';
+import UptimeStatusContent from '@/components/UptimeStatusContent';
+import SslCertificateContent from '@/components/SslCertificateContent';
+import SettingsContent from '@/components/SettingsContent';
 import AddWebsiteModal from '@/components/AddWebsiteModal';
 import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -186,7 +189,7 @@ export default function DashboardClient({
         return <MonitorWebsitesContent onOpenAddModal={() => setIsAddModalOpen(true)} />;
 
       case 'uptime-status':
-        return <PlaceholderScreen title="Uptime Status" icon={<Clock className="w-8 h-8" />} />;
+        return <UptimeStatusContent />;
 
       case 'downtime-alerts':
         return <DowntimeAlertsContent />;
@@ -195,13 +198,13 @@ export default function DashboardClient({
         return <PerformanceSpeedContent />;
 
       case 'ssl-certificate':
-        return <PlaceholderScreen title="SSL Certificate" icon={<ShieldCheck className="w-8 h-8" />} />;
+        return <SslCertificateContent />;
 
       case 'reports':
         return <PlaceholderScreen title="Reports" icon={<FileText className="w-8 h-8" />} />;
 
       case 'settings':
-        return <PlaceholderScreen title="Settings" icon={<Settings className="w-8 h-8" />} />;
+        return <SettingsContent />;
 
       default:
         return null;

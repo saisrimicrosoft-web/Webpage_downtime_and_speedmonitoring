@@ -32,57 +32,106 @@ export interface MonitoredSite {
 /* ──────────────── SAMPLE DATA ──────────────── */
 const SAMPLE_WEBSITES: MonitoredSite[] = [
   { id:'1', name:'google.com', url:'https://google.com', status:'Online', uptime:100.00, latency:42, sslStatus:'Valid', sslDaysLeft:248, region:'US-East N.Virginia', lastChecked:'12s ago', interval:'30s', ipAddress:'142.250.190.46', lastIncident:'None (Clean)', lastDeployment:'Sep 26, 2026 12:00 UTC', monitoringStarted:'Jan 15, 2026', isPaused:false },
-  { id:'2', name:'github.com', url:'https://github.com', status:'Online', uptime:99.99, latency:118, sslStatus:'Valid', sslDaysLeft:42, region:'EU-West Frankfurt', lastChecked:'28s ago', interval:'1m', ipAddress:'140.82.121.4', lastIncident:'Aug 12, 2026 (Resolved 2m)', lastDeployment:'Sep 25, 2026 18:30 UTC', monitoringStarted:'Feb 01, 2026', isPaused:false },
-  { id:'3', name:'amazon.in', url:'https://amazon.in', status:'Slow', uptime:95.42, latency:380, sslStatus:'Expiring Soon', sslDaysLeft:4, region:'AP-South Mumbai', lastChecked:'Just now', interval:'30s', ipAddress:'52.95.116.115', lastIncident:'Sep 27, 2026 04:12 UTC (Latency)', lastDeployment:'Sep 20, 2026 09:15 UTC', monitoringStarted:'Feb 10, 2026', isPaused:false },
+  { id:'2', name:'github.com', url:'https://github.com', status:'Online', uptime:99.99, latency:118, sslStatus:'Valid', sslDaysLeft:42, region:'EU-Central Frankfurt', lastChecked:'28s ago', interval:'1m', ipAddress:'140.82.121.4', lastIncident:'Aug 12, 2026 (Resolved 2m)', lastDeployment:'Sep 25, 2026 18:30 UTC', monitoringStarted:'Feb 01, 2026', isPaused:false },
+  { id:'3', name:'amazon.in', url:'https://amazon.in', status:'Slow', uptime:95.42, latency:380, sslStatus:'Expiring Soon', sslDaysLeft:4, region:'India - Mumbai', lastChecked:'Just now', interval:'30s', ipAddress:'52.95.116.115', lastIncident:'Sep 27, 2026 04:12 UTC (Latency)', lastDeployment:'Sep 20, 2026 09:15 UTC', monitoringStarted:'Feb 10, 2026', isPaused:false },
   { id:'4', name:'openai.com', url:'https://openai.com', status:'Online', uptime:99.98, latency:88, sslStatus:'Valid', sslDaysLeft:190, region:'US-West California', lastChecked:'5s ago', interval:'1m', ipAddress:'104.18.7.192', lastIncident:'Jul 30, 2026 (Resolved 6m)', lastDeployment:'Sep 24, 2026 21:00 UTC', monitoringStarted:'Jan 22, 2026', isPaused:false },
-  { id:'5', name:'myntra.com', url:'https://myntra.com', status:'Online', uptime:99.91, latency:135, sslStatus:'Valid', sslDaysLeft:65, region:'AP-South Mumbai', lastChecked:'18s ago', interval:'5m', ipAddress:'13.235.14.99', lastIncident:'Sep 02, 2026 (Resolved 3m)', lastDeployment:'Sep 22, 2026 11:45 UTC', monitoringStarted:'Mar 05, 2026', isPaused:false },
-  { id:'6', name:'spotify.com', url:'https://spotify.com', status:'Maintenance', uptime:99.85, latency:160, sslStatus:'Valid', sslDaysLeft:120, region:'EU-Central Frankfurt', lastChecked:'2m ago', interval:'5m', ipAddress:'35.186.224.25', lastIncident:'Scheduled Maintenance Window', lastDeployment:'Sep 27, 2026 01:00 UTC', monitoringStarted:'Feb 18, 2026', isPaused:false },
-  { id:'7', name:'netflix.com', url:'https://netflix.com', status:'Online', uptime:99.99, latency:92, sslStatus:'Valid', sslDaysLeft:310, region:'US-East N.Virginia', lastChecked:'8s ago', interval:'30s', ipAddress:'54.237.226.164', lastIncident:'None (Clean)', lastDeployment:'Sep 26, 2026 03:30 UTC', monitoringStarted:'Jan 01, 2026', isPaused:false },
-  { id:'8', name:'flipkart.com', url:'https://flipkart.com', status:'Down', uptime:92.10, latency:0, sslStatus:'Expired', sslDaysLeft:0, region:'AP-South Mumbai', lastChecked:'4s ago', interval:'30s', ipAddress:'163.53.78.88', lastIncident:'Sep 27, 2026 14:10 UTC (Failure)', lastDeployment:'Sep 19, 2026 15:00 UTC', monitoringStarted:'Mar 12, 2026', isPaused:false },
-  { id:'9', name:'medium.com', url:'https://medium.com', status:'Online', uptime:99.94, latency:105, sslStatus:'Valid', sslDaysLeft:180, region:'US-East N.Virginia', lastChecked:'15s ago', interval:'1m', ipAddress:'162.159.152.4', lastIncident:'Sep 15, 2026 (Resolved 4m)', lastDeployment:'Sep 23, 2026 08:00 UTC', monitoringStarted:'Apr 02, 2026', isPaused:false },
-  { id:'10', name:'vercel.com', url:'https://vercel.com', status:'Online', uptime:99.97, latency:56, sslStatus:'Valid', sslDaysLeft:220, region:'US-West California', lastChecked:'10s ago', interval:'30s', ipAddress:'76.76.21.21', lastIncident:'None (Clean)', lastDeployment:'Sep 27, 2026 06:00 UTC', monitoringStarted:'Jan 18, 2026', isPaused:false },
+  { id:'5', name:'myntra.com', url:'https://myntra.com', status:'Online', uptime:99.91, latency:135, sslStatus:'Valid', sslDaysLeft:65, region:'India - Bengaluru', lastChecked:'18s ago', interval:'5m', ipAddress:'13.235.14.99', lastIncident:'Sep 02, 2026 (Resolved 3m)', lastDeployment:'Sep 22, 2026 11:45 UTC', monitoringStarted:'Mar 05, 2026', isPaused:false },
+  { id:'6', name:'spotify.com', url:'https://spotify.com', status:'Maintenance', uptime:99.85, latency:160, sslStatus:'Valid', sslDaysLeft:120, region:'EU-West London', lastChecked:'2m ago', interval:'5m', ipAddress:'35.186.224.25', lastIncident:'Scheduled Maintenance Window', lastDeployment:'Sep 27, 2026 01:00 UTC', monitoringStarted:'Feb 18, 2026', isPaused:false },
+  { id:'7', name:'netflix.com', url:'https://netflix.com', status:'Online', uptime:99.99, latency:92, sslStatus:'Valid', sslDaysLeft:310, region:'US-East Ohio', lastChecked:'8s ago', interval:'30s', ipAddress:'54.237.226.164', lastIncident:'None (Clean)', lastDeployment:'Sep 26, 2026 03:30 UTC', monitoringStarted:'Jan 01, 2026', isPaused:false },
+  { id:'8', name:'flipkart.com', url:'https://flipkart.com', status:'Down', uptime:92.10, latency:0, sslStatus:'Expired', sslDaysLeft:0, region:'India - Delhi NCR', lastChecked:'4s ago', interval:'30s', ipAddress:'163.53.78.88', lastIncident:'Sep 27, 2026 14:10 UTC (Failure)', lastDeployment:'Sep 19, 2026 15:00 UTC', monitoringStarted:'Mar 12, 2026', isPaused:false },
+  { id:'9', name:'medium.com', url:'https://medium.com', status:'Online', uptime:99.94, latency:105, sslStatus:'Valid', sslDaysLeft:180, region:'AP-Southeast Singapore', lastChecked:'15s ago', interval:'1m', ipAddress:'162.159.152.4', lastIncident:'Sep 15, 2026 (Resolved 4m)', lastDeployment:'Sep 23, 2026 08:00 UTC', monitoringStarted:'Apr 02, 2026', isPaused:false },
+  { id:'10', name:'vercel.com', url:'https://vercel.com', status:'Online', uptime:99.97, latency:56, sslStatus:'Valid', sslDaysLeft:220, region:'India - Hyderabad', lastChecked:'10s ago', interval:'30s', ipAddress:'76.76.21.21', lastIncident:'None (Clean)', lastDeployment:'Sep 27, 2026 06:00 UTC', monitoringStarted:'Jan 18, 2026', isPaused:false },
 ];
 
-/* ──────────────── ALL DATA CENTRE REGIONS ──────────────── */
-const ALL_REGIONS = [
-  // North America
-  'US-East N.Virginia',
-  'US-East Ohio',
-  'US-West Oregon',
-  'US-West California',
-  'US-Central Iowa',
-  'CA-Central Montreal',
-  'CA-West Vancouver',
-  // South America
-  'SA-East São Paulo',
-  'SA-West Santiago',
-  // Europe
-  'EU-West Frankfurt',
-  'EU-Central Frankfurt',
-  'EU-West Ireland',
-  'EU-West London',
-  'EU-North Stockholm',
-  'EU-South Milan',
-  'EU-South Paris',
-  'EU-East Warsaw',
-  'EU-West Amsterdam',
-  // Asia Pacific
-  'AP-South Mumbai',
-  'AP-South Hyderabad',
-  'AP-Southeast Singapore',
-  'AP-Southeast Jakarta',
-  'AP-Northeast Tokyo',
-  'AP-Northeast Osaka',
-  'AP-Northeast Seoul',
-  'AP-East Hong Kong',
-  'AP-Southeast Sydney',
-  'AP-Southeast Melbourne',
-  // Middle East & Africa
-  'ME-South Bahrain',
-  'ME-Central UAE Dubai',
-  'AF-South Cape Town',
-  'AF-North Cairo',
+/* ──────────────── REGION GROUPS & DATA CENTRES ──────────────── */
+export interface RegionGroup {
+  group: string;
+  regions: string[];
+}
+
+export const REGION_GROUPS: RegionGroup[] = [
+  {
+    group: '🇮🇳 India (Primary)',
+    regions: [
+      'India (All)',
+      'India - Mumbai',
+      'India - Hyderabad',
+      'India - Bengaluru',
+      'India - Delhi NCR',
+      'India - Chennai',
+      'India - Pune',
+      'India - Kolkata',
+    ],
+  },
+  {
+    group: '🌏 Asia Pacific',
+    regions: [
+      'AP-Southeast Singapore',
+      'AP-Northeast Tokyo',
+      'AP-Northeast Osaka',
+      'AP-Northeast Seoul',
+      'AP-East Hong Kong',
+      'AP-Southeast Jakarta',
+      'AP-Southeast Bangkok',
+      'AP-Southeast Sydney',
+      'AP-Southeast Melbourne',
+      'AP-Southeast Auckland',
+    ],
+  },
+  {
+    group: '🇺🇸 North America',
+    regions: [
+      'US-East N.Virginia',
+      'US-East Ohio',
+      'US-West Oregon',
+      'US-West California',
+      'US-Central Iowa',
+      'US-South Texas',
+      'CA-Central Montreal',
+      'CA-West Vancouver',
+      'CA-East Toronto',
+    ],
+  },
+  {
+    group: '🇪🇺 Europe',
+    regions: [
+      'EU-West London',
+      'EU-Central Frankfurt',
+      'EU-West Ireland',
+      'EU-South Paris',
+      'EU-West Amsterdam',
+      'EU-North Stockholm',
+      'EU-South Milan',
+      'EU-South Madrid',
+      'EU-East Warsaw',
+      'EU-Central Zurich',
+    ],
+  },
+  {
+    group: '🌍 Middle East & Africa',
+    regions: [
+      'ME-Central UAE Dubai',
+      'ME-South Bahrain',
+      'ME-Central Riyadh',
+      'AF-South Cape Town',
+      'AF-South Johannesburg',
+      'AF-North Cairo',
+      'AF-West Lagos',
+      'AF-East Nairobi',
+    ],
+  },
+  {
+    group: '🌎 South America',
+    regions: [
+      'SA-East São Paulo',
+      'SA-West Santiago',
+      'SA-North Bogotá',
+      'SA-South Buenos Aires',
+    ],
+  },
 ];
+
+const ALL_REGIONS = REGION_GROUPS.flatMap(g => g.regions);
 
 
 interface Props {
@@ -117,7 +166,14 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
     if (statusFilter === 'down') return site.status === 'Down';
     if (statusFilter === 'slow') return site.status === 'Slow';
     if (statusFilter === 'maintenance') return site.status === 'Maintenance';
-    if (regionFilter !== 'all') return site.region === regionFilter;
+    if (regionFilter !== 'all') {
+      if (regionFilter === 'India (All)' || regionFilter === 'India') {
+        const lower = site.region.toLowerCase();
+        return lower.includes('india') || lower.includes('mumbai') || lower.includes('bengaluru') || lower.includes('bangalore') || lower.includes('delhi') || lower.includes('hyderabad') || lower.includes('chennai') || lower.includes('pune') || lower.includes('kolkata') || lower.includes('ap-south');
+      }
+      const norm = (s: string) => s.toLowerCase().replace(/[\(\)\-\s\.\/]/g, '');
+      return norm(site.region).includes(norm(regionFilter)) || norm(regionFilter).includes(norm(site.region));
+    }
     return true;
   });
 
@@ -266,10 +322,18 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
               <select
                 value={regionFilter}
                 onChange={e => setRegionFilter(e.target.value)}
-                className="appearance-none bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-8 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+                className="appearance-none bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-8 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer max-w-[200px] truncate"
               >
                 <option value="all">All Regions</option>
-                {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                {REGION_GROUPS.map(group => (
+                  <optgroup key={group.group} label={group.group} className="font-bold text-zinc-900 dark:text-zinc-100">
+                    {group.regions.map(r => (
+                      <option key={r} value={r} className="font-normal text-zinc-700 dark:text-zinc-300">
+                        {r}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
               <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
             </div>

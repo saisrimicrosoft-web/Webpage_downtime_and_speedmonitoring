@@ -10,15 +10,22 @@ interface AddWebsiteModalProps {
 }
 
 const REGION_OPTIONS = [
-  'India (Chennai)',
-  'Mumbai',
+  'India - Mumbai',
+  'India - Bengaluru',
+  'India - Delhi NCR',
+  'India - Hyderabad',
+  'India - Chennai',
+  'India - Pune',
+  'India - Kolkata',
   'Singapore',
+  'Tokyo',
   'London',
   'Frankfurt',
-  'Tokyo',
   'Sydney',
   'New York',
   'California',
+  'São Paulo',
+  'Dubai',
 ];
 
 const MONITOR_TYPES = ['HTTP', 'HTTPS', 'Ping', 'TCP Port', 'DNS Lookup', 'API Endpoint'];
@@ -31,7 +38,7 @@ export default function AddWebsiteModal({ isOpen, onClose, onSave }: AddWebsiteM
   const [description, setDescription] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['HTTPS', 'HTTP']);
   const [pollingInterval, setPollingInterval] = useState('1 Minute');
-  const [selectedRegions, setSelectedRegions] = useState<string[]>(['India (Chennai)', 'Mumbai', 'Singapore']);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>(['India - Mumbai', 'India - Bengaluru', 'Singapore']);
   const [sslEnabled, setSslEnabled] = useState(true);
   const [sslDaysThreshold, setSslDaysThreshold] = useState(30);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>(['Email', 'Discord', 'Slack']);

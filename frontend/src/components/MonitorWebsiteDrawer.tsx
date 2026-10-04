@@ -76,8 +76,17 @@ export default function MonitorWebsiteDrawer({ website, onClose, onTogglePause }
         <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-purple-50/60 to-white dark:from-zinc-900 dark:to-zinc-900 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-md">
-                {website.name.charAt(0).toUpperCase()}
+              <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-md flex items-center justify-center overflow-hidden flex-shrink-0">
+                <img
+                  src={`https://www.google.com/s2/favicons?domain=${website.name.replace(/^www\./, '')}&sz=128`}
+                  alt={website.name}
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white flex items-center space-x-1.5">
