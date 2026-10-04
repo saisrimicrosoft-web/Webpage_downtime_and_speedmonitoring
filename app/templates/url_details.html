@@ -1,79 +1,170 @@
 {% extends 'base.html' %}
+{% block title %}{{ url | replace('https://', '') | replace('http://', '') | truncate(40) }} — Details{% endblock %}
 
 {% block content %}
-<div class="header-action">
-    <h1>Details: {{ url }}</h1>
-    <a href="{{ url_for('websites.index') }}" class="btn">Back to List</a>
-</div>
 
+<!-- ── Back breadcrumb ── -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('websites.index') }}" class="breadcrumb-link">← All Websites</a>
+    <span aria-hidden="true"> / </span>
+    <span class="breadcrumb-current">{{ url | replace('https://', '') | replace('http://', '') }}</span>
+</nav>
+
+<!-- ── Page Hero ── -->
+<section class="page-hero" aria-labelledby="detail-heading">
+    <div class="page-hero-text">
+        <h1 id="detail-heading" class="detail-title">
+            {% if latest %}
+                <span class="status-dot {% if latest.is_up %}dot-online{% else %}dot-down{% endif %}" style="width: 16px; height: 16px; margin-right: 12px;" aria-hidden="true"></span>
+            {% endif %}
+            {{ url | replace('https://', '') | replace('http://', '') | truncate(55) }}
+        </h1>
+        <p class="page-subtitle">
+            <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="external-link">
+                Open website ↗
+            </a>
+        </p>
+    </div>
+    <form action="{{ url_for('websites.remove_url') }}" method="POST"
+          onsubmit="return confirm('Remove this website from monitoring?');">
+        <input type="hidden" name="url" value="{{ url }}">
+        <button type="submit" class="btn btn-danger" aria-label="Stop monitoring this website">
+            Remove from Monitoring
+        </button>
+    </form>
+</section>
+
+<!-- ── KPI Cards ── -->
 {% if latest %}
-<div class="stats-grid">
-    <div class="stat-card {{ 'healthy' if latest.is_up else 'down' }}">
-        <h3>Current Status</h3>
-        <p class="stat-value">{{ 'UP' if latest.is_up else 'DOWN' }}</p>
-    </div>
-    <div class="stat-card">
-        <h3>Response Time</h3>
-        <p class="stat-value">{{ latest.response_ms }} ms</p>
-    </div>
-    <div class="stat-card">
-        <h3>HTTP Status</h3>
+<section class="stats-grid stats-grid-4" aria-label="Current metrics">
+
+    <article class="stat-card {% if latest.is_up %}healthy{% else %}down{% endif %}" aria-label="Current status">
+        <div class="stat-card-icon {% if latest.is_up %}green{% else %}red{% endif %}" aria-hidden="true">
+            {% if latest.is_up %}
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+            {% else %}
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            {% endif %}
+        </div>
+        <p class="stat-label">Status</p>
+        <p class="stat-value">{{ 'Online' if latest.is_up else 'Offline' }}</p>
+    </article>
+
+    <article class="stat-card" aria-label="Latest response time">
+        <div class="stat-card-icon {% if latest.response_ms and latest.response_ms < 300 %}green{% elif latest.response_ms and latest.response_ms < 1000 %}amber{% else %}red{% endif %}" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <p class="stat-label">Response Time</p>
+        <p class="stat-value">{{ latest.response_ms if latest.response_ms is not none else 'N/A' }}<small>ms</small></p>
+    </article>
+
+    <article class="stat-card" aria-label="HTTP status code">
+        <div class="stat-card-icon {% if latest.status_code and latest.status_code < 300 %}green{% elif latest.status_code and latest.status_code >= 500 %}red{% else %}amber{% endif %}" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        </div>
+        <p class="stat-label">HTTP Code</p>
         <p class="stat-value">{{ latest.status_code if latest.status_code else 'N/A' }}</p>
-    </div>
-    <div class="stat-card {{ 'warning' if latest.ssl_days_left != None and latest.ssl_days_left < 30 else '' }}">
-        <h3>SSL Days Left</h3>
-        <p class="stat-value">{{ latest.ssl_days_left if latest.ssl_days_left != None else 'N/A' }}</p>
-    </div>
-</div>
+    </article>
+
+    <article class="stat-card {% if latest.ssl_days_left is not none and latest.ssl_days_left < 30 %}warning{% elif latest.ssl_days_left is not none and latest.ssl_days_left < 14 %}down{% endif %}" aria-label="SSL certificate days remaining">
+        <div class="stat-card-icon {% if latest.ssl_days_left is not none and latest.ssl_days_left > 30 %}green{% elif latest.ssl_days_left is not none and latest.ssl_days_left > 14 %}amber{% elif latest.ssl_days_left is not none %}red{% else %}neutral{% endif %}" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <p class="stat-label">SSL Days Left</p>
+        <p class="stat-value">
+            {% if latest.ssl_days_left is not none and latest.ssl_days_left >= 0 %}
+                {{ latest.ssl_days_left }}<small>d</small>
+            {% else %}N/A{% endif %}
+        </p>
+    </article>
+
+</section>
 {% else %}
-<div class="card">
-    <p>No checks have been recorded yet for this URL. The scheduler will check it shortly.</p>
+<div class="info-banner" role="status">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    No data yet — the monitoring engine will check this URL shortly.
 </div>
 {% endif %}
 
-<div class="card mt-4">
-    <h2>Response Time History</h2>
-    <canvas id="responseTimeChart" height="100"></canvas>
+<!-- ── Response Time Chart ── -->
+<div class="section-card mt-4" aria-labelledby="chart-heading">
+    <div class="section-card-header">
+        <h2 id="chart-heading">Response Time History</h2>
+        <span class="result-count">Last 50 checks</span>
+    </div>
+    <div class="chart-container">
+        <canvas id="responseTimeChart" aria-label="Line chart showing response time over the last 50 checks" role="img"></canvas>
+    </div>
 </div>
 
-<div class="card mt-4">
-    <h2>Recent Checks</h2>
+<!-- ── Recent Checks Table ── -->
+<div class="section-card mt-4" aria-labelledby="checks-heading">
+    <div class="section-card-header">
+        <h2 id="checks-heading">Recent Checks</h2>
+    </div>
+
     {% if checks %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Checked At</th>
-                <th>Status</th>
-                <th>HTTP Code</th>
-                <th>Response Time</th>
-                <th>SSL Days Left</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for c in checks %}
-            <tr>
-                <td>{{ c.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                <td>
-                    {% if c.is_up %}
-                        <span class="badge badge-healthy">UP</span>
-                    {% else %}
-                        <span class="badge badge-down">DOWN</span>
-                    {% endif %}
-                </td>
-                <td>{{ c.status_code if c.status_code else '-' }}</td>
-                <td>{{ c.response_ms }} ms</td>
-                <td>{{ c.ssl_days_left if c.ssl_days_left != None else '-' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap" role="region" aria-label="Recent checks log" tabindex="0">
+        <table class="table" id="checks-table">
+            <thead>
+                <tr>
+                    <th scope="col">Timestamp</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">HTTP Code</th>
+                    <th scope="col">Response Time</th>
+                    <th scope="col">SSL Days Left</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in checks %}
+                <tr class="{% if not c.is_up %}row-down{% endif %}">
+                    <td>
+                        <time datetime="{{ c.checked_at.isoformat() }}">
+                            {{ c.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </time>
+                    </td>
+                    <td>
+                        {% if c.is_up %}
+                            <span class="badge badge-healthy">● Online</span>
+                        {% else %}
+                            <span class="badge badge-down">● Offline</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if c.status_code %}
+                            <code class="code-chip {% if c.status_code >= 200 and c.status_code < 300 %}code-ok{% elif c.status_code >= 500 %}code-err{% else %}code-warn{% endif %}">
+                                {{ c.status_code }}
+                            </code>
+                        {% else %}&ndash;{% endif %}
+                    </td>
+                    <td>
+                        <span class="response-time {% if c.response_ms < 300 %}rt-fast{% elif c.response_ms < 1000 %}rt-ok{% else %}rt-slow{% endif %}">
+                            {{ c.response_ms }} ms
+                        </span>
+                    </td>
+                    <td>
+                        {% if c.ssl_days_left is not none and c.ssl_days_left >= 0 %}
+                            <span class="ssl-chip {% if c.ssl_days_left < 14 %}ssl-crit{% elif c.ssl_days_left < 30 %}ssl-warn{% else %}ssl-ok{% endif %}">
+                                {{ c.ssl_days_left }}d
+                            </span>
+                        {% else %}&ndash;{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% else %}
-    <p>No checks recorded yet.</p>
+    <div class="empty-state" role="status">
+        <div class="empty-icon" aria-hidden="true">📊</div>
+        <p>No checks recorded yet. The engine will run on its next scheduled cycle.</p>
+    </div>
     {% endif %}
 </div>
 
-<script>
-    const checkUrl = "{{ url }}";
-</script>
+<script>const checkUrl = "{{ url }}";</script>
+{% endblock %}
+
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/website_details.js') }}"></script>
 {% endblock %}

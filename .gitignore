@@ -172,3 +172,7 @@ cython_debug/
 
 # specific logs
 app.log
+
+# Nested redundant directory
+Webpage_downtime_and_speedmonitoring/
+
