@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a8d8ea"/>
+      <stop offset="100%" stop-color="#8ec6e6"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c9b1d9"/>
+      <stop offset="100%" stop-color="#b39ddb"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b2e0d8"/>
+      <stop offset="100%" stop-color="#80cbc4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- TOP-LEFT ARM -->
+  <polygon points="20,10 65,10 100,55" fill="#b8ddf0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="65,10 100,55 55,55" fill="#9ecce8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="20,10 55,55 20,55" fill="#c4b0d8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="55,55 100,55 80,80" fill="#a8c8e8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+
+  <!-- TOP-RIGHT ARM -->
+  <polygon points="180,10 135,10 100,55" fill="#c8b4dc" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="135,10 100,55 145,55" fill="#b89cd0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="180,10 145,55 180,55" fill="#9dd4e0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="145,55 100,55 120,80" fill="#d0b8e0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+
+  <!-- CENTER DIAMOND -->
+  <polygon points="80,80 100,55 120,80 100,100" fill="#bcd8ec" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="80,120 100,100 120,120 100,145" fill="#c8b0d8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="55,55 80,80 100,100 80,120 55,145" fill="#a0cce0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="145,55 120,80 100,100 120,120 145,145" fill="#c4a8d8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+
+  <!-- BOTTOM-LEFT ARM -->
+  <polygon points="55,145 100,145 80,120" fill="#8ec8dc" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="65,190 100,145 55,145" fill="#b0d8e8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="20,190 65,190 100,145" fill="#c0b4d8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="20,190 55,145 20,145" fill="#b8e0d0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+
+  <!-- BOTTOM-RIGHT ARM -->
+  <polygon points="145,145 100,145 120,120" fill="#d0b8e4" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="135,190 100,145 145,145" fill="#bac4e0" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="180,190 135,190 100,145" fill="#a8d4e8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+  <polygon points="180,190 145,145 180,145" fill="#e0c0e8" stroke="#fff" stroke-width="0.8" opacity="0.95"/>
+
+  <!-- WORDMARK -->
+  <text
+    x="100"
+    y="226"
+    text-anchor="middle"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="26"
+    font-weight="300"
+    letter-spacing="3"
+    fill="#2d2d2d"
+  >nexoxa</text>
+</svg>

@@ -44,6 +44,10 @@
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     Websites
                 </a>
+                <a href="{{ url_for('uptime.uptime_page') }}" class="nav-link {% if request.endpoint and 'uptime' in request.endpoint %}active{% endif %}">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    Uptime Status
+                </a>
             </nav>
 
             <!-- Live indicator -->
