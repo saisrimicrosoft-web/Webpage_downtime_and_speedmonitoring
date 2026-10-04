@@ -99,6 +99,13 @@ class MonitorService:
                 ssl_days_left=ssl_days_left
             )
 
+        # ---- Incident lifecycle ----
+        try:
+            from app.services.incident_service import process_check_for_incidents
+            process_check_for_incidents(check, region='Primary')
+        except Exception as e:
+            logger.error(f"Error processing incident lifecycle: {e}")
+
         logger.info(f"Check complete: {url} | up={is_up} | {response_ms}ms | SSL={ssl_days_left}")
         return check
 
