@@ -1,6 +1,4 @@
 [
     "https://www.google.com",
-    "https://example.com",
-    "https://this-site-does-not-exist-at-all.com",
-    "https://httpstat.us/404"
+    "https://example.com"
 ]
