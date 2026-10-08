@@ -172,8 +172,10 @@ class UptimeRepository:
             bucket_minutes = 30   # 48 segments for 24h
         elif hours <= 168:
             bucket_minutes = 180  # ~56 segments for 7d
-        else:
+        elif hours <= 720:
             bucket_minutes = 720  # ~60 segments for 30d
+        else:
+            bucket_minutes = 1440 # ~90 segments for 90d
 
         segments = []
         now = datetime.now(timezone.utc)

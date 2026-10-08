@@ -176,5 +176,7 @@ def _parse_hours(range_str: str) -> int:
         return 168
     elif range_str in ('30d', '720h'):
         return 720
+    elif range_str in ('90d', '2160h'):
+        return 2160
     else:
         return 24
