@@ -1,13 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import DashboardLayout, { NavPage } from '@/components/DashboardLayout';
 import KPIOverview from '@/components/KPIOverview';
 import UrlPerformanceChart from '@/components/UrlPerformanceChart';
 import UrlSelector from '@/components/UrlSelector';
 import ChecksTable from '@/components/ChecksTable';
+import MonitorWebsitesContent from '@/components/MonitorWebsitesContent';
+import PerformanceSpeedContent from '@/components/PerformanceSpeedContent';
+import DowntimeAlertsContent from '@/components/DowntimeAlertsContent';
+import UptimeStatusContent from '@/components/UptimeStatusContent';
+import SslCertificateContent from '@/components/SslCertificateContent';
+import SettingsContent from '@/components/SettingsContent';
+import AddWebsiteModal from '@/components/AddWebsiteModal';
 import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import { Activity, RefreshCw, Radio, Database } from 'lucide-react';
+import {
+  Activity, RefreshCw, Radio, Database, Clock, Gauge, TrendingUp,
+  ShieldCheck, FileText, Settings
+} from 'lucide-react';
 
 interface InitialDataProps {
   initialKpis: { uptimePercentage: number; activeIncidents: number; sslWarnings: number; totalUrls: number };
@@ -17,6 +28,26 @@ interface InitialDataProps {
   initialChartData: CheckLog[];
 }
 
+/* ─── Placeholder screens for nav items not yet built ─── */
+function PlaceholderScreen({ title, icon }: { title: string; icon: React.ReactNode }) {
+  return (
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xs text-center p-12">
+        <div className="p-4 bg-purple-50 dark:bg-purple-950/30 text-purple-500 rounded-2xl mb-4">
+          {icon}
+        </div>
+        <h2 className="text-lg font-bold text-zinc-800 dark:text-white mb-2">{title}</h2>
+        <p className="text-sm text-zinc-500 max-w-xs">
+          This section is under construction. Check back soon for full analytics and management features.
+        </p>
+        <div className="mt-6 px-4 py-2 bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 text-xs font-semibold rounded-full border border-purple-200 dark:border-purple-800">
+          Coming soon
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardClient({
   initialKpis,
   initialLogs,
@@ -24,6 +55,10 @@ export default function DashboardClient({
   initialChartUrl,
   initialChartData,
 }: InitialDataProps) {
+  const [activePage, setActivePage] = useState<NavPage>('dashboard');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Dashboard data state
   const [kpis, setKpis] = useState(initialKpis);
   const [logs, setLogs] = useState<CheckLog[]>(initialLogs);
   const [urls, setUrls] = useState<string[]>(initialUrls);
@@ -32,30 +67,22 @@ export default function DashboardClient({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  // Fetch updated history when selectedUrl changes
+  // Fetch history when URL changes
   useEffect(() => {
     if (!selectedUrl) return;
-    async function loadHistory() {
-      const data = await getUrlHistory(selectedUrl);
-      setChartData(data);
-    }
-    loadHistory();
+    getUrlHistory(selectedUrl).then(setChartData);
   }, [selectedUrl]);
 
-  // Master refresh function
+  // Master refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       const [newKpis, newLogs, newUrls] = await Promise.all([
-        getGlobalKPIs(),
-        getRecentLogs(50),
-        getUniqueUrls(),
+        getGlobalKPIs(), getRecentLogs(50), getUniqueUrls(),
       ]);
-
       setKpis(newKpis);
       setLogs(newLogs);
       setUrls(newUrls);
-
       const activeUrl = selectedUrl || (newUrls.length > 0 ? newUrls[0] : '');
       if (activeUrl) {
         if (!selectedUrl) setSelectedUrl(activeUrl);
@@ -69,104 +96,140 @@ export default function DashboardClient({
     }
   };
 
-  // Live polling interval (15 seconds)
+  // Auto-polling (15s)
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(() => {
-      handleRefresh();
-    }, 15000);
+    const interval = setInterval(handleRefresh, 15000);
     return () => clearInterval(interval);
   }, [autoRefresh, selectedUrl]);
 
+  /* ─── Render active page content ─── */
+  const renderPageContent = () => {
+    switch (activePage) {
+      case 'dashboard':
+        return (
+          <div className="px-4 sm:px-6 lg:px-8 py-6">
+            {/* Dashboard header */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div>
+                <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                  Website Monitoring Dashboard
+                </h1>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium max-w-xl">
+                  Monitor uptime, downtime, response time, SSL health, and website performance in real time across 18 edge locations worldwide.
+                </p>
+              </div>
+              <div className="flex items-center flex-wrap gap-2">
+                {/* Live polling toggle */}
+                <button
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    autoRefresh
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                  }`}
+                >
+                  <Radio className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-pulse text-emerald-500' : ''}`} />
+                  <span>{autoRefresh ? 'Live Polling · 30s interval' : 'Polling Paused'}</span>
+                </button>
+                {/* Sync button */}
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Sync Now</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Data source badge */}
+            <div className="mb-5">
+              <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                isSupabaseConfigured
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+              }`}>
+                <Database className="w-3 h-3" />
+                <span>{isSupabaseConfigured ? 'Supabase DB Sync Active' : 'Local Flask API Mode'}</span>
+              </span>
+            </div>
+
+            {/* KPI Cards */}
+            <KPIOverview
+              uptimePercentage={kpis.uptimePercentage}
+              activeIncidents={kpis.activeIncidents}
+              sslWarnings={kpis.sslWarnings}
+              totalUrls={kpis.totalUrls || urls.length}
+            />
+
+            {/* URL Selector */}
+            {urls.length > 0 && (
+              <UrlSelector urls={urls} selectedUrl={selectedUrl} onSelectUrl={setSelectedUrl} />
+            )}
+
+            {/* Performance Chart */}
+            {selectedUrl ? (
+              <UrlPerformanceChart data={chartData} url={selectedUrl} />
+            ) : (
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-500 shadow-xs mb-8">
+                No target URLs monitored yet. Run a check to populate metrics.
+              </div>
+            )}
+
+            {/* Checks Table */}
+            <div className="mt-8">
+              <ChecksTable logs={logs} />
+            </div>
+          </div>
+        );
+
+      case 'monitor-websites':
+        return <MonitorWebsitesContent onOpenAddModal={() => setIsAddModalOpen(true)} />;
+
+      case 'uptime-status':
+        return <UptimeStatusContent />;
+
+      case 'downtime-alerts':
+        return <DowntimeAlertsContent />;
+
+      case 'performance-speed':
+        return <PerformanceSpeedContent />;
+
+      case 'ssl-certificate':
+        return <SslCertificateContent />;
+
+      case 'reports':
+        return <PlaceholderScreen title="Reports" icon={<FileText className="w-8 h-8" />} />;
+
+      case 'settings':
+        return <SettingsContent />;
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased">
-      {/* Header Bar */}
-      <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-20 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl shadow-md">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
-                Early Warning Monitor
-              </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium hidden sm:block">
-                Downtime & Latency Telemetry Engine
-              </p>
-            </div>
-          </div>
+    <>
+      <DashboardLayout
+        activePage={activePage}
+        onNavigate={setActivePage}
+        onOpenAddModal={activePage === 'monitor-websites' ? () => setIsAddModalOpen(true) : undefined}
+      >
+        {renderPageContent()}
+      </DashboardLayout>
 
-          <div className="flex items-center space-x-3">
-            {/* DB Source Badge */}
-            <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-              isSupabaseConfigured
-                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border-blue-200 dark:border-blue-800'
-                : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-            }`}>
-              <Database className="w-3 h-3" />
-              <span>{isSupabaseConfigured ? 'Supabase DB' : 'Local Flask API'}</span>
-            </span>
-
-            {/* Live indicator toggle */}
-            <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                autoRefresh
-                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                  : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-              }`}
-            >
-              <Radio className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-pulse text-emerald-500' : ''}`} />
-              <span>{autoRefresh ? 'Live Polling' : 'Paused'}</span>
-            </button>
-
-            {/* Manual refresh button */}
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all shadow-xs disabled:opacity-50 cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Sync Now</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* KPI Cards Grid */}
-        <KPIOverview
-          uptimePercentage={kpis.uptimePercentage}
-          activeIncidents={kpis.activeIncidents}
-          sslWarnings={kpis.sslWarnings}
-          totalUrls={kpis.totalUrls || urls.length}
-        />
-
-        {/* URL Target Selector */}
-        {urls.length > 0 && (
-          <UrlSelector
-            urls={urls}
-            selectedUrl={selectedUrl}
-            onSelectUrl={setSelectedUrl}
-          />
-        )}
-
-        {/* Latency History Chart */}
-        {selectedUrl ? (
-          <UrlPerformanceChart data={chartData} url={selectedUrl} />
-        ) : (
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-8 text-center text-zinc-500 shadow-xs mb-8">
-            No target URLs monitored yet. Run a check to populate metrics.
-          </div>
-        )}
-
-        {/* Live Logs Table */}
-        <div className="mt-8">
-          <ChecksTable logs={logs} />
-        </div>
-      </main>
-    </div>
+      {/* Global Add Website Modal */}
+      <AddWebsiteModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={(data) => {
+          console.log('New website saved:', data);
+          setIsAddModalOpen(false);
+        }}
+      />
+    </>
   );
 }

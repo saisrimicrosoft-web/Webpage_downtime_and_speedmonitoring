@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Uptime & Speed Monitoring{% endblock %}
 
 {% block content %}
 
@@ -109,7 +109,6 @@
              style="width: {{ uptime_pct }}%"></div>
     </div>
 </div>
-{% endif %}
 
 <!-- ── Websites Table ── -->
 <div class="section-card" aria-labelledby="status-table-heading">
@@ -140,6 +139,27 @@
                 </svg>
                 Refresh
             </button>
+        </div>
+    </div>
+
+    <!-- Toolbar / Filtering -->
+    <div class="toolbar">
+        <div class="search-box">
+            <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="domain-search" class="search-input" placeholder="Filter domains..." oninput="filterTable()">
+        </div>
+        <div class="filter-group">
+            <select id="status-filter" class="filter-select" onchange="filterTable()">
+                <option value="all">Status: All</option>
+                <option value="online">Online</option>
+                <option value="degraded">Degraded</option>
+                <option value="down">Down</option>
+            </select>
+            <select id="ssl-filter" class="filter-select" onchange="filterTable()">
+                <option value="all">SSL: All</option>
+                <option value="valid">Valid</option>
+                <option value="warning">Expiring Soon</option>
+            </select>
         </div>
     </div>
 
@@ -221,9 +241,7 @@
                     </td>
                     <td class="cell-time">
                         {% if w.checked_at %}
-                            <time datetime="{{ w.checked_at.isoformat() }}" title="{{ w.checked_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}">
-                                {{ w.checked_at.strftime('%H:%M:%S') }}
-                            </time>
+                            {{ w.checked_at.strftime('%H:%M:%S') }}
                         {% else %}
                             <span class="muted">Never</span>
                         {% endif %}
@@ -249,13 +267,19 @@
                 {% endfor %}
             </tbody>
         </table>
+        
+        <div id="no-results" style="display: none; padding: 40px; text-align: center; color: var(--text-muted);">
+            No websites match your filter criteria.
+        </div>
     </div>
     {% else %}
     <div class="empty-state" role="status">
-        <div class="empty-icon" aria-hidden="true">🌐</div>
-        <h3>No websites yet</h3>
-        <p>Add your first website URL to start monitoring its uptime, performance, and SSL certificate health.</p>
-        <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary">+ Add Your First Website</a>
+        <div class="empty-icon" aria-hidden="true">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h3>No websites monitored yet</h3>
+        <p>Add your first website to start tracking uptime, response time, and SSL health.</p>
+        <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary">+ Add Website</a>
     </div>
     {% endif %}
 </div>

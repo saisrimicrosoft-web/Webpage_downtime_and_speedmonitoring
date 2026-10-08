@@ -458,6 +458,7 @@ body {
     letter-spacing: -1px;
     line-height: 1;
     color: var(--text);
+    margin-bottom: 4px;
 }
 .stat-value small {
     font-size: 0.85rem;
@@ -803,12 +804,15 @@ body {
     color: var(--blue-text); font-size: 0.875rem; font-weight: 500;
     margin-bottom: 20px;
 }
+.empty-state h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.empty-state p  { color: var(--text-muted); max-width: 380px; margin: 0 auto 24px; font-size: 0.9rem; }
 
 /* ── Chart ── */
 .chart-container {
     padding: 20px 24px;
     height: 260px;
     position: relative;
+    width: 100%;
 }
 
 /* ── Breadcrumb ── */
