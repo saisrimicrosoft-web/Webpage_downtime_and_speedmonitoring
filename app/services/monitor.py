@@ -8,7 +8,7 @@ from config import Config
 
 # Supabase Pipeline Integration
 from monitoring_core.db_client import MonitoringDatabaseClient
-from monitoring_core.alert_manager import DiscordAlertManager
+from monitoring_core.alert_manager import AlertManager
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def get_pipeline():
 
     # 2. Initialize AlertManager (independent — won't crash if webhook is missing)
     try:
-        _alert_manager = DiscordAlertManager(_db_client)
+        _alert_manager = AlertManager(_db_client)
     except Exception as e:
         logger.error(f"Failed to initialize AlertManager: {e}")
         # DB client still works even if alerting fails

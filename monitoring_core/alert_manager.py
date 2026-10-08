@@ -9,11 +9,11 @@ from monitoring_core.db_client import MonitoringDatabaseClient
 logger = logging.getLogger(__name__)
 
 
-class DiscordAlertManager:
-    """State-aware Discord Webhook alerting engine.
+class AlertManager:
+    """State-aware Webhook alerting engine.
 
     Evaluates check results against the incidents table to fire rich
-    Discord Embeds only on state transitions:
+    Embeds to Discord, Slack, and Microsoft Teams only on state transitions:
       - UP  → DOWN  (new DOWNTIME incident)
       - DOWN → UP   (resolve DOWNTIME incident)
       - SSL valid → SSL < 14 days / invalid (new SSL_ISSUE incident)
@@ -22,23 +22,27 @@ class DiscordAlertManager:
     Sustained failures are silently deduplicated (anti-spam).
     """
 
-    def __init__(self, db_client: MonitoringDatabaseClient, webhook_url: Optional[str] = None):
-        self.webhook_url = webhook_url or os.environ.get("DISCORD_WEBHOOK_URL", "")
+    def __init__(self, db_client: MonitoringDatabaseClient, discord_webhook_url: Optional[str] = None, slack_webhook_url: Optional[str] = None, teams_webhook_url: Optional[str] = None):
+        self.discord_webhook_url = discord_webhook_url or os.environ.get("DISCORD_WEBHOOK_URL", "")
+        self.slack_webhook_url = slack_webhook_url or os.environ.get("SLACK_WEBHOOK_URL", "")
+        self.teams_webhook_url = teams_webhook_url or os.environ.get("TEAMS_WEBHOOK_URL", "")
         self.db = db_client
 
-        if not self.webhook_url:
-            logger.warning(
-                "DISCORD_WEBHOOK_URL not configured. "
-                "AlertManager will track incidents but skip Discord notifications."
-            )
+        if not any([self.discord_webhook_url, self.slack_webhook_url, self.teams_webhook_url]):
+            logger.warning("No Webhook URLs configured. AlertManager will track incidents but skip notifications.")
 
-    def send_discord_embed(self, title: str, description: str, color: int,
-                           fields: list = None) -> bool:
-        """Sends a rich embed message to Discord. Returns True on success."""
-        if not self.webhook_url:
-            logger.warning("Discord webhook not configured — skipping notification.")
-            return False
+    def broadcast_alert(self, title: str, description: str, color: int, fields: list = None) -> bool:
+        """Sends rich messages to all configured webhooks."""
+        success = False
+        if self.discord_webhook_url and self._send_discord(title, description, color, fields):
+            success = True
+        if self.slack_webhook_url and self._send_slack(title, description, color, fields):
+            success = True
+        if self.teams_webhook_url and self._send_teams(title, description, color, fields):
+            success = True
+        return success
 
+    def _send_discord(self, title: str, description: str, color: int, fields: list = None) -> bool:
         now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         payload = {
             "embeds": [{
@@ -51,20 +55,66 @@ class DiscordAlertManager:
             }]
         }
         try:
-            resp = requests.post(self.webhook_url, json=payload, timeout=10)
+            resp = requests.post(self.discord_webhook_url, json=payload, timeout=10)
             if resp.status_code in (200, 204):
                 logger.info(f"Discord alert sent: {title}")
                 return True
             else:
-                logger.error(
-                    f"Discord webhook returned {resp.status_code}: {resp.text}"
-                )
+                logger.error(f"Discord webhook returned {resp.status_code}: {resp.text}")
                 return False
-        except requests.exceptions.Timeout:
-            logger.error("Discord webhook request timed out.")
-            return False
         except Exception as e:
             logger.error(f"Failed to send Discord alert: {e}")
+            return False
+
+    def _send_slack(self, title: str, description: str, color: int, fields: list = None) -> bool:
+        hex_color = f"#{color:06x}"
+        slack_fields = [{"title": f["name"], "value": f["value"], "short": f.get("inline", False)} for f in (fields or [])]
+        payload = {
+            "attachments": [{
+                "color": hex_color,
+                "title": title,
+                "text": description,
+                "fields": slack_fields,
+                "footer": "Universal Early Warning System"
+            }]
+        }
+        try:
+            resp = requests.post(self.slack_webhook_url, json=payload, timeout=10)
+            if resp.status_code in (200, 204):
+                logger.info(f"Slack alert sent: {title}")
+                return True
+            else:
+                logger.error(f"Slack webhook returned {resp.status_code}: {resp.text}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to send Slack alert: {e}")
+            return False
+
+    def _send_teams(self, title: str, description: str, color: int, fields: list = None) -> bool:
+        hex_color = f"{color:06x}"
+        facts = [{"name": f["name"], "value": str(f["value"])} for f in (fields or [])]
+        payload = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": hex_color,
+            "summary": title,
+            "sections": [{
+                "activityTitle": title,
+                "activitySubtitle": description,
+                "facts": facts,
+                "markdown": True
+            }]
+        }
+        try:
+            resp = requests.post(self.teams_webhook_url, json=payload, timeout=10)
+            if resp.status_code in (200, 204):
+                logger.info(f"Teams alert sent: {title}")
+                return True
+            else:
+                logger.error(f"Teams webhook returned {resp.status_code}: {resp.text}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to send Teams alert: {e}")
             return False
 
     def evaluate_downtime(self, target: Dict[str, Any], check_result: Dict[str, Any]):
@@ -85,7 +135,7 @@ class DiscordAlertManager:
             self.db.create_incident(target_id, "DOWNTIME", details)
             logger.warning(f"INCIDENT OPENED: DOWNTIME for {target_name} ({target_url})")
 
-            self.send_discord_embed(
+            self.broadcast_alert(
                 title="🚨 MONITOR DOWN 🚨",
                 description=f"**{target_name}** is currently unreachable.",
                 color=0xFF0000,  # Red
@@ -101,7 +151,7 @@ class DiscordAlertManager:
             self.db.resolve_incident(open_incident["id"])
             logger.info(f"INCIDENT RESOLVED: DOWNTIME for {target_name} ({target_url})")
 
-            self.send_discord_embed(
+            self.broadcast_alert(
                 title="✅ MONITOR RECOVERED ✅",
                 description=f"**{target_name}** is back online.",
                 color=0x00FF00,  # Green
@@ -141,7 +191,7 @@ class DiscordAlertManager:
             self.db.create_incident(target_id, "SSL_ISSUE", details)
             logger.warning(f"INCIDENT OPENED: SSL_ISSUE for {target_name} ({target_url})")
 
-            self.send_discord_embed(
+            self.broadcast_alert(
                 title="⚠️ SSL CERTIFICATE ALERT ⚠️",
                 description=f"SSL certificate issue for **{target_name}**.",
                 color=0xFFFF00,  # Yellow
@@ -157,7 +207,7 @@ class DiscordAlertManager:
             self.db.resolve_incident(open_incident["id"])
             logger.info(f"INCIDENT RESOLVED: SSL_ISSUE for {target_name} ({target_url})")
 
-            self.send_discord_embed(
+            self.broadcast_alert(
                 title="🔒 SSL CERTIFICATE RESTORED 🔒",
                 description=f"SSL certificate for **{target_name}** is healthy again.",
                 color=0x00FF00,  # Green

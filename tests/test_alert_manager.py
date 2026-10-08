@@ -1,6 +1,6 @@
 """Tests for the DiscordAlertManager — stateful anti-spam alerting engine."""
 from unittest.mock import patch, MagicMock
-from monitoring_core.alert_manager import DiscordAlertManager
+from monitoring_core.alert_manager import AlertManager
 
 
 def _make_mock_db():
@@ -18,8 +18,8 @@ def _make_mock_db():
 
 
 def _make_alerter(mock_db, webhook_url="https://discord.com/api/webhooks/test"):
-    """Create a DiscordAlertManager with a mock DB and optional webhook."""
-    return DiscordAlertManager(mock_db, webhook_url=webhook_url)
+    """Create an AlertManager with a mock DB and optional Discord webhook."""
+    return AlertManager(mock_db, discord_webhook_url=webhook_url)
 
 
 # ─────────────── Downtime State Machine ───────────────
@@ -33,7 +33,7 @@ def test_up_to_down_creates_incident_and_alerts():
 
     check = {"target_id": "target-uuid", "is_up": False, "status_code": None, "response_time_ms": 5000}
 
-    with patch.object(alerter, 'send_discord_embed', return_value=True) as mock_send:
+    with patch.object(alerter, 'broadcast_alert', return_value=True) as mock_send:
         alerter.process_check(check)
 
         mock_db.create_incident.assert_called_once()
@@ -54,7 +54,7 @@ def test_sustained_downtime_no_duplicate_alert():
 
     check = {"target_id": "target-uuid", "is_up": False, "status_code": None, "response_time_ms": 5000}
 
-    with patch.object(alerter, 'send_discord_embed') as mock_send:
+    with patch.object(alerter, 'broadcast_alert') as mock_send:
         alerter.process_check(check)
 
         mock_db.create_incident.assert_not_called()
@@ -72,7 +72,7 @@ def test_down_to_up_resolves_incident_and_alerts():
 
     check = {"target_id": "target-uuid", "is_up": True, "status_code": 200, "response_time_ms": 150}
 
-    with patch.object(alerter, 'send_discord_embed', return_value=True) as mock_send:
+    with patch.object(alerter, 'broadcast_alert', return_value=True) as mock_send:
         alerter.process_check(check)
 
         mock_db.resolve_incident.assert_called_once_with("existing-incident-uuid")
@@ -89,7 +89,7 @@ def test_normal_up_no_alert():
     check = {"target_id": "target-uuid", "is_up": True, "status_code": 200,
              "response_time_ms": 100, "ssl_valid": True, "ssl_days_remaining": 90}
 
-    with patch.object(alerter, 'send_discord_embed') as mock_send:
+    with patch.object(alerter, 'broadcast_alert') as mock_send:
         alerter.process_check(check)
 
         mock_db.create_incident.assert_not_called()
@@ -109,7 +109,7 @@ def test_ssl_expiring_creates_incident():
     check = {"target_id": "target-uuid", "is_up": True, "status_code": 200,
              "response_time_ms": 100, "ssl_valid": True, "ssl_days_remaining": 7}
 
-    with patch.object(alerter, 'send_discord_embed', return_value=True) as mock_send:
+    with patch.object(alerter, 'broadcast_alert', return_value=True) as mock_send:
         alerter.process_check(check)
 
         # Should have created an SSL incident
@@ -129,7 +129,7 @@ def test_ssl_invalid_creates_incident():
     check = {"target_id": "target-uuid", "is_up": True, "status_code": 200,
              "response_time_ms": 100, "ssl_valid": False, "ssl_days_remaining": 0}
 
-    with patch.object(alerter, 'send_discord_embed', return_value=True) as mock_send:
+    with patch.object(alerter, 'broadcast_alert', return_value=True) as mock_send:
         alerter.process_check(check)
 
         create_calls = mock_db.create_incident.call_args_list
@@ -149,7 +149,7 @@ def test_ssl_renewed_resolves_incident():
     check = {"target_id": "target-uuid", "is_up": True, "status_code": 200,
              "response_time_ms": 100, "ssl_valid": True, "ssl_days_remaining": 90}
 
-    with patch.object(alerter, 'send_discord_embed', return_value=True) as mock_send:
+    with patch.object(alerter, 'broadcast_alert', return_value=True) as mock_send:
         alerter.process_check(check)
 
         mock_db.resolve_incident.assert_called_once_with("ssl-incident-uuid")
@@ -168,7 +168,7 @@ def test_sustained_ssl_issue_no_duplicate_alert():
     check = {"target_id": "target-uuid", "is_up": True, "status_code": 200,
              "response_time_ms": 100, "ssl_valid": False, "ssl_days_remaining": 5}
 
-    with patch.object(alerter, 'send_discord_embed') as mock_send:
+    with patch.object(alerter, 'broadcast_alert') as mock_send:
         alerter.process_check(check)
 
         mock_db.create_incident.assert_not_called()
@@ -211,8 +211,8 @@ def test_no_webhook_still_tracks_incidents():
     mock_db.create_incident.assert_called_once()
 
 
-def test_discord_embed_sent_with_correct_payload():
-    """Test that the Discord embed payload is well-formed."""
+def test_broadcast_alert_sends_with_correct_payload():
+    """Test that the Discord embed payload is well-formed when broadcast_alert is used."""
     mock_db = _make_mock_db()
     alerter = _make_alerter(mock_db)
 
@@ -221,7 +221,7 @@ def test_discord_embed_sent_with_correct_payload():
         mock_resp.status_code = 204
         mock_post.return_value = mock_resp
 
-        result = alerter.send_discord_embed(
+        result = alerter.broadcast_alert(
             title="Test Title",
             description="Test Description",
             color=0xFF0000,
