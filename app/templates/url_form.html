@@ -3,12 +3,20 @@
 
 {% block content %}
 
-<section class="page-hero" aria-labelledby="add-url-heading">
-    <div class="page-hero-text">
+<!-- ── Breadcrumb ── -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('websites.index') }}" class="breadcrumb-link">Monitor Websites</a>
+    <span aria-hidden="true"> / </span>
+    <span class="breadcrumb-current">Add Website</span>
+</nav>
+
+<!-- ── Page Header ── -->
+<div class="page-header" aria-labelledby="add-url-heading">
+    <div class="page-header-text">
         <h1 id="add-url-heading">Add a Website to Monitor</h1>
-        <p class="page-subtitle">Enter any public URL. We'll check its uptime, speed, and SSL certificate every 5 minutes.</p>
+        <p class="page-subtitle">Enter any public URL. We'll check its uptime, speed, and SSL certificate every few minutes.</p>
     </div>
-</section>
+</div>
 
 <div class="form-card" role="main">
     <form method="POST" class="form" id="add-url-form" novalidate>
@@ -20,7 +28,9 @@
             </label>
             <div class="input-wrap">
                 <span class="input-prefix" aria-hidden="true">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/>
+                    </svg>
                 </span>
                 <input
                     type="url"
@@ -40,32 +50,34 @@
         <!-- What gets monitored info box -->
         <div class="info-box" aria-label="What gets monitored">
             <h3 class="info-box-title">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                </svg>
                 What we'll monitor
             </h3>
             <ul class="info-list">
                 <li>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                     <strong>Uptime</strong> — Is the site responding?
                 </li>
                 <li>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                     <strong>Response time</strong> — How fast does it load?
                 </li>
                 <li>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                     <strong>SSL certificate</strong> — Days until it expires
                 </li>
                 <li>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                     <strong>HTTP status code</strong> — 200 OK, 404, 5xx, etc.
                 </li>
             </ul>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                 Start Monitoring
             </button>
             <a href="{{ url_for('websites.index') }}" class="btn btn-ghost">Cancel</a>
@@ -77,7 +89,6 @@
 
 {% block scripts %}
 <script>
-// Client-side URL validation for immediate feedback
 const form = document.getElementById('add-url-form');
 const input = document.getElementById('url-input');
 const errorEl = document.getElementById('url-error');

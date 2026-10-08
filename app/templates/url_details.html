@@ -3,85 +3,96 @@
 
 {% block content %}
 
-<!-- ── Back breadcrumb ── -->
+<!-- ── Breadcrumb ── -->
 <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="{{ url_for('websites.index') }}" class="breadcrumb-link">← All Websites</a>
+    <a href="{{ url_for('websites.index') }}" class="breadcrumb-link">Monitor Websites</a>
     <span aria-hidden="true"> / </span>
     <span class="breadcrumb-current">{{ url | replace('https://', '') | replace('http://', '') }}</span>
 </nav>
 
-<!-- ── Page Hero ── -->
-<section class="page-hero" aria-labelledby="detail-heading">
-    <div class="page-hero-text">
-        <h1 id="detail-heading" class="detail-title">
+<!-- ── Page Header ── -->
+<div class="page-header" aria-labelledby="detail-heading">
+    <div class="page-header-text">
+        <h1 id="detail-heading" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             {% if latest %}
                 <span class="status-dot-lg {% if latest.is_up %}dot-up{% else %}dot-down{% endif %}" aria-hidden="true"></span>
             {% endif %}
             {{ url | replace('https://', '') | replace('http://', '') | truncate(55) }}
         </h1>
         <p class="page-subtitle">
-            <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="external-link">
-                Open website ↗
-            </a>
+            <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="external-link">Open website ↗</a>
         </p>
     </div>
-    <form action="{{ url_for('websites.remove_url') }}" method="POST"
-          onsubmit="return confirm('Remove this website from monitoring?');">
-        <input type="hidden" name="url" value="{{ url }}">
-        <button type="submit" class="btn btn-danger" aria-label="Stop monitoring this website">
-            Remove from Monitoring
-        </button>
-    </form>
-</section>
+    <div class="page-header-actions">
+        <form action="{{ url_for('websites.remove_url') }}" method="POST"
+              onsubmit="return confirm('Remove this website from monitoring?');">
+            <input type="hidden" name="url" value="{{ url }}">
+            <button type="submit" class="btn btn-danger btn-sm" aria-label="Stop monitoring this website">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                </svg>
+                Remove from Monitoring
+            </button>
+        </form>
+    </div>
+</div>
 
 <!-- ── KPI Cards ── -->
 {% if latest %}
-<section class="stats-grid stats-grid-4" aria-label="Current metrics">
+<div class="kpi-grid" aria-label="Current metrics">
 
-    <article class="stat-card {% if latest.is_up %}healthy{% else %}down{% endif %}" aria-label="Current status">
-        <div class="stat-card-icon {% if latest.is_up %}green{% else %}red{% endif %}" aria-hidden="true">
+    <div class="kpi-card" aria-label="Current status">
+        <div class="kpi-card-icon {% if latest.is_up %}green{% else %}red{% endif %} stat-card-icon">
             {% if latest.is_up %}
-                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
             {% else %}
-                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
             {% endif %}
         </div>
-        <p class="stat-label">Status</p>
-        <p class="stat-value">{{ 'Online' if latest.is_up else 'Offline' }}</p>
-    </article>
+        <p class="kpi-label">Status</p>
+        <p class="kpi-value" style="color:{% if latest.is_up %}var(--green-text){% else %}var(--red-text){% endif %}">
+            {{ 'Online' if latest.is_up else 'Offline' }}
+        </p>
+    </div>
 
-    <article class="stat-card" aria-label="Latest response time">
-        <div class="stat-card-icon {% if latest.response_ms and latest.response_ms < 300 %}green{% elif latest.response_ms and latest.response_ms < 1000 %}amber{% else %}red{% endif %}" aria-hidden="true">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <div class="kpi-card" aria-label="Latest response time">
+        <div class="kpi-card-icon {% if latest.response_ms and latest.response_ms < 300 %}green{% elif latest.response_ms and latest.response_ms < 1000 %}amber{% else %}red{% endif %} stat-card-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         </div>
-        <p class="stat-label">Response Time</p>
-        <p class="stat-value">{{ latest.response_ms if latest.response_ms is not none else 'N/A' }}<small>ms</small></p>
-    </article>
+        <p class="kpi-label">Response Time</p>
+        <p class="kpi-value">{{ latest.response_ms if latest.response_ms is not none else 'N/A' }}<small>ms</small></p>
+    </div>
 
-    <article class="stat-card" aria-label="HTTP status code">
-        <div class="stat-card-icon {% if latest.status_code and latest.status_code < 300 %}green{% elif latest.status_code and latest.status_code >= 500 %}red{% else %}amber{% endif %}" aria-hidden="true">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+    <div class="kpi-card" aria-label="HTTP status code">
+        <div class="kpi-card-icon {% if latest.status_code and latest.status_code < 300 %}green{% elif latest.status_code and latest.status_code >= 500 %}red{% else %}amber{% endif %} stat-card-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+            </svg>
         </div>
-        <p class="stat-label">HTTP Code</p>
-        <p class="stat-value">{{ latest.status_code if latest.status_code else 'N/A' }}</p>
-    </article>
+        <p class="kpi-label">HTTP Code</p>
+        <p class="kpi-value">{{ latest.status_code if latest.status_code else 'N/A' }}</p>
+    </div>
 
-    <article class="stat-card {% if latest.ssl_days_left is not none and latest.ssl_days_left < 30 %}warning{% elif latest.ssl_days_left is not none and latest.ssl_days_left < 14 %}down{% endif %}" aria-label="SSL certificate days remaining">
-        <div class="stat-card-icon {% if latest.ssl_days_left is not none and latest.ssl_days_left > 30 %}green{% elif latest.ssl_days_left is not none and latest.ssl_days_left > 14 %}amber{% elif latest.ssl_days_left is not none %}red{% else %}neutral{% endif %}" aria-hidden="true">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <div class="kpi-card" aria-label="SSL certificate days remaining">
+        <div class="kpi-card-icon {% if latest.ssl_days_left is not none and latest.ssl_days_left > 30 %}green{% elif latest.ssl_days_left is not none and latest.ssl_days_left > 14 %}amber{% elif latest.ssl_days_left is not none %}red{% else %}gray{% endif %} stat-card-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
         </div>
-        <p class="stat-label">SSL Days Left</p>
-        <p class="stat-value">
+        <p class="kpi-label">SSL Days Left</p>
+        <p class="kpi-value">
             {% if latest.ssl_days_left is not none and latest.ssl_days_left >= 0 %}
                 {{ latest.ssl_days_left }}<small>d</small>
             {% else %}N/A{% endif %}
         </p>
-    </article>
+    </div>
 
-</section>
+</div>
 {% else %}
 <div class="info-banner" role="status">
-    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
     No data yet — the monitoring engine will check this URL shortly.
 </div>
 {% endif %}
@@ -101,6 +112,7 @@
 <div class="section-card mt-4" aria-labelledby="checks-heading">
     <div class="section-card-header">
         <h2 id="checks-heading">Recent Checks</h2>
+        <span class="result-count">{{ checks | length }} records</span>
     </div>
 
     {% if checks %}
@@ -117,17 +129,17 @@
             </thead>
             <tbody>
                 {% for c in checks %}
-                <tr class="{% if not c.is_up %}row-down{% endif %}">
-                    <td>
+                <tr>
+                    <td class="cell-mono">
                         <time datetime="{{ c.checked_at.isoformat() }}">
                             {{ c.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}
                         </time>
                     </td>
                     <td>
                         {% if c.is_up %}
-                            <span class="badge badge-healthy">● Online</span>
+                            <span class="badge badge-healthy"><span class="status-dot dot-up" aria-hidden="true"></span> Online</span>
                         {% else %}
-                            <span class="badge badge-down">● Offline</span>
+                            <span class="badge badge-down"><span class="status-dot dot-down" aria-hidden="true"></span> Offline</span>
                         {% endif %}
                     </td>
                     <td>
@@ -135,11 +147,11 @@
                             <code class="code-chip {% if c.status_code >= 200 and c.status_code < 300 %}code-ok{% elif c.status_code >= 500 %}code-err{% else %}code-warn{% endif %}">
                                 {{ c.status_code }}
                             </code>
-                        {% else %}&ndash;{% endif %}
+                        {% else %}—{% endif %}
                     </td>
                     <td>
                         <span class="response-time {% if c.response_ms < 300 %}rt-fast{% elif c.response_ms < 1000 %}rt-ok{% else %}rt-slow{% endif %}">
-                            {{ c.response_ms }} ms
+                            {{ c.response_ms }}ms
                         </span>
                     </td>
                     <td>
@@ -147,7 +159,7 @@
                             <span class="ssl-chip {% if c.ssl_days_left < 14 %}ssl-crit{% elif c.ssl_days_left < 30 %}ssl-warn{% else %}ssl-ok{% endif %}">
                                 {{ c.ssl_days_left }}d
                             </span>
-                        {% else %}&ndash;{% endif %}
+                        {% else %}—{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
