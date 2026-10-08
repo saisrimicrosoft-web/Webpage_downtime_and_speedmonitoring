@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Nexora — Real-time website uptime, performance, and SSL monitoring dashboard.">
+    <meta name="theme-color" content="#7c3aed">
+    <title>Uptime Status — Nexora Monitor</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar" role="navigation" aria-label="Main sidebar">
+
+        <!-- Brand -->
+        <a href="/" class="sidebar-brand" aria-label="Nexora Home">
+            <div class="sidebar-brand-logo" aria-hidden="true">N</div>
+            <div class="sidebar-brand-text">
+                <span class="sidebar-brand-name">Nexora</span>
+                <span class="sidebar-brand-sub">Enterprise</span>
+            </div>
+        </a>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav" aria-label="Primary navigation">
+
+            <a href="/"
+               class="sidebar-link "
+               id="nav-dashboard">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/websites/"
+               class="sidebar-link "
+               id="nav-websites">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span>Monitor Websites</span>
+            </a>
+
+            <a href="/uptime" class="sidebar-link" id="nav-uptime">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <span>Uptime Status</span>
+            </a>
+
+            <a href="/" class="sidebar-link" id="nav-alerts">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span>Downtime Alerts</span>
+                
+            </a>
+
+            <a href="/" class="sidebar-link" id="nav-perf">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Performance Speed</span>
+            </a>
+
+            <a href="/" class="sidebar-link" id="nav-ssl">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>SSL Certificate</span>
+            </a>
+
+            <a href="/" class="sidebar-link" id="nav-reports">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <span>Reports</span>
+            </a>
+
+            <a href="/" class="sidebar-link" id="nav-settings">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+        <!-- Sidebar user -->
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" aria-hidden="true">DA</div>
+            <div class="sidebar-user-info">
+                <span class="sidebar-user-name">DevOps Admin</span>
+                <span class="sidebar-user-role">Cloud Ops</span>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ── Main Wrapper ── -->
+    <div class="main-wrapper">
+
+        <!-- Top Bar -->
+        <header class="topbar" role="banner">
+            <div class="topbar-search">
+                <svg class="topbar-search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="search" placeholder="Search websites, regions, alerts..." id="topbar-search-input" aria-label="Search">
+            </div>
+
+            <div class="topbar-spacer"></div>
+
+            <div class="topbar-actions">
+                <a href="/websites/add" class="btn btn-primary btn-sm" id="monitor-new-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    Monitor New Website
+                </a>
+
+                <button class="topbar-icon-btn" aria-label="Notifications">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                </button>
+
+                <div class="topbar-user" aria-label="User menu">
+                    <div class="topbar-user-avatar" aria-hidden="true">DA</div>
+                    <div class="topbar-user-info">
+                        <div class="topbar-user-name">DevOps Admin</div>
+                        <div class="topbar-user-role">Cloud Ops</div>
+                    </div>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true" style="color:#9ca3af">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        
+            
+        
+
+        <!-- Page Content -->
+        <main class="page-content" id="main-content">
+            
+<link rel="stylesheet" href="/static/css/uptime.css">
+
+<div class="uptime-page" id="uptime-page">
+
+    <!-- Back link -->
+    <a href="/" class="uptime-back" aria-label="Back to Dashboard">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Dashboard
+    </a>
+
+    <!-- ── Uptime Status Component ── -->
+    <div class="uptime-status-wrapper" style="display: flex; justify-content: center; margin: 2rem 0;">
+  <div id="uptime-status-root"></div>
+</div>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: {
+      preflight: false,
+    }
+  }
+</script>
+<style>
+  #uptime-status-root { font-family: 'Inter', sans-serif; }
+  @keyframes ecg-slide-html {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-ecg { animation: none !important; }
+  }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  // --- ICONS (lucide-react exact paths) ---
+  const Icon = ({ path, className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {path}
+    </svg>
+  );
+  const HeartPulse = ({ className }) => <Icon className={className} path={<><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></>} />;
+  const AlertTriangle = ({ className }) => <Icon className={className} path={<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></>} />;
+  const Globe = ({ className }) => <Icon className={className} path={<><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></>} />;
+  const Database = ({ className }) => <Icon className={className} path={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></>} />;
+  const Server = ({ className }) => <Icon className={className} path={<><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></>} />;
+  const Plus = ({ className }) => <Icon className={className} path={<><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></>} />;
+  const AlertCircle = ({ className }) => <Icon className={className} path={<><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>} />;
+  const CheckCircle = ({ className }) => <Icon className={className} path={<><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>} />;
+
+  // --- DATA ---
+  const MOCK_MONITORS = [
+    { id: 'api', name: 'api.pulseguard.io', protocol: 'HTTPS', regions: 3, status: 'up', uptime: 99.98, history: Array.from({ length: 91 }, () => 'perfect') },
+    { id: 'app', name: 'app.acme-store.com', protocol: 'HTTPS', regions: 2, status: 'slow', uptime: 99.71, history: Array.from({ length: 91 }, (_, i) => [45, 62, 70, 85, 90].includes(i) ? 'slow' : 'perfect') },
+    { id: 'db', name: 'db.acme-store.com:5432', protocol: 'TCP', regions: 1, status: 'up', uptime: 100, history: Array.from({ length: 91 }, () => 'perfect') },
+    { id: 'checkout', name: 'checkout.acme-store.com', protocol: 'HTTPS', regions: 2, status: 'down', uptime: 97.42, history: (() => {
+        const hist = Array.from({ length: 91 }, () => 'perfect');
+        hist[5] = 'down'; hist[6] = 'down'; hist[88] = 'down'; hist[89] = 'down';
+        hist[20] = 'slow'; hist[45] = 'slow'; hist[75] = 'slow';
+        return hist;
+      })() },
+    { id: 'staging', name: 'staging.acme.dev', protocol: 'HTTP', regions: 'paused', status: 'paused', uptime: 0, history: Array.from({ length: 91 }, () => 'perfect') }
+  ];
+
+  const MOCK_INCIDENTS = [
+    { monitorId: 'checkout', type: 'ongoing', title: 'Timeout after 10s', startedAt: new Date(Date.now() - (14 * 60000 + 22 * 1000)).toISOString() },
+    { monitorId: 'checkout', type: 'resolved', title: 'Status 500', startedAt: new Date(Date.now() - 12 * 86400000).toISOString(), duration: '1h 08m' }
+  ];
+
+  // --- COMPONENTS ---
+  const Heartbeat = ({ status }) => {
+    const color = status === 'down' ? '#f87171' : status === 'slow' ? '#fbbf24' : status === 'paused' ? '#5c5c6b' : '#34d399';
+    
+    if (status === 'paused') {
+      return (
+        <svg className="w-full h-[40px]" viewBox="0 0 300 40" preserveAspectRatio="none">
+          <line x1="0" y1="20" x2="300" y2="20" stroke={color} strokeWidth="1.75" strokeDasharray="4 4" fill="none" strokeLinecap="round" />
+        </svg>
+      );
+    }
+
+    if (status === 'down') {
+      return (
+        <svg className="w-full h-[40px]" viewBox="0 0 300 40" preserveAspectRatio="none">
+          <path d="M0 20 L15 20 L18 18 L22 22 L25 20 L45 20 L50 5 L55 35 L60 15 L65 25 L70 20 L90 20" stroke="#34d399" strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M90 20 L294 20" stroke={color} strokeWidth="1.75" fill="none" style={{ filter: \`drop-shadow(0 0 3px \${color}80)\` }} />
+          <circle cx="294" cy="20" r="3.5" fill={color} style={{ filter: \`drop-shadow(0 0 4px \${color})\` }} />
+          <circle cx="294" cy="20" r="3.5" fill="none" stroke={color} className="animate-ping" style={{ transformOrigin: '294px 20px' }} />
+        </svg>
+      );
+    }
+
+    const normalPath = "M 0 20 L 15 20 L 18 18 L 22 22 L 25 20 L 45 20 L 50 5 L 55 35 L 60 15 L 65 25 L 70 20 L 100 20";
+    const slowPath = "M 0 20 L 10 20 L 13 15 L 18 28 L 22 10 L 28 35 L 32 15 L 38 25 L 42 20 L 60 20 L 65 10 L 70 30 L 75 15 L 80 25 L 85 20 L 100 20";
+    const path = status === 'slow' ? slowPath : normalPath;
+    
+    const offsetPath = (d, xOffset) => d.replace(/([ML])\s*(\d+(\.\d+)?)/g, (_, cmd, x) => \`\${cmd} \${parseFloat(x) + xOffset}\`);
+    const fullPath = [0, 100, 200, 300].map(off => offsetPath(path, off)).join(' ');
+
+    return (
+      <div className="w-full h-[40px] overflow-hidden relative" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
+        <div className="absolute top-0 left-0 h-full w-[200%] flex animate-ecg" style={{ animation: 'ecg-slide-html 3s linear infinite' }}>
+           <svg className="w-1/2 h-full" viewBox="0 0 300 40" preserveAspectRatio="none" style={{ filter: \`drop-shadow(0 0 3px \${color}80)\` }}>
+              <path d={fullPath} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+           </svg>
+           <svg className="w-1/2 h-full" viewBox="0 0 300 40" preserveAspectRatio="none" style={{ filter: \`drop-shadow(0 0 3px \${color}80)\` }}>
+              <path d={fullPath} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+           </svg>
+        </div>
+      </div>
+    );
+  };
+
+  const MonitorRow = ({ monitor, isSelected, onClick }) => {
+    const IconC = monitor.protocol === 'HTTPS' || monitor.protocol === 'HTTP' ? Globe : monitor.protocol === 'TCP' ? Database : Server;
+    const isPaused = monitor.status === 'paused';
+    
+    return (
+      <button 
+        onClick={onClick}
+        aria-pressed={isSelected}
+        aria-label={\`\${monitor.name}, \${monitor.status}, \${monitor.uptime}% uptime\`}
+        className={\`w-full flex flex-col sm:flex-row sm:items-center text-left px-4 py-3 rounded-[12px] transition-colors border outline-none focus-visible:ring-2 focus-visible:ring-[#7c5cff]
+          \${isSelected 
+            ? 'bg-[rgba(124,92,255,0.08)] border-[#7c5cff] shadow-[0_0_15px_rgba(124,92,255,0.15)]' 
+            : 'bg-[#13131a] border-[rgba(255,255,255,0.08)] hover:bg-[#1a1a24]'}
+          \${isPaused ? 'opacity-60' : 'opacity-100'}\`}
+      >
+        <div className="w-full sm:w-[180px] shrink-0 flex items-center gap-3 mb-2 sm:mb-0">
+          <IconC className={\`w-4 h-4 shrink-0 \${isSelected ? 'text-[#7c5cff]' : 'text-[#8b8b99]'}\`} />
+          <div className="truncate flex-1">
+            <div className="text-[13px] font-bold text-[#f4f4f6] truncate pr-2">{monitor.name}</div>
+            <div className="text-[11px] text-[#8b8b99] truncate">
+              {monitor.protocol} · {monitor.regions} {typeof monitor.regions === 'number' ? 'region' + (monitor.regions > 1 ? 's' : '') : ''}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex-1 flex justify-center px-0 sm:px-4 mb-2 sm:mb-0 min-w-0">
+          <Heartbeat status={monitor.status} />
+        </div>
+        
+        <div className="w-full sm:w-[80px] shrink-0 sm:text-right flex sm:block justify-between items-center">
+          {isPaused ? (
+            <span className="text-[15px] font-semibold text-[#8b8b99]">Paused</span>
+          ) : (
+            <span className={\`text-[15px] font-bold tabular-nums \${
+              monitor.status === 'down' ? 'text-[#f87171]' : monitor.status === 'slow' ? 'text-[#fbbf24]' : 'text-[#34d399]'
+            }\`}>
+              {monitor.uptime}%
+            </span>
+          )}
+        </div>
+      </button>
+    );
+  }
+
+  const UptimeHeatmap = ({ monitor }) => {
+    return (
+      <div className="w-[265px] shrink-0">
+        <div className="flex justify-between items-end mb-3 text-[#f4f4f6]">
+          <h3 className="text-[14px] font-bold leading-none">{monitor.name} · last 91 days</h3>
+          <div className="flex items-center gap-2.5 text-[11px] text-[#8b8b99] ml-4">
+            <span className="flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-[1px] bg-[#34d399]" /> Perfect</span>
+            <span className="flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-[1px] bg-[#fbbf24]" /> Slow</span>
+            <span className="flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-[1px] bg-[#f87171]" /> Down</span>
+          </div>
+        </div>
+        <div className="grid grid-rows-7 grid-flow-col gap-[4px] overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+          {monitor.history.map((status, i) => {
+            const week = Math.floor(i / 7);
+            const day = i % 7;
+            return (
+              <div 
+                key={i} 
+                title={\`\${status} (Day \${day + 1}, Week \${week + 1})\`}
+                className={\`w-[15px] h-[15px] rounded-[3px] transition-all \${status === 'perfect' ? 'bg-[#34d399]' : status === 'slow' ? 'bg-[#fbbf24]' : 'bg-[#f87171]'} hover:brightness-125 cursor-default\`} 
+              />
+            );
+          })}
+        </div>
+        <div className="flex justify-between mt-2 text-[11px] text-[#8b8b99]">
+          <span>13 weeks ago</span>
+          <span>Today</span>
+        </div>
+      </div>
+    );
+  }
+
+  const IncidentLog = ({ incidents, now }) => {
+    return (
+      <div className="flex-1">
+        <div className="text-[11px] text-[#8b8b99] mb-3">Flatline log</div>
+        <div className="flex flex-col">
+          {incidents.length > 0 ? (
+            incidents.map((inc, i) => {
+              const isOngoing = inc.type === 'ongoing';
+              let displayDuration = inc.duration;
+              let displayStartedAt = inc.startedAt;
+
+              if (isOngoing) {
+                const startedDate = new Date(inc.startedAt);
+                const diffMs = Math.max(0, now - startedDate.getTime());
+                const minutes = Math.floor(diffMs / 60000);
+                const seconds = Math.floor((diffMs % 60000) / 1000);
+                displayDuration = \`\${minutes}m \${seconds}s\`;
+                displayStartedAt = \`Started \${startedDate.getHours().toString().padStart(2, '0')}:\${startedDate.getMinutes().toString().padStart(2, '0')}\`;
+              } else {
+                 const startedDate = new Date(inc.startedAt);
+                 if (inc.startedAt.includes('T')) {
+                   const diffDays = Math.floor((now - startedDate.getTime()) / 86400000);
+                   displayStartedAt = \`\${diffDays} days ago\`;
+                 }
+              }
+
+              return (
+                <div key={i} className={\`py-2.5 flex items-start justify-between \${i !== 0 ? 'border-t border-[rgba(255,255,255,0.08)]' : ''}\`}>
+                  <div className="flex items-start gap-3">
+                    {isOngoing ? (
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#f87171]/10 text-[#f87171] text-[11px] font-medium border border-[#f87171]/20 mt-0.5">
+                        <AlertCircle className="w-3 h-3" /> Ongoing
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#34d399]/10 text-[#34d399] text-[11px] font-medium border border-[#34d399]/20 mt-0.5">
+                        <CheckCircle className="w-3 h-3" /> Resolved
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-[13px] font-bold text-[#f4f4f6]">{inc.title}</div>
+                      <div className="text-[11px] text-[#8b8b99] mt-0.5">
+                        {displayStartedAt}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-[13px] text-[#8b8b99] tabular-nums font-medium shrink-0 ml-4 mt-0.5">{displayDuration}</div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-[13px] text-[#5c5c6b] py-3">No incidents reported.</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const UptimeStatus = () => {
+    const [selectedMonitor, setSelectedMonitor] = useState('checkout');
+    const [range, setRange] = useState('90d');
+    const [now, setNow] = useState(Date.now());
+
+    useEffect(() => {
+      const timer = setInterval(() => setNow(Date.now()), 1000);
+      return () => clearInterval(timer);
+    }, []);
+
+    const selected = MOCK_MONITORS.find(m => m.id === selectedMonitor) || MOCK_MONITORS[0];
+    const upMonitors = MOCK_MONITORS.filter(m => m.status !== 'paused' && m.status !== 'down').length;
+    const totalMonitors = MOCK_MONITORS.filter(m => m.status !== 'paused').length;
+
+    const getOngoingFlatline = () => {
+      const ongoingIncidents = MOCK_INCIDENTS.filter(i => i.type === 'ongoing');
+      if (ongoingIncidents.length === 0) return null;
+      const latest = ongoingIncidents[0];
+      const diffMs = Math.max(0, now - new Date(latest.startedAt).getTime());
+      const minutes = Math.floor(diffMs / 60000);
+      return { name: MOCK_MONITORS.find(m => m.id === latest.monitorId)?.name, minutes };
+    }
+    
+    const flatline = getOngoingFlatline();
+
+    return (
+      <div className="w-full max-w-[600px] p-[20px] rounded-[16px] bg-[#0c0c11] border border-[rgba(255,255,255,0.08)] font-sans text-[#f4f4f6] shadow-xl">
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-[44px] h-[44px] rounded-[12px] bg-[rgba(124,92,255,0.08)] border border-[rgba(124,92,255,0.2)] flex items-center justify-center shrink-0">
+            <HeartPulse className="w-5 h-5 text-[#7c5cff]" />
+          </div>
+          <div>
+            <h2 className="text-[18px] text-[#f4f4f6] font-bold leading-tight !mb-0">{upMonitors} of {totalMonitors} systems alive</h2>
+            {flatline && (
+              <div className="flex items-center gap-1.5 mt-1 text-[#f87171] text-[12px]">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>{flatline.name} flatlined {flatline.minutes}m ago</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Range controls */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+          {['24h', '7d', '30d', '90d'].map(r => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={\`px-3 py-1 text-[13px] rounded-lg border transition-colors shrink-0 \${range === r ? 'bg-[#f4f4f6]/10 border-[#f4f4f6]/20 text-[#f4f4f6]' : 'border-[rgba(255,255,255,0.08)] text-[#8b8b99] hover:bg-[#f4f4f6]/5'}\`}
+            >
+              {r}
+            </button>
+          ))}
+          <button 
+            onClick={() => alert('Add monitor dialog would open here')}
+            className="px-3 py-1 text-[13px] rounded-lg border border-[rgba(255,255,255,0.08)] text-[#8b8b99] hover:bg-[#f4f4f6]/5 flex items-center gap-1.5 ml-2 transition-colors shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add monitor
+          </button>
+        </div>
+
+        {/* Section label row */}
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-[11px] text-[#8b8b99]">Live heartbeat · select a monitor</span>
+          <div className="flex items-center gap-1.5 text-[#34d399] text-[11px]">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34d399] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#34d399]"></span>
+            </span>
+            streaming
+          </div>
+        </div>
+
+        {/* Monitor list */}
+        <div className="flex flex-col gap-[8px]">
+          {MOCK_MONITORS.map(monitor => (
+            <MonitorRow 
+              key={monitor.id} 
+              monitor={monitor} 
+              isSelected={selectedMonitor === monitor.id} 
+              onClick={() => setSelectedMonitor(monitor.id)} 
+            />
+          ))}
+        </div>
+
+        {/* Detail panel */}
+        <div className="mt-5 pt-5 border-t border-[rgba(255,255,255,0.08)] flex flex-col sm:flex-row gap-8">
+          <UptimeHeatmap monitor={selected} />
+          <IncidentLog incidents={MOCK_INCIDENTS.filter(inc => inc.monitorId === selected.id)} now={now} />
+        </div>
+      </div>
+    );
+  }
+
+  const root = ReactDOM.createRoot(document.getElementById('uptime-status-root'));
+  root.render(<UptimeStatus />);
+</script>
+
+    
+    <!-- Website Selector -->
+    <div class="uptime-selector">
+        <div class="uptime-selector-dropdown">
+            <label for="uptime-url-select" class="sr-only">Select monitored website</label>
+            <select id="uptime-url-select" class="uptime-select" aria-label="Select monitored website">
+                
+                
+                <option value="" disabled selected>No websites monitored</option>
+                
+            </select>
+        </div>
+        <span class="uptime-selector-env" aria-label="Environment: Production">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            HTTPS · Production
+        </span>
+    </div>
+
+    <!-- Status Banner -->
+    <div id="uptime-banner" class="uptime-banner status-unknown" role="status" aria-live="polite">
+        <div class="uptime-banner-left">
+            <div id="uptime-status-icon" class="uptime-status-icon unknown" aria-hidden="true">
+                <div class="status-dot-inner"></div>
+            </div>
+            <div class="uptime-banner-info">
+                <div id="uptime-status-label" class="uptime-banner-label unknown">CHECKING…</div>
+                <div id="uptime-status-message" class="uptime-banner-message">Loading monitoring data…</div>
+                <div id="uptime-status-url" class="uptime-banner-url"></div>
+            </div>
+        </div>
+        <div class="uptime-banner-right">
+            <div id="uptime-last-checked" class="uptime-last-checked">—</div>
+            <div id="uptime-live-badge" class="uptime-live-indicator live" aria-label="Live monitoring active">
+                <span class="uptime-live-dot" aria-hidden="true"></span>
+                <span>Live</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="uptime-filters" role="toolbar" aria-label="Monitoring filters">
+        <span class="uptime-filter-label">Time Range</span>
+        <div class="uptime-filter-group" role="radiogroup" aria-label="Time range filter">
+            <button class="uptime-filter-btn active" data-filter="range" data-value="24h" role="radio" aria-checked="true">24H</button>
+            <button class="uptime-filter-btn" data-filter="range" data-value="7d" role="radio" aria-checked="false">7D</button>
+            <button class="uptime-filter-btn" data-filter="range" data-value="30d" role="radio" aria-checked="false">30D</button>
+        </div>
+
+        <span class="uptime-filter-label">Status</span>
+        <div class="uptime-filter-group" role="radiogroup" aria-label="Status filter">
+            <button class="uptime-filter-btn active" data-filter="status" data-value="all" role="radio" aria-checked="true">All</button>
+            <button class="uptime-filter-btn" data-filter="status" data-value="operational" role="radio" aria-checked="false">Operational</button>
+            <button class="uptime-filter-btn" data-filter="status" data-value="degraded" role="radio" aria-checked="false">Degraded</button>
+            <button class="uptime-filter-btn" data-filter="status" data-value="down" role="radio" aria-checked="false">Down</button>
+        </div>
+
+        <span class="uptime-filter-label">View</span>
+        <div class="uptime-filter-group" role="radiogroup" aria-label="View filter">
+            <button class="uptime-filter-btn active" data-filter="incidents" data-value="all" role="radio" aria-checked="true">All Events</button>
+            <button class="uptime-filter-btn" data-filter="incidents" data-value="incidents" role="radio" aria-checked="false">Incidents Only</button>
+        </div>
+    </div>
+
+    <!-- Timeline + Sidebar Grid -->
+    <div class="uptime-grid">
+        <div class="uptime-main-col">
+            <!-- Uptime Activity Timeline -->
+            <div class="uptime-timeline-section">
+                <div class="uptime-timeline-header">
+                    <h2>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        Uptime Activity
+                    </h2>
+                    <span id="uptime-pct" class="uptime-pct good" aria-label="Uptime percentage">—</span>
+                </div>
+                <div class="uptime-timeline-body">
+                    <div id="uptime-timeline-container" class="uptime-bar-wrap">
+                        <!-- Loading skeleton -->
+                        <div class="uptime-loading" id="timeline-loading">
+                            <div class="uptime-skeleton bar"></div>
+                        </div>
+                        <div id="uptime-bar" class="uptime-bar" style="display:none;"></div>
+                        <div id="uptime-bar-labels" class="uptime-bar-labels" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Downtime / Incidents -->
+            <div class="uptime-incidents-section" style="margin-top:20px;">
+                <div class="uptime-incidents-header">
+                    <h2>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Downtime History
+                    </h2>
+                    <span id="incident-count-badge" class="uptime-incident-count zero">0</span>
+                </div>
+                <div id="uptime-incidents-body" class="uptime-incidents-body">
+                    <div class="uptime-loading" id="incidents-loading">
+                        <div class="uptime-skeleton wide"></div>
+                        <div class="uptime-skeleton medium"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status History Table -->
+            <div class="uptime-history-section" style="margin-top:20px;">
+                <div class="uptime-history-header">
+                    <h2>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Status History
+                    </h2>
+                    <span id="history-result-count" class="result-count">—</span>
+                </div>
+                <div id="uptime-history-body">
+                    <div class="uptime-loading" id="history-loading">
+                        <div class="uptime-skeleton wide"></div>
+                        <div class="uptime-skeleton wide"></div>
+                        <div class="uptime-skeleton medium"></div>
+                    </div>
+                    <div id="uptime-table-container" style="display:none;">
+                        <div class="uptime-table-wrap">
+                            <table class="uptime-table" role="table" aria-label="Status history">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="sortable" data-sort="time">Time</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col" class="sortable" data-sort="response">Response</th>
+                                        <th scope="col">Region</th>
+                                        <th scope="col">Event</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="uptime-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="uptime-pagination" class="uptime-pagination" style="display:none;">
+                            <span id="pagination-info" class="uptime-pagination-info"></span>
+                            <div id="pagination-btns" class="uptime-pagination-btns"></div>
+                        </div>
+                    </div>
+                    <!-- Empty state -->
+                    <div id="history-empty" class="empty-state" style="display:none;">
+                        <div class="empty-icon">
+                            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        </div>
+                        <h3>No monitoring events</h3>
+                        <p>No health checks have been recorded yet for this website.</p>
+                    </div>
+                    <!-- Error state -->
+                    <div id="history-error" class="uptime-error" style="display:none;">
+                        <div class="uptime-error-icon">✕</div>
+                        <h4>Unable to load monitoring data</h4>
+                        <p id="history-error-msg">An unexpected error occurred.</p>
+                        <button class="btn btn-primary btn-xs" onclick="UptimeApp.refresh()">Try Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="uptime-sidebar">
+            <!-- Regional Status -->
+            <div class="uptime-regions">
+                <div class="uptime-regions-header">
+                    <h3>Monitoring Regions</h3>
+                </div>
+                <div id="uptime-region-list" class="uptime-region-list">
+                    <div class="uptime-loading" id="regions-loading">
+                        <div class="uptime-skeleton medium"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Time -->
+            <div class="uptime-response-summary">
+                <div class="uptime-response-header">
+                    <h3>Response Time</h3>
+                </div>
+                <div id="uptime-response-body" class="uptime-response-body">
+                    <div class="uptime-loading" id="response-loading">
+                        <div class="uptime-skeleton short"></div>
+                        <div class="uptime-skeleton medium"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Tooltip (reused) -->
+<div id="uptime-tooltip" class="uptime-tooltip" role="tooltip" aria-hidden="true"></div>
+
+<!-- Incident Detail Drawer -->
+<div id="uptime-drawer-overlay" class="uptime-drawer-overlay" aria-hidden="true"></div>
+<aside id="uptime-drawer" class="uptime-drawer" role="dialog" aria-label="Incident details" aria-hidden="true">
+    <div class="uptime-drawer-header">
+        <span class="uptime-drawer-title">Incident Details</span>
+        <button id="uptime-drawer-close" class="uptime-drawer-close" aria-label="Close drawer">×</button>
+    </div>
+    <div id="uptime-drawer-body" class="uptime-drawer-body">
+        <!-- Populated by JS -->
+    </div>
+</aside>
+
+<!-- Screen-reader only utility -->
+<style>.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}</style>
+
+
+        </main>
+
+    </div><!-- /.main-wrapper -->
+
+</div><!-- /.app-layout -->
+
+<!-- Global JS -->
+<script>
+    // Auto-refresh dashboard every 60 seconds
+    if (window.location.pathname === '/') {
+        setTimeout(() => window.location.reload(), 60000);
+    }
+    // Dismiss flash messages after 5 seconds
+    document.querySelectorAll('.flash').forEach(el => {
+        setTimeout(() => el.style.opacity = '0', 4500);
+        setTimeout(() => el.remove(), 5000);
+    });
+    // Topbar search → filter table rows
+    const topSearchInput = document.getElementById('topbar-search-input');
+    if (topSearchInput) {
+        topSearchInput.addEventListener('input', () => {
+            const q = topSearchInput.value.toLowerCase();
+            document.querySelectorAll('.table tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+</script>
+
+<script src="/static/js/uptime_status.js"></script>
+
+</body>
+</html>

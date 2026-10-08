@@ -24,14 +24,26 @@ class CheckRepository:
                 self.is_up = c_row.get('is_up', False)
                 self.response_ms = c_row.get('response_time_ms')
                 self.ssl_days_left = c_row.get('ssl_days_remaining')
+                self.status_code = c_row.get('status_code')
+                
+                checked_str = c_row.get('checked_at')
+                if checked_str:
+                    from datetime import datetime
+                    try:
+                        self.checked_at = datetime.fromisoformat(checked_str.replace('Z', '+00:00'))
+                    except Exception:
+                        self.checked_at = None
+                else:
+                    self.checked_at = None
+
                 self.data = {
                     'id': c_row.get('id'),
                     'url': c_url,
-                    'checked_at': c_row.get('checked_at'),
-                    'status_code': c_row.get('status_code'),
-                    'response_ms': c_row.get('response_time_ms'),
-                    'is_up': c_row.get('is_up', False),
-                    'ssl_days_left': c_row.get('ssl_days_remaining')
+                    'checked_at': checked_str,
+                    'status_code': self.status_code,
+                    'response_ms': self.response_ms,
+                    'is_up': self.is_up,
+                    'ssl_days_left': self.ssl_days_left
                 }
             def to_dict(self):
                 return self.data
@@ -78,6 +90,32 @@ class CheckRepository:
         targets = {t['id']: t['url'] for t in db.get_all_targets()}
         
         return [CheckRepository._map_check(c, targets.get(c['target_id'], 'Unknown')) for c in checks]
+
+    @staticmethod
+    def get_uptime_per_url():
+        db = CheckRepository.get_db()
+        if not db:
+            return {}
+        
+        targets = db.get_all_targets()
+        result = {}
+        for t in targets:
+            url = t['url']
+            t_id = t['id']
+            # Get total checks for this target
+            total_resp = db.supabase.table("check_results").select("id", count="exact").eq("target_id", t_id).execute()
+            total_count = total_resp.count if total_resp else 0
+            
+            if total_count == 0:
+                result[url] = 100.0
+                continue
+                
+            up_resp = db.supabase.table("check_results").select("id", count="exact").eq("target_id", t_id).eq("is_up", True).execute()
+            up_count = up_resp.count if up_resp else 0
+            
+            result[url] = round((up_count / total_count) * 100, 2)
+            
+        return result
 
     @staticmethod
     def get_summary():
