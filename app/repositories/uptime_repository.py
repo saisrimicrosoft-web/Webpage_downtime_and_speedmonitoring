@@ -16,6 +16,7 @@ from sqlalchemy import func, case, and_, desc
 from app.models import db
 from app.models.check import Check
 from app.models.incident import Incident
+from app.utils.uptime_calculator import get_uptime_stats_for_range
 
 logger = logging.getLogger(__name__)
 
@@ -333,31 +334,20 @@ class UptimeRepository:
     @staticmethod
     def get_uptime_summary(url: str, hours: int = 24) -> dict:
         """Get uptime percentage and summary stats for a time period."""
+        uptime_pct, up_checks, total_checks, avg_resp, down_checks = get_uptime_stats_for_range(url, hours)
+
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
-
-        total = Check.query.filter(
-            Check.url == url,
-            Check.checked_at >= cutoff
-        ).count()
-
-        up_count = Check.query.filter(
-            Check.url == url,
-            Check.checked_at >= cutoff,
-            Check.is_up == True
-        ).count()
-
         incident_count = Incident.query.filter(
             Incident.url == url,
             Incident.started_at >= cutoff
         ).count()
 
-        uptime_pct = round((up_count / total) * 100, 2) if total > 0 else 0
-
         return {
-            'total_checks': total,
-            'up_checks': up_count,
-            'down_checks': total - up_count,
+            'total_checks': total_checks,
+            'up_checks': up_checks,
+            'down_checks': down_checks,
             'uptime_percentage': uptime_pct,
             'incident_count': incident_count,
             'time_range_hours': hours,
+            'avg_response_ms': avg_resp,
         }

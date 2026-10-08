@@ -1,124 +1,47 @@
 from typing import List, Dict, Any
+from app.models.check import Check
+from app.models import db
+from sqlalchemy import func
+from app.utils.uptime_calculator import get_uptime_stats_for_range
 
 class CheckRepository:
-    """Data access layer for reading from Supabase for the dashboard."""
-
-    _db_client = None
-
-    @classmethod
-    def get_db(cls):
-        if cls._db_client is None:
-            from monitoring_core.db_client import MonitoringDatabaseClient
-            try:
-                cls._db_client = MonitoringDatabaseClient()
-            except Exception as e:
-                import logging
-                logging.error(f"Supabase DB init failed: {e}")
-        return cls._db_client
+    """Data access layer for reading monitoring data from SQLite for the dashboard."""
 
     @staticmethod
-    def _map_check(check_row: Dict[str, Any], url: str) -> Any:
-        class DummyCheck:
-            def __init__(self, c_row, c_url):
-                self.url = c_url
-                self.is_up = c_row.get('is_up', False)
-                self.response_ms = c_row.get('response_time_ms')
-                self.ssl_days_left = c_row.get('ssl_days_remaining')
-                self.status_code = c_row.get('status_code')
-                
-                checked_str = c_row.get('checked_at')
-                if checked_str:
-                    from datetime import datetime
-                    try:
-                        self.checked_at = datetime.fromisoformat(checked_str.replace('Z', '+00:00'))
-                    except Exception:
-                        self.checked_at = None
-                else:
-                    self.checked_at = None
-
-                self.data = {
-                    'id': c_row.get('id'),
-                    'url': c_url,
-                    'checked_at': checked_str,
-                    'status_code': self.status_code,
-                    'response_ms': self.response_ms,
-                    'is_up': self.is_up,
-                    'ssl_days_left': self.ssl_days_left
-                }
-            def to_dict(self):
-                return self.data
-        return DummyCheck(check_row, url)
+    def get_latest_check_per_url() -> List[Check]:
+        # Fetch all checks, sort by checked_at descending, then get first per URL
+        checks = Check.query.order_by(Check.url, Check.checked_at.desc()).all()
+        seen_urls = set()
+        latest_checks = []
+        for c in checks:
+            if c.url not in seen_urls:
+                latest_checks.append(c)
+                seen_urls.add(c.url)
+        return latest_checks
 
     @staticmethod
-    def get_latest_check_per_url():
-        db = CheckRepository.get_db()
-        if not db:
-            return []
-        
-        targets = db.get_all_targets()
-        results = []
-        for target in targets:
-            recent = db.get_recent_checks(target['id'], limit=1)
-            if recent:
-                results.append(CheckRepository._map_check(recent[0], target['url']))
-        return results
+    def get_checks_for_url(url: str, limit: int = 50) -> List[Check]:
+        return Check.query.filter_by(url=url).order_by(Check.checked_at.desc()).limit(limit).all()
 
     @staticmethod
-    def get_checks_for_url(url: str, limit: int = 50):
-        db = CheckRepository.get_db()
-        if not db:
-            return []
-            
-        target = db.get_or_create_target_by_url(url)
-        if not target:
-            return []
-            
-        recent = db.get_recent_checks(target['id'], limit=limit)
-        return [CheckRepository._map_check(c, url) for c in recent]
+    def get_all_checks(limit: int = 100) -> List[Check]:
+        return Check.query.order_by(Check.checked_at.desc()).limit(limit).all()
 
     @staticmethod
-    def get_all_checks(limit: int = 100):
-        db = CheckRepository.get_db()
-        if not db:
-            return []
-            
-        # Supabase Python client doesn't support joins elegantly yet without RPC or views.
-        # We will fetch recent checks and map them to targets.
-        response = db.supabase.table("check_results").select("*").order("checked_at", desc=True).limit(limit).execute()
-        checks = response.data if response.data else []
-        
-        targets = {t['id']: t['url'] for t in db.get_all_targets()}
-        
-        return [CheckRepository._map_check(c, targets.get(c['target_id'], 'Unknown')) for c in checks]
-
-    @staticmethod
-    def get_uptime_per_url():
-        db = CheckRepository.get_db()
-        if not db:
-            return {}
-        
-        targets = db.get_all_targets()
+    def get_uptime_per_url() -> Dict[str, float]:
+        from config import load_urls
+        urls = load_urls()
         result = {}
-        for t in targets:
-            url = t['url']
-            t_id = t['id']
-            # Get total checks for this target
-            total_resp = db.supabase.table("check_results").select("id", count="exact").eq("target_id", t_id).execute()
-            total_count = total_resp.count if total_resp else 0
-            
-            if total_count == 0:
-                result[url] = 100.0
-                continue
-                
-            up_resp = db.supabase.table("check_results").select("id", count="exact").eq("target_id", t_id).eq("is_up", True).execute()
-            up_count = up_resp.count if up_resp else 0
-            
-            result[url] = round((up_count / total_count) * 100, 2)
-            
+        for url in urls:
+            uptime_pct, _, _, _, _ = get_uptime_stats_for_range(url=url, hours=None)
+            if uptime_pct == 0.0 and Check.query.filter_by(url=url).count() == 0:
+                result[url] = 100.0 # No checks means default to 100.0 like before to match expectations
+            else:
+                result[url] = uptime_pct
         return result
 
     @staticmethod
-    def get_summary():
+    def get_summary() -> Dict[str, Any]:
         from config import load_urls
         urls = load_urls()
         latest = CheckRepository.get_latest_check_per_url()
@@ -170,18 +93,7 @@ class CheckRepository:
 
         avg_response_ms = (total_response_ms / response_count) if response_count > 0 else 0
         
-        db = CheckRepository.get_db()
-        avg_uptime_pct = 0
-        if db:
-            # Calculate uptime using simple count over all checks
-            total_checks_resp = db.supabase.table("check_results").select("id", count="exact").execute()
-            up_checks_resp = db.supabase.table("check_results").select("id", count="exact").eq("is_up", True).execute()
-            
-            total_checks_count = total_checks_resp.count if total_checks_resp else 0
-            up_checks_count = up_checks_resp.count if up_checks_resp else 0
-            
-            if total_checks_count and total_checks_count > 0:
-                avg_uptime_pct = (up_checks_count / total_checks_count) * 100
+        avg_uptime_pct, _, _, _, _ = get_uptime_stats_for_range(hours=None)
 
         return {
             'total': total,
