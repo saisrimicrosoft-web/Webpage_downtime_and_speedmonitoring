@@ -1,23 +1,93 @@
 {% extends 'base.html' %}
-{% block title %}Managed Websites{% endblock %}
+{% block title %}Monitor Websites{% endblock %}
 
 {% block content %}
 
-<section class="page-hero" aria-labelledby="websites-heading">
-    <div class="page-hero-text">
-        <h1 id="websites-heading">Monitored Websites</h1>
-        <p class="page-subtitle">Manage the list of URLs being watched around the clock.</p>
+<!-- ── Page Header ── -->
+<div class="page-header" aria-labelledby="websites-heading">
+    <div class="page-header-text">
+        <h1 id="websites-heading">Monitor Websites</h1>
+        <p class="page-subtitle">Manage monitored websites, probes, SSL certificates and alert rules.</p>
     </div>
-    <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary" id="add-url-cta">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        Add Website
-    </a>
-</section>
+    <div class="page-header-actions">
+        <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary btn-sm" id="add-url-cta">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            + Add Website
+        </a>
+    </div>
+</div>
 
-<section class="section-card" aria-labelledby="websites-table-heading">
+<!-- ── Stats Row ── -->
+<div class="stats-grid stats-grid-3" aria-label="Website statistics">
+    <div class="stat-card">
+        <div class="stat-card-icon purple" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/>
+            </svg>
+        </div>
+        <div class="stat-card-body">
+            <p class="stat-label">Total Monitored</p>
+            <p class="stat-value">{{ websites | length }}</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon green" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
+        </div>
+        <div class="stat-card-body">
+            <p class="stat-label">Online Health</p>
+            <p class="stat-value">{{ websites | selectattr('is_up', 'equalto', true) | list | length }}</p>
+            <p class="stat-sub"><span class="txt-green">{{ websites | selectattr('is_up', 'equalto', true) | list | length }} Online</span></p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-icon red" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+        </div>
+        <div class="stat-card-body">
+            <p class="stat-label">Offline / Degraded</p>
+            <p class="stat-value">{{ websites | selectattr('is_up', 'equalto', false) | list | length }}</p>
+            <p class="stat-sub">
+                {% set down_count = websites | selectattr('is_up', 'equalto', false) | list | length %}
+                {% if down_count > 0 %}<span class="txt-red">{{ down_count }} Down</span>{% else %}<span class="txt-green">All Clear</span>{% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Websites Table ── -->
+<div class="section-card" aria-labelledby="websites-table-heading">
     <div class="section-card-header">
-        <h2 id="websites-table-heading">All URLs</h2>
-        <span class="result-count">{{ websites | length }} site{% if websites | length != 1 %}s{% endif %}</span>
+        <div class="section-card-header-left">
+            <h2 id="websites-table-heading">Showing {{ websites | length }} of {{ websites | length }} websites</h2>
+        </div>
+        <div class="section-card-header-right">
+            <div class="search-wrap-sm">
+                <svg class="search-wrap-sm-icon" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="search" class="search-input-sm" placeholder="Search website..." id="wl-search" aria-label="Filter websites">
+            </div>
+
+            <select class="filter-select" id="wl-filter-status" aria-label="Filter by status">
+                <option value="">▼ All Status</option>
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+                <option value="pending">Pending</option>
+            </select>
+
+            <button class="btn btn-sm" onclick="window.location.reload()" aria-label="Refresh">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Refresh
+            </button>
+        </div>
     </div>
 
     {% if websites %}
@@ -32,23 +102,20 @@
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="wl-tbody">
                 {% for w in websites %}
-                <tr>
-                    <td class="cell-main">
+                <tr data-status="{% if w.is_up == None %}pending{% elif w.is_up %}online{% else %}offline{% endif %}">
+                    <td class="cell-url">
                         <div class="url-cell">
-                            <span class="status-indicator">
-                                {% if w.is_up == None %}
-                                    <div class="status-dot dot-unknown"></div>
-                                {% elif w.is_up %}
-                                    <div class="status-dot dot-online"></div>
-                                {% else %}
-                                    <div class="status-dot dot-down"></div>
-                                {% endif %}
-                            </span>
-                            <div style="display:flex; flex-direction:column; margin-left: 8px;">
-                                <span class="url-title">{{ w.url | replace('https://', '') | replace('http://', '') | truncate(50) }}</span>
-                                <a href="{{ url_for('websites.details', url=w.url) }}" class="url-link" title="{{ w.url }}">View Details →</a>
+                            <div class="site-favicon" aria-hidden="true">
+                                <img src="https://www.google.com/s2/favicons?sz=32&domain={{ w.url }}"
+                                     alt="" onerror="this.parentElement.textContent='{{ (w.url | replace('https://','') | replace('http://',''))[0] | upper }}'">
+                            </div>
+                            <div class="site-info">
+                                <a href="{{ url_for('websites.details', url=w.url) }}" class="site-name" title="{{ w.url }}">
+                                    {{ w.url | replace('https://', '') | replace('http://', '') | truncate(35) }}
+                                </a>
+                                <span class="site-url">{{ w.url }}</span>
                             </div>
                         </div>
                     </td>
@@ -56,17 +123,21 @@
                         {% if w.is_up == None %}
                             <span class="badge badge-pending">Pending</span>
                         {% elif w.is_up %}
-                            <span class="badge badge-healthy">● Online</span>
+                            <span class="badge badge-healthy">
+                                <span class="status-dot dot-up" aria-hidden="true"></span> Online
+                            </span>
                         {% else %}
-                            <span class="badge badge-down">● Offline</span>
+                            <span class="badge badge-down">
+                                <span class="status-dot dot-down" aria-hidden="true"></span> Offline
+                            </span>
                         {% endif %}
                     </td>
                     <td>
                         {% if w.response_ms is not none %}
                             <span class="response-time {% if w.response_ms < 300 %}rt-fast{% elif w.response_ms < 1000 %}rt-ok{% else %}rt-slow{% endif %}">
-                                {{ w.response_ms }} ms
+                                {{ w.response_ms }}ms
                             </span>
-                        {% else %}&ndash;{% endif %}
+                        {% else %}—{% endif %}
                     </td>
                     <td class="cell-time">
                         {% if w.checked_at %}
@@ -78,18 +149,21 @@
                         {% endif %}
                     </td>
                     <td class="cell-actions">
-                        <a href="{{ url_for('websites.details', url=w.url) }}"
-                           class="btn btn-xs"
-                           aria-label="View details for {{ w.url }}">Details</a>
-
-                        <form action="{{ url_for('websites.remove_url') }}" method="POST"
-                              style="display:inline;"
+                        <a href="{{ url_for('websites.details', url=w.url) }}" class="icon-btn" title="View Details" aria-label="View details for {{ w.url }}">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </a>
+                        <form action="{{ url_for('websites.remove_url') }}" method="POST" style="display:inline;"
                               onsubmit="return confirm('Remove {{ w.url }} from monitoring?');">
                             <input type="hidden" name="url" value="{{ w.url }}">
-                            <button type="submit"
-                                    class="btn btn-xs btn-danger"
-                                    aria-label="Remove {{ w.url }} from monitoring">
-                                Remove
+                            <button type="submit" class="icon-btn danger" aria-label="Remove {{ w.url }}" title="Remove">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                    <path d="M10 11v6M14 11v6"/>
+                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                </svg>
                             </button>
                         </form>
                     </td>
@@ -102,10 +176,28 @@
     <div class="empty-state" role="status">
         <div class="empty-icon" aria-hidden="true">🌐</div>
         <h3>Nothing here yet</h3>
-        <p>Click <strong>Add Website</strong> to start monitoring your first URL.</p>
+        <p>Click <strong>+ Add Website</strong> to start monitoring your first URL.</p>
         <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary">+ Add Website</a>
     </div>
     {% endif %}
-</section>
+</div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+const wlSearch = document.getElementById('wl-search');
+const wlFilterStatus = document.getElementById('wl-filter-status');
+function applyWlFilters() {
+    const q = (wlSearch ? wlSearch.value : '').toLowerCase();
+    const status = wlFilterStatus ? wlFilterStatus.value : '';
+    document.querySelectorAll('#wl-tbody tr').forEach(row => {
+        const matchQ = !q || row.textContent.toLowerCase().includes(q);
+        const matchStatus = !status || row.dataset.status === status;
+        row.style.display = (matchQ && matchStatus) ? '' : 'none';
+    });
+}
+if (wlSearch) wlSearch.addEventListener('input', applyWlFilters);
+if (wlFilterStatus) wlFilterStatus.addEventListener('change', applyWlFilters);
+</script>
 {% endblock %}

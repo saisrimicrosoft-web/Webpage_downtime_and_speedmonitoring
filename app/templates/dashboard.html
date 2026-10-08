@@ -3,171 +3,143 @@
 
 {% block content %}
 
-<!-- ── Page Hero ── -->
-<section class="page-hero" aria-labelledby="dashboard-heading">
-    <div class="page-hero-text">
-        <h1 id="dashboard-heading">Uptime & Speed Monitoring</h1>
-        <p class="page-subtitle">Monitor availability, response time, SSL health, and recent incidents across your websites.</p>
+<!-- ── Page Header ── -->
+<div class="page-header" aria-labelledby="dashboard-heading">
+    <div class="page-header-text">
+        <h1 id="dashboard-heading">Dashboard</h1>
+        <p class="page-subtitle">Real-time overview of all monitored websites. Auto-refreshes every 60 seconds.</p>
     </div>
-    <div class="page-hero-actions" style="display: flex; gap: 12px;">
-        <button class="btn btn-ghost" onclick="window.location.reload()">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 2.1-5.8L2 9"/></svg>
-            Refresh
-        </button>
-        <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary" id="add-url-btn">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    <div class="page-header-actions">
+        <span class="live-badge" aria-label="System is live and monitoring">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span>Live</span>
+        </span>
+        <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary btn-sm" id="add-url-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Add Website
         </a>
     </div>
-</section>
+</div>
 
 <!-- ── Summary KPI Cards ── -->
-<section class="stats-grid" aria-label="Summary statistics">
+<div class="stats-grid" aria-label="Summary statistics">
 
-    <article class="stat-card" aria-label="Total monitored websites">
-        <div class="stat-card-header">
-            <span class="stat-label">Total Websites</span>
-            <div class="stat-icon neutral">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
+    <div class="stat-card" aria-label="Total monitored websites">
+        <div class="stat-card-icon purple" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/>
+            </svg>
         </div>
-        <div class="stat-value">{{ summary.total }} <span class="stat-subtext" style="font-weight: 500; font-size: 0.9rem;">Websites</span></div>
-        <div class="stat-subtext">
-            <span style="color: var(--green); font-weight: 600;">{{ summary.up }} Online</span>
-            {% if summary.degraded > 0 %} · <span style="color: var(--amber); font-weight: 600;">{{ summary.degraded }} Degraded</span>{% endif %}
-            {% if summary.down > 0 %} · <span style="color: var(--red); font-weight: 600;">{{ summary.down }} Down</span>{% endif %}
+        <div class="stat-card-body">
+            <p class="stat-label">Total Monitored</p>
+            <p class="stat-value" id="stat-total">{{ summary.total }}</p>
         </div>
-    </article>
+    </div>
 
-    <article class="stat-card" aria-label="Average Uptime">
-        <div class="stat-card-header">
-            <span class="stat-label">Average Uptime</span>
-            <div class="stat-icon green">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            </div>
+    <div class="stat-card" aria-label="Websites currently online">
+        <div class="stat-card-icon green" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
         </div>
-        <div class="stat-value">{{ summary.avg_uptime_pct }}%</div>
-        <div class="stat-subtext">Across all monitored sites</div>
-    </article>
-
-    <article class="stat-card" aria-label="Average Response Time">
-        <div class="stat-card-header">
-            <span class="stat-label">Avg Response Time</span>
-            <div class="stat-icon amber">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
+        <div class="stat-card-body">
+            <p class="stat-label">Online Health</p>
+            <p class="stat-value" id="stat-up">{{ summary.up }}</p>
+            <p class="stat-sub"><span class="txt-green">{{ summary.up }} Online</span></p>
         </div>
-        <div class="stat-value">{{ summary.avg_response_ms }} <span class="stat-subtext" style="font-weight: 500; font-size: 0.9rem;">ms</span></div>
-        <div class="stat-subtext">Last check average</div>
-    </article>
+    </div>
 
-    <article class="stat-card" aria-label="Active Alerts">
-        <div class="stat-card-header">
-            <span class="stat-label">Active Alerts</span>
-            <div class="stat-icon red">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </div>
+    <div class="stat-card" aria-label="Websites down or degraded">
+        <div class="stat-card-icon red" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
         </div>
-        <div class="stat-value">{{ summary.down + summary.ssl_warning }}</div>
-        <div class="stat-subtext">
-            {% if summary.down > 0 %}<span style="color: var(--red);">{{ summary.down }} Incidents</span>{% else %}0 Incidents{% endif %}
-            · 
-            {% if summary.ssl_warning > 0 %}<span style="color: var(--amber);">{{ summary.ssl_warning }} SSL Warnings</span>{% else %}0 SSL Warnings{% endif %}
+        <div class="stat-card-body">
+            <p class="stat-label">Offline / Degraded</p>
+            <p class="stat-value" id="stat-down">{{ summary.down }}</p>
+            <p class="stat-sub">
+                {% if summary.down > 0 %}<span class="txt-red">{{ summary.down }} Down</span>{% else %}<span class="txt-green">All Clear</span>{% endif %}
+            </p>
         </div>
-    </article>
+    </div>
 
-</section>
-
-<!-- ── Analytics Grid ── -->
-<div class="dash-grid">
-    <!-- Latency Chart / History (Simulated with visual layout for now) -->
-    <section class="section-card">
-        <div class="section-card-header">
-            <div class="section-card-title">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--brand);"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                <h2>Response Time (Latest)</h2>
-            </div>
+    <div class="stat-card" aria-label="SSL certificates expiring soon">
+        <div class="stat-card-icon amber" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
         </div>
-        <div class="chart-container" style="display: flex; align-items: flex-end; gap: 8px; justify-content: space-between; padding-top: 40px;">
-            <!-- Render a simple visual bar chart of response times if websites exist -->
-            {% if websites %}
-                {% for w in websites[:12] %}
-                    {% set bar_height = (w.response_ms or 0) / 10 %}
-                    {% if bar_height > 100 %}{% set bar_height = 100 %}{% endif %}
-                    {% if bar_height < 5 %}{% set bar_height = 5 %}{% endif %}
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; group: hover;" title="{{ w.url }}: {{ w.response_ms }}ms">
-                        <div style="width: 100%; height: 160px; display: flex; align-items: flex-end; background: var(--neutral-bg); border-radius: 4px; overflow: hidden; position: relative;">
-                            <div style="width: 100%; height: {{ bar_height }}%; background: {% if (w.response_ms or 0) > 500 %}var(--red){% elif (w.response_ms or 0) > 250 %}var(--amber){% else %}var(--brand){% endif %}; opacity: 0.8; border-radius: 4px 4px 0 0; transition: height 0.5s;"></div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
-                    Not enough data to display chart
-                </div>
-            {% endif %}
+        <div class="stat-card-body">
+            <p class="stat-label">SSL Warning</p>
+            <p class="stat-value" id="stat-ssl">{{ summary.ssl_warning }}</p>
+            <p class="stat-sub">
+                {% if summary.ssl_warning > 0 %}<span class="txt-amber">Expiring Soon</span>{% else %}<span class="txt-green">All Valid</span>{% endif %}
+            </p>
         </div>
-    </section>
+    </div>
 
-    <!-- Latency Distribution -->
-    <section class="section-card">
-        <div class="section-card-header">
-            <div class="section-card-title">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--brand);"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-                <h2>Latency Distribution</h2>
-            </div>
+    <div class="stat-card" aria-label="Pending first check">
+        <div class="stat-card-icon gray" aria-hidden="true">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
         </div>
-        <div style="padding: 24px;">
-            {% set tot_latency = (summary.latency_dist.fast + summary.latency_dist.normal + summary.latency_dist.slow + summary.latency_dist.critical) or 1 %}
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <span style="font-weight: 500; font-size: 0.9rem;">&lt;100ms</span>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 120px; height: 6px; background: var(--neutral-bg); border-radius: 100px; overflow: hidden;">
-                        <div style="height: 100%; background: var(--green); width: {{ (summary.latency_dist.fast / tot_latency) * 100 }}%;"></div>
-                    </div>
-                    <span style="font-weight: 600; width: 30px; text-align: right;">{{ summary.latency_dist.fast }}</span>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <span style="font-weight: 500; font-size: 0.9rem;">100–250ms</span>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 120px; height: 6px; background: var(--neutral-bg); border-radius: 100px; overflow: hidden;">
-                        <div style="height: 100%; background: var(--brand); width: {{ (summary.latency_dist.normal / tot_latency) * 100 }}%;"></div>
-                    </div>
-                    <span style="font-weight: 600; width: 30px; text-align: right;">{{ summary.latency_dist.normal }}</span>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <span style="font-weight: 500; font-size: 0.9rem;">250–500ms</span>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 120px; height: 6px; background: var(--neutral-bg); border-radius: 100px; overflow: hidden;">
-                        <div style="height: 100%; background: var(--amber); width: {{ (summary.latency_dist.slow / tot_latency) * 100 }}%;"></div>
-                    </div>
-                    <span style="font-weight: 600; width: 30px; text-align: right;">{{ summary.latency_dist.slow }}</span>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 500; font-size: 0.9rem;">&gt;500ms</span>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 120px; height: 6px; background: var(--neutral-bg); border-radius: 100px; overflow: hidden;">
-                        <div style="height: 100%; background: var(--red); width: {{ (summary.latency_dist.critical / tot_latency) * 100 }}%;"></div>
-                    </div>
-                    <span style="font-weight: 600; width: 30px; text-align: right;">{{ summary.latency_dist.critical }}</span>
-                </div>
-            </div>
+        <div class="stat-card-body">
+            <p class="stat-label">Pending Check</p>
+            <p class="stat-value" id="stat-pending">{{ summary.unchecked }}</p>
         </div>
-    </section>
+    </div>
+
+</div>
+
+<!-- ── Uptime Bar ── -->
+{% if summary.total > 0 %}
+{% set uptime_pct = ((summary.up / summary.total) * 100) | round(1) %}
+<div class="uptime-bar-section" aria-label="Overall uptime {{ uptime_pct }}%">
+    <div class="uptime-bar-header">
+        <span class="uptime-bar-label">Overall Uptime</span>
+        <span class="uptime-bar-pct {% if uptime_pct == 100 %}pct-green{% elif uptime_pct >= 80 %}pct-amber{% else %}pct-red{% endif %}">
+            {{ uptime_pct }}%
+        </span>
+    </div>
+    <div class="uptime-track" role="progressbar" aria-valuenow="{{ uptime_pct }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="uptime-fill {% if uptime_pct == 100 %}fill-green{% elif uptime_pct >= 80 %}fill-amber{% else %}fill-red{% endif %}"
+             style="width: {{ uptime_pct }}%"></div>
+    </div>
 </div>
 
 <!-- ── Websites Table ── -->
-<section class="section-card" aria-labelledby="status-table-heading">
+<div class="section-card" aria-labelledby="status-table-heading">
     <div class="section-card-header">
-        <h2 id="status-table-heading">Website Monitoring</h2>
-        <span class="result-count">{{ websites | length }} site{% if websites | length != 1 %}s{% endif %}</span>
+        <div class="section-card-header-left">
+            <h2 id="status-table-heading">Website Status</h2>
+            <span class="result-count">Showing {{ websites | length }} of {{ websites | length }} websites</span>
+        </div>
+        <div class="section-card-header-right">
+            <div class="search-wrap-sm">
+                <svg class="search-wrap-sm-icon" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="search" class="search-input-sm" placeholder="Search website..." id="table-search" aria-label="Filter websites">
+            </div>
+
+            <select class="filter-select" id="filter-status" aria-label="Filter by status">
+                <option value="">▼ All Status</option>
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+                <option value="pending">Pending</option>
+            </select>
+
+            <button class="btn btn-sm" onclick="window.location.reload()" aria-label="Refresh data">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Refresh
+            </button>
+        </div>
     </div>
 
     <!-- Toolbar / Filtering -->
@@ -197,79 +169,75 @@
             <thead>
                 <tr>
                     <th scope="col">Website</th>
+                    <th scope="col">Uptime %</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Uptime</th>
-                    <th scope="col">Latency</th>
-                    <th scope="col">SSL Certificate</th>
-                    <th scope="col">Region</th>
-                    <th scope="col">Last Check</th>
+                    <th scope="col">Response Time</th>
+                    <th scope="col">HTTP Code</th>
+                    <th scope="col">SSL Expiry</th>
+                    <th scope="col">Last Checked</th>
                     <th scope="col">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="website-tbody">
                 {% for w in websites %}
-                <tr class="url-row" data-url="{{ w.url | lower }}" data-status="{{ w.status | lower }}" data-ssl="{% if w.ssl_days_left and w.ssl_days_left < 30 %}warning{% else %}valid{% endif %}">
-                    <td class="cell-main">
+                <tr data-status="{% if w.is_up == None %}pending{% elif w.is_up %}online{% else %}offline{% endif %}">
+                    <td class="cell-url">
                         <div class="url-cell">
-                            <span class="url-title">{{ w.url | replace('https://', '') | replace('http://', '') | truncate(35) }}</span>
-                            <a href="{{ w.url }}" target="_blank" class="url-link" title="{{ w.url }}">{{ w.url }}</a>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="status-indicator">
-                            {% if w.status == 'ONLINE' %}
-                                <div class="status-dot dot-online"></div>
-                                <span class="status-text">Online</span>
-                            {% elif w.status == 'DEGRADED' %}
-                                <div class="status-dot dot-degraded"></div>
-                                <span class="status-text" style="color: var(--amber);">Degraded</span>
-                            {% elif w.status == 'DOWN' %}
-                                <div class="status-dot dot-down"></div>
-                                <span class="status-text" style="color: var(--red);">Down</span>
-                            {% else %}
-                                <div class="status-dot dot-unknown"></div>
-                                <span class="status-text" style="color: var(--text-faint);">Unknown</span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="uptime-mini">
-                            <div class="uptime-mini-track">
-                                {% set u_color = 'var(--green)' %}
-                                {% if w.uptime_pct < 95 %}{% set u_color = 'var(--red)' %}
-                                {% elif w.uptime_pct < 99 %}{% set u_color = 'var(--amber)' %}{% endif %}
-                                <div class="uptime-mini-fill" style="width: {{ w.uptime_pct }}%; background: {{ u_color }};"></div>
+                            <div class="site-favicon" aria-hidden="true">
+                                <img src="https://www.google.com/s2/favicons?sz=32&domain={{ w.url }}"
+                                     alt="" onerror="this.parentElement.textContent='{{ (w.url | replace('https://','') | replace('http://',''))[0] | upper }}'">
                             </div>
-                            <span class="uptime-mini-text">{{ w.uptime_pct }}%</span>
+                            <div class="site-info">
+                                <a href="{{ url_for('websites.details', url=w.url) }}" class="site-name" title="{{ w.url }}">
+                                    {{ w.url | replace('https://', '') | replace('http://', '') | truncate(30) }}
+                                </a>
+                                <span class="site-url">{{ w.url | truncate(40) }}</span>
+                            </div>
                         </div>
+                    </td>
+                    <td>
+                        {% if w.is_up is not none %}
+                            {% set uptime = 100.0 if w.is_up else 0.0 %}
+                            <span class="uptime-pct {% if w.is_up %}good{% else %}poor{% endif %}">
+                                {{ "100.00%" if w.is_up else "0.00%" }}
+                            </span>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if w.is_up == None %}
+                            <span class="badge badge-pending">Pending</span>
+                        {% elif w.is_up %}
+                            <span class="badge badge-healthy">
+                                <span class="status-dot dot-up" aria-hidden="true"></span> Online
+                            </span>
+                        {% else %}
+                            <span class="badge badge-down">
+                                <span class="status-dot dot-down" aria-hidden="true"></span> Offline
+                            </span>
+                        {% endif %}
                     </td>
                     <td>
                         {% if w.response_ms is not none %}
-                            <span class="response-time {% if w.response_ms < 250 %}rt-fast{% elif w.response_ms < 500 %}rt-ok{% else %}rt-slow{% endif %}">
-                                {{ w.response_ms }} ms
+                            <span class="response-time {% if w.response_ms < 300 %}rt-fast{% elif w.response_ms < 1000 %}rt-ok{% else %}rt-slow{% endif %}">
+                                {{ w.response_ms }}ms
                             </span>
-                        {% else %}&ndash;{% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if w.status_code %}
+                            <code class="code-chip {% if w.status_code >= 200 and w.status_code < 300 %}code-ok{% elif w.status_code >= 500 %}code-err{% else %}code-warn{% endif %}">
+                                {{ w.status_code }}
+                            </code>
+                        {% else %}—{% endif %}
                     </td>
                     <td>
                         {% if w.ssl_days_left is not none and w.ssl_days_left >= 0 %}
-                            <div class="ssl-status">
-                                {% if w.ssl_days_left < 14 %}
-                                    <svg width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span style="color: var(--red); font-weight: 500;">Expiring in {{ w.ssl_days_left }}d</span>
-                                {% elif w.ssl_days_left < 30 %}
-                                    <svg width="14" height="14" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <span style="color: var(--amber); font-weight: 500;">Expiring in {{ w.ssl_days_left }}d</span>
-                                {% else %}
-                                    <svg width="14" height="14" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                    <span style="color: var(--text-muted);">Valid ({{ w.ssl_days_left }}d)</span>
-                                {% endif %}
-                            </div>
-                        {% else %}
-                            <span class="muted">&ndash;</span>
-                        {% endif %}
-                    </td>
-                    <td style="color: var(--text-muted); font-size: 0.8rem;">
-                        Global
+                            <span class="ssl-chip {% if w.ssl_days_left < 14 %}ssl-crit{% elif w.ssl_days_left < 30 %}ssl-warn{% else %}ssl-ok{% endif %}">
+                                {{ w.ssl_days_left }}d left
+                            </span>
+                        {% else %}—{% endif %}
                     </td>
                     <td class="cell-time">
                         {% if w.checked_at %}
@@ -278,12 +246,22 @@
                             <span class="muted">Never</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <div class="cell-actions">
-                            <a href="{{ url_for('websites.details', url=w.url) }}" class="btn btn-xs btn-ghost" aria-label="View details for {{ w.url }}">
-                                Details
-                            </a>
-                        </div>
+                    <td class="cell-actions">
+                        <a href="{{ url_for('websites.details', url=w.url) }}" class="icon-btn" aria-label="View details for {{ w.url }}" title="Details">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </a>
+                        <form action="{{ url_for('websites.remove_url') }}" method="POST" style="display:inline;"
+                              onsubmit="return confirm('Remove {{ w.url }} from monitoring?');">
+                            <input type="hidden" name="url" value="{{ w.url }}">
+                            <button type="submit" class="icon-btn danger" aria-label="Remove {{ w.url }}" title="Remove">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                    <path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                </svg>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
@@ -304,41 +282,25 @@
         <a href="{{ url_for('websites.add_url') }}" class="btn btn-primary">+ Add Website</a>
     </div>
     {% endif %}
-</section>
+</div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function filterTable() {
-        const query = document.getElementById('domain-search').value.toLowerCase();
-        const status = document.getElementById('status-filter').value;
-        const ssl = document.getElementById('ssl-filter').value;
-        
-        const rows = document.querySelectorAll('.url-row');
-        let visibleCount = 0;
-        
-        rows.forEach(row => {
-            const url = row.getAttribute('data-url');
-            const rowStatus = row.getAttribute('data-status');
-            const rowSsl = row.getAttribute('data-ssl');
-            
-            const matchSearch = url.includes(query);
-            const matchStatus = status === 'all' || rowStatus === status;
-            const matchSsl = ssl === 'all' || rowSsl === ssl;
-            
-            if (matchSearch && matchStatus && matchSsl) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        const noResults = document.getElementById('no-results');
-        if (noResults) {
-            noResults.style.display = visibleCount === 0 ? 'block' : 'none';
-        }
-    }
+// Table search filter
+const tableSearch = document.getElementById('table-search');
+const filterStatus = document.getElementById('filter-status');
+function applyFilters() {
+    const q = (tableSearch ? tableSearch.value : '').toLowerCase();
+    const status = filterStatus ? filterStatus.value : '';
+    document.querySelectorAll('#website-tbody tr').forEach(row => {
+        const matchQ = !q || row.textContent.toLowerCase().includes(q);
+        const matchStatus = !status || row.dataset.status === status;
+        row.style.display = (matchQ && matchStatus) ? '' : 'none';
+    });
+}
+if (tableSearch) tableSearch.addEventListener('input', applyFilters);
+if (filterStatus) filterStatus.addEventListener('change', applyFilters);
 </script>
 {% endblock %}

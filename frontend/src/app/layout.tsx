@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Universal Monitor – Webpage Downtime & Speed Monitoring",
-  description: "Real-time website uptime monitoring, latency tracking, SSL certificate health, and incident management dashboard.",
+  title: "Early Warning Monitor",
+  description: "Downtime & Latency Telemetry Engine",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
