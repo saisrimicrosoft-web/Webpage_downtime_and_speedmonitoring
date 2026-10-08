@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Uptime Status Demo</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #050505; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;}
+    @keyframes ecg-slide-html {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .animate-ecg { animation: none !important; }
+    }
+    /* Hide scrollbar for clean horizontal scroll */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- ICONS (lucide-react exact paths) ---
+    const Icon = ({ path, className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {path}
+      </svg>
+    );
+    const HeartPulse = ({ className }) => <Icon className={className} path={<><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></>} />;
+    const AlertTriangle = ({ className }) => <Icon className={className} path={<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></>} />;
+    const Globe = ({ className }) => <Icon className={className} path={<><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></>} />;
+    const Database = ({ className }) => <Icon className={className} path={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></>} />;
+    const Server = ({ className }) => <Icon className={className} path={<><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></>} />;
+    const Plus = ({ className }) => <Icon className={className} path={<><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></>} />;
+    const AlertCircle = ({ className }) => <Icon className={className} path={<><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>} />;
+    const CheckCircle = ({ className }) => <Icon className={className} path={<><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>} />;
+
+    // --- DATA ---
+    const MOCK_MONITORS = [
+      { id: 'api', name: 'api.pulseguard.io', protocol: 'HTTPS', regions: 3, status: 'up', uptime: 99.98, history: Array.from({ length: 91 }, () => 'perfect') },
+      { id: 'app', name: 'app.acme-store.com', protocol: 'HTTPS', regions: 2, status: 'slow', uptime: 99.71, history: Array.from({ length: 91 }, (_, i) => [45, 62, 70, 85, 90].includes(i) ? 'slow' : 'perfect') },
+      { id: 'db', name: 'db.acme-store.com:5432', protocol: 'TCP', regions: 1, status: 'up', uptime: 100, history: Array.from({ length: 91 }, () => 'perfect') },
+      { id: 'checkout', name: 'checkout.acme-store.com', protocol: 'HTTPS', regions: 2, status: 'down', uptime: 97.42, history: (() => {
+          const hist = Array.from({ length: 91 }, () => 'perfect');
+          hist[5] = 'down'; hist[6] = 'down'; hist[88] = 'down'; hist[89] = 'down';
+          hist[20] = 'slow'; hist[45] = 'slow'; hist[75] = 'slow';
+          return hist;
+        })() },
+      { id: 'staging', name: 'staging.acme.dev', protocol: 'HTTP', regions: 'paused', status: 'paused', uptime: 0, history: Array.from({ length: 91 }, () => 'perfect') }
+    ];
+
+    const MOCK_INCIDENTS = [
+      { monitorId: 'checkout', type: 'ongoing', title: 'Timeout after 10s', startedAt: new Date(Date.now() - (14 * 60000 + 22 * 1000)).toISOString() },
+      { monitorId: 'checkout', type: 'resolved', title: 'Status 500', startedAt: new Date(Date.now() - 12 * 86400000).toISOString(), duration: '1h 08m' }
+    ];
+
+    // --- COMPONENTS ---
+    const Heartbeat = ({ status }) => {
+      const color = status === 'down' ? '#f87171' : status === 'slow' ? '#fbbf24' : status === 'paused' ? '#5c5c6b' : '#34d399';
+      
+      if (status === 'paused') {
+        return (
+          <svg className="w-full h-[40px]" viewBox="0 0 300 40" preserveAspectRatio="none">
+            <line x1="0" y1="20" x2="300" y2="20" stroke={color} strokeWidth="1.75" strokeDasharray="4 4" fill="none" strokeLinecap="round" />
+          </svg>
+        );
+      }
+
+      if (status === 'down') {
+        return (
+          <svg className="w-full h-[40px]" viewBox="0 0 300 40" preserveAspectRatio="none">
+            <path d="M0 20 L15 20 L18 18 L22 22 L25 20 L45 20 L50 5 L55 35 L60 15 L65 25 L70 20 L90 20" stroke="#34d399" strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M90 20 L294 20" stroke={color} strokeWidth="1.75" fill="none" style={{ filter: \`drop-shadow(0 0 3px \${color}80)\` }} />
+            <circle cx="294" cy="20" r="3.5" fill={color} style={{ filter: \`drop-shadow(0 0 4px \${color})\` }} />
+            <circle cx="294" cy="20" r="3.5" fill="none" stroke={color} className="animate-ping" style={{ transformOrigin: '294px 20px' }} />
+          </svg>
+        );
+      }
+
+      const normalPath = "M 0 20 L 15 20 L 18 18 L 22 22 L 25 20 L 45 20 L 50 5 L 55 35 L 60 15 L 65 25 L 70 20 L 100 20";
+      const slowPath = "M 0 20 L 10 20 L 13 15 L 18 28 L 22 10 L 28 35 L 32 15 L 38 25 L 42 20 L 60 20 L 65 10 L 70 30 L 75 15 L 80 25 L 85 20 L 100 20";
+      const path = status === 'slow' ? slowPath : normalPath;
+      
+      const offsetPath = (d, xOffset) => d.replace(/([ML])\s*(\d+(\.\d+)?)/g, (_, cmd, x) => \`\${cmd} \${parseFloat(x) + xOffset}\`);
+      const fullPath = [0, 100, 200, 300].map(off => offsetPath(path, off)).join(' ');
+
+      return (
+        <div className="w-full h-[40px] overflow-hidden relative" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
+          <div className="absolute top-0 left-0 h-full w-[200%] flex animate-ecg" style={{ animation: 'ecg-slide-html 3s linear infinite' }}>
+             <svg className="w-1/2 h-full" viewBox="0 0 300 40" preserveAspectRatio="none" style={{ filter: \`drop-shadow(0 0 3px \${color}80)\` }}>
+                <path d={fullPath} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+             </svg>
+             <svg className="w-1/2 h-full" viewBox="0 0 300 40" preserveAspectRatio="none" style={{ filter: \`drop-shadow(0 0 3px \${color}80)\` }}>
+                <path d={fullPath} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+             </svg>
+          </div>
+        </div>
+      );
+    };
+
+    const MonitorRow = ({ monitor, isSelected, onClick }) => {
+      const IconC = monitor.protocol === 'HTTPS' || monitor.protocol === 'HTTP' ? Globe : monitor.protocol === 'TCP' ? Database : Server;
+      const isPaused = monitor.status === 'paused';
+      
+      return (
+        <button 
+          onClick={onClick}
+          aria-pressed={isSelected}
+          aria-label={\`\${monitor.name}, \${monitor.status}, \${monitor.uptime}% uptime\`}
+          className={\`w-full flex flex-col sm:flex-row sm:items-center text-left px-4 py-3 rounded-[12px] transition-colors border outline-none focus-visible:ring-2 focus-visible:ring-[#7c5cff]
+            \${isSelected 
+              ? 'bg-[rgba(124,92,255,0.08)] border-[#7c5cff] shadow-[0_0_15px_rgba(124,92,255,0.15)]' 
+              : 'bg-[#13131a] border-[rgba(255,255,255,0.08)] hover:bg-[#1a1a24]'}
+            \${isPaused ? 'opacity-60' : 'opacity-100'}\`}
+        >
+          <div className="w-full sm:w-[180px] shrink-0 flex items-center gap-3 mb-2 sm:mb-0">
+            <IconC className={\`w-4 h-4 shrink-0 \${isSelected ? 'text-[#7c5cff]' : 'text-[#8b8b99]'}\`} />
+            <div className="truncate flex-1">
+              <div className="text-[13px] font-bold truncate pr-2">{monitor.name}</div>
+              <div className="text-[11px] text-[#8b8b99] truncate">
+                {monitor.protocol} · {monitor.regions} {typeof monitor.regions === 'number' ? 'region' + (monitor.regions > 1 ? 's' : '') : ''}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex-1 flex justify-center px-0 sm:px-4 mb-2 sm:mb-0 min-w-0">
+            <Heartbeat status={monitor.status} />
+          </div>
+          
+          <div className="w-full sm:w-[80px] shrink-0 sm:text-right flex sm:block justify-between items-center">
+            {isPaused ? (
+              <span className="text-[15px] font-semibold text-[#8b8b99]">Paused</span>
+            ) : (
+              <span className={\`text-[15px] font-bold tabular-nums \${
+                monitor.status === 'down' ? 'text-[#f87171]' : monitor.status === 'slow' ? 'text-[#fbbf24]' : 'text-[#34d399]'
+              }\`}>
+                {monitor.uptime}%
+              </span>
+            )}
+          </div>
+        </button>
+      );
+    }
+
+    const UptimeHeatmap = ({ monitor }) => {
+      return (
+        <div className="w-[265px] shrink-0">
+          <div className="flex justify-between items-end mb-3">
+            <h3 className="text-[14px] font-bold leading-none">{monitor.name} · last 91 days</h3>
+            <div className="flex items-center gap-2.5 text-[11px] text-[#8b8b99] ml-4">
+              <span className="flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-[1px] bg-[#34d399]" /> Perfect</span>
+              <span className="flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-[1px] bg-[#fbbf24]" /> Slow</span>
+              <span className="flex items-center gap-1.5"><span className="w-[7px] h-[7px] rounded-[1px] bg-[#f87171]" /> Down</span>
+            </div>
+          </div>
+          <div className="grid grid-rows-7 grid-flow-col gap-[4px] overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+            {monitor.history.map((status, i) => {
+              const week = Math.floor(i / 7);
+              const day = i % 7;
+              return (
+                <div 
+                  key={i} 
+                  title={\`\${status} (Day \${day + 1}, Week \${week + 1})\`}
+                  className={\`w-[15px] h-[15px] rounded-[3px] transition-all \${status === 'perfect' ? 'bg-[#34d399]' : status === 'slow' ? 'bg-[#fbbf24]' : 'bg-[#f87171]'} hover:brightness-125 cursor-default\`} 
+                />
+              );
+            })}
+          </div>
+          <div className="flex justify-between mt-2 text-[11px] text-[#8b8b99]">
+            <span>13 weeks ago</span>
+            <span>Today</span>
+          </div>
+        </div>
+      );
+    }
+
+    const IncidentLog = ({ incidents, now }) => {
+      return (
+        <div className="flex-1">
+          <div className="text-[11px] text-[#8b8b99] mb-3">Flatline log</div>
+          <div className="flex flex-col">
+            {incidents.length > 0 ? (
+              incidents.map((inc, i) => {
+                const isOngoing = inc.type === 'ongoing';
+                let displayDuration = inc.duration;
+                let displayStartedAt = inc.startedAt;
+
+                if (isOngoing) {
+                  const startedDate = new Date(inc.startedAt);
+                  const diffMs = Math.max(0, now - startedDate.getTime());
+                  const minutes = Math.floor(diffMs / 60000);
+                  const seconds = Math.floor((diffMs % 60000) / 1000);
+                  displayDuration = \`\${minutes}m \${seconds}s\`;
+                  displayStartedAt = \`Started \${startedDate.getHours().toString().padStart(2, '0')}:\${startedDate.getMinutes().toString().padStart(2, '0')}\`;
+                } else {
+                   const startedDate = new Date(inc.startedAt);
+                   if (inc.startedAt.includes('T')) {
+                     const diffDays = Math.floor((now - startedDate.getTime()) / 86400000);
+                     displayStartedAt = \`\${diffDays} days ago\`;
+                   }
+                }
+
+                return (
+                  <div key={i} className={\`py-2.5 flex items-start justify-between \${i !== 0 ? 'border-t border-[rgba(255,255,255,0.08)]' : ''}\`}>
+                    <div className="flex items-start gap-3">
+                      {isOngoing ? (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#f87171]/10 text-[#f87171] text-[11px] font-medium border border-[#f87171]/20 mt-0.5">
+                          <AlertCircle className="w-3 h-3" /> Ongoing
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#34d399]/10 text-[#34d399] text-[11px] font-medium border border-[#34d399]/20 mt-0.5">
+                          <CheckCircle className="w-3 h-3" /> Resolved
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-[13px] font-bold">{inc.title}</div>
+                        <div className="text-[11px] text-[#8b8b99] mt-0.5">
+                          {displayStartedAt}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[13px] text-[#8b8b99] tabular-nums font-medium shrink-0 ml-4 mt-0.5">{displayDuration}</div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-[13px] text-[#5c5c6b] py-3">No incidents reported.</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const UptimeStatus = () => {
+      const [selectedMonitor, setSelectedMonitor] = useState('checkout');
+      const [range, setRange] = useState('90d');
+      const [now, setNow] = useState(Date.now());
+
+      useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+      }, []);
+
+      const selected = MOCK_MONITORS.find(m => m.id === selectedMonitor) || MOCK_MONITORS[0];
+      const upMonitors = MOCK_MONITORS.filter(m => m.status !== 'paused' && m.status !== 'down').length;
+      const totalMonitors = MOCK_MONITORS.filter(m => m.status !== 'paused').length;
+
+      const getOngoingFlatline = () => {
+        const ongoingIncidents = MOCK_INCIDENTS.filter(i => i.type === 'ongoing');
+        if (ongoingIncidents.length === 0) return null;
+        const latest = ongoingIncidents[0];
+        const diffMs = Math.max(0, now - new Date(latest.startedAt).getTime());
+        const minutes = Math.floor(diffMs / 60000);
+        return { name: MOCK_MONITORS.find(m => m.id === latest.monitorId)?.name, minutes };
+      }
+      
+      const flatline = getOngoingFlatline();
+
+      return (
+        <div className="w-full max-w-[600px] p-[20px] rounded-[16px] bg-[#0c0c11] border border-[rgba(255,255,255,0.08)] font-sans text-[#f4f4f6]">
+          {/* Header */}
+          <div className="flex items-start gap-4 mb-5">
+            <div className="w-[44px] h-[44px] rounded-[12px] bg-[rgba(124,92,255,0.08)] border border-[rgba(124,92,255,0.2)] flex items-center justify-center shrink-0">
+              <HeartPulse className="w-5 h-5 text-[#7c5cff]" />
+            </div>
+            <div>
+              <h2 className="text-[18px] font-bold leading-tight">{upMonitors} of {totalMonitors} systems alive</h2>
+              {flatline && (
+                <div className="flex items-center gap-1.5 mt-1 text-[#f87171] text-[12px]">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>{flatline.name} flatlined {flatline.minutes}m ago</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Range controls */}
+          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
+            {['24h', '7d', '30d', '90d'].map(r => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={\`px-3 py-1 text-[13px] rounded-lg border transition-colors shrink-0 \${range === r ? 'bg-[#f4f4f6]/10 border-[#f4f4f6]/20 text-[#f4f4f6]' : 'border-[rgba(255,255,255,0.08)] text-[#8b8b99] hover:bg-[#f4f4f6]/5'}\`}
+              >
+                {r}
+              </button>
+            ))}
+            <button 
+              onClick={() => alert('Add monitor dialog would open here')}
+              className="px-3 py-1 text-[13px] rounded-lg border border-[rgba(255,255,255,0.08)] text-[#8b8b99] hover:bg-[#f4f4f6]/5 flex items-center gap-1.5 ml-2 transition-colors shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add monitor
+            </button>
+          </div>
+
+          {/* Section label row */}
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-[11px] text-[#8b8b99]">Live heartbeat · select a monitor</span>
+            <div className="flex items-center gap-1.5 text-[#34d399] text-[11px]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34d399] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#34d399]"></span>
+              </span>
+              streaming
+            </div>
+          </div>
+
+          {/* Monitor list */}
+          <div className="flex flex-col gap-[8px]">
+            {MOCK_MONITORS.map(monitor => (
+              <MonitorRow 
+                key={monitor.id} 
+                monitor={monitor} 
+                isSelected={selectedMonitor === monitor.id} 
+                onClick={() => setSelectedMonitor(monitor.id)} 
+              />
+            ))}
+          </div>
+
+          {/* Detail panel */}
+          <div className="mt-5 pt-5 border-t border-[rgba(255,255,255,0.08)] flex flex-col sm:flex-row gap-8">
+            <UptimeHeatmap monitor={selected} />
+            <IncidentLog incidents={MOCK_INCIDENTS.filter(inc => inc.monitorId === selected.id)} now={now} />
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<UptimeStatus />);
+  </script>
+</body>
+</html>

@@ -25,7 +25,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///monitor.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Discord Webhook for alerts
+    # Webhooks for alerts
     DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', '')
 
     # Monitoring settings
