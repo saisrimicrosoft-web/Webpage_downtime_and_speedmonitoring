@@ -1,0 +1,5 @@
+# Dependencies for the monitoring_core pipeline (Person B)
+# These are also included in the root requirements.txt
+supabase
+requests
+python-dotenv
