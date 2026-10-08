@@ -1,26 +1,52 @@
-import React from 'react';
-import DashboardClient from '@/components/DashboardClient';
-import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory } from '@/lib/api';
+'use client';
 
-export const revalidate = 30; // Revalidate static generation every 30 seconds
+import React, { useState, useCallback } from 'react';
+import AuthGuard from '@/components/AuthGuard';
+import UserSidebar from '@/components/UserSidebar';
+import SiteDetailView from '@/components/SiteDetailView';
+import DashboardShell from '@/components/DashboardShell';
+import AddMonitorModal from '@/components/AddMonitorModal';
 
-export default async function DashboardPage() {
-  const [kpis, recentLogs, uniqueUrls] = await Promise.all([
-    getGlobalKPIs(),
-    getRecentLogs(50),
-    getUniqueUrls(),
-  ]);
+export default function HomePage() {
+  return (
+    <AuthGuard>
+      <DashboardPage />
+    </AuthGuard>
+  );
+}
 
-  const initialChartUrl = uniqueUrls.length > 0 ? uniqueUrls[0] : '';
-  const initialChartData = initialChartUrl ? await getUrlHistory(initialChartUrl) : [];
+function DashboardPage() {
+  const [selectedId,   setSelectedId]   = useState<number | null>(null);
+  const [addOpen,      setAddOpen]      = useState(false);
+  const [refreshTick,  setRefreshTick]  = useState(0);
+
+  const handleCreated = useCallback(() => setRefreshTick(t => t + 1), []);
 
   return (
-    <DashboardClient
-      initialKpis={kpis}
-      initialLogs={recentLogs}
-      initialUrls={uniqueUrls}
-      initialChartUrl={initialChartUrl}
-      initialChartData={initialChartData}
-    />
+    <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+      {/* Per-user sidebar */}
+      <UserSidebar
+        selectedMonitorId={selectedId}
+        onSelectMonitor={setSelectedId}
+        onAddMonitor={() => setAddOpen(true)}
+        refreshTick={refreshTick}
+      />
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto">
+        {selectedId != null ? (
+          <SiteDetailView monitorId={selectedId} />
+        ) : (
+          <DashboardShell onAddMonitor={() => setAddOpen(true)} />
+        )}
+      </main>
+
+      {addOpen && (
+        <AddMonitorModal
+          onClose={() => setAddOpen(false)}
+          onCreated={handleCreated}
+        />
+      )}
+    </div>
   );
 }
