@@ -1,13 +1,20 @@
 import os
+import logging
 from flask import Flask
+from flask_cors import CORS
 from config import Config
 from app.models import db
 from app.routes.dashboard import dashboard_bp
 from app.routes.websites import websites_bp
 from app.routes.api import api_bp
 from app.routes.uptime import uptime_bp
+from app.routes.auth import auth_bp
+from app.routes.monitors import monitors_bp
+from app.routes.profile import profile_bp
 from app.scheduler.scheduler import start_scheduler
 from app.utils.logging_config import setup_logging
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(config_class=Config):
@@ -15,6 +22,10 @@ def create_app(config_class=Config):
 
     app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
     app.config.from_object(config_class)
+
+    # Allow Next.js dev server (port 3000) and same-origin in production
+    CORS(app, resources={r'/api/*': {'origins': ['http://localhost:3000', 'http://127.0.0.1:3000']}},
+         supports_credentials=True)
 
     # Initialize extensions
     db.init_app(app)
@@ -24,17 +35,73 @@ def create_app(config_class=Config):
     app.register_blueprint(websites_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(uptime_bp)
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(monitors_bp, url_prefix='/api/monitors')
+    app.register_blueprint(profile_bp, url_prefix='/api/profile')
 
-    # Setup database and scheduler
+    # Setup database (create all tables) and seed default user
     with app.app_context():
         os.makedirs(app.instance_path, exist_ok=True)
         db.create_all()
-
+        _migrate_legacy_data()
         # Start the background scheduler
         if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
             start_scheduler(app)
 
     return app
+
+
+def _migrate_legacy_data():
+    """
+    One-time migration: if urls.json has URLs and no monitors exist yet,
+    create a default user and migrate those URLs as monitors.
+    Safe to run repeatedly — skips if migration already done.
+    """
+    from app.models.user import User
+    from app.models.monitor import Monitor
+    from app.models.alert_setting import AlertSetting
+    from app.utils.auth import hash_password
+    from config import load_urls
+
+    urls = load_urls()
+    if not urls:
+        return
+
+    # Check if migration already happened
+    if Monitor.query.count() > 0:
+        return
+
+    logger.info('Migrating legacy urls.json to default user...')
+
+    # Create default user if not exists
+    default_email = 'admin@monitor.local'
+    user = User.query.filter_by(email=default_email).first()
+    if not user:
+        user = User(
+            name          = 'Admin',
+            email         = default_email,
+            password_hash = hash_password('changeme123'),
+        )
+        db.session.add(user)
+        db.session.flush()
+
+        # Create default alert settings
+        settings = AlertSetting(user_id=user.id)
+        db.session.add(settings)
+
+    # Create monitors for each URL
+    for url in urls:
+        name = url.replace('https://', '').replace('http://', '').split('/')[0]
+        monitor = Monitor(
+            user_id = user.id,
+            name    = name,
+            url     = url,
+        )
+        db.session.add(monitor)
+
+    db.session.commit()
+    logger.info(f'Migrated {len(urls)} URLs to default user ({default_email}). '
+                f'Default password: changeme123')
 
 
 app = create_app()
