@@ -8,17 +8,22 @@ load_dotenv()
 URLS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'urls.json')
 
 def load_urls():
-    """Load the list of monitored URLs from urls.json."""
+    """Load the list of monitored URLs from the database (monitors table)."""
     try:
-        with open(URLS_FILE, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
+        from app.models.monitor import Monitor
+        monitors = Monitor.query.filter_by(is_active=True).all()
+        return [m.url for m in monitors]
+    except Exception:
+        # Fallback if outside app context or DB not initialized
+        try:
+            with open(URLS_FILE, 'r') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
 
 def save_urls(urls):
-    """Save the list of monitored URLs to urls.json."""
-    with open(URLS_FILE, 'w') as f:
-        json.dump(urls, f, indent=4)
+    """Deprecated: URLs are now saved directly to the database via Monitor model."""
+    pass
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key')

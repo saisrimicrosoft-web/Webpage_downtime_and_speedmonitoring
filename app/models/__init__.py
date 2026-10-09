@@ -14,3 +14,4 @@ from app.models.user_incident import UserIncident
 from app.models.alert_setting import AlertSetting
 from app.models.alert import Alert, AlertRule, NotificationChannel, NotificationLog
 from app.models.setting import Setting
+from app.models.ssl_check import SSLCheck

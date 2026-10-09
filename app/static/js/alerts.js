@@ -238,7 +238,7 @@ function renderCards(alerts) {
             <div class="alert-card-stats">
                 <div class="mini-stat">
                     <div class="mini-stat-label">Started</div>
-                    <div class="mini-stat-val" style="font-size:12px;">${new Date(alert.started_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                    <div class="mini-stat-val" style="font-size:12px;">${window.TimeUtils.formatLocalTime(alert.started_at).split(', ')[1] || window.TimeUtils.formatLocalTime(alert.started_at)}</div>
                 </div>
                 <div class="mini-stat">
                     <div class="mini-stat-label">HTTP</div>
@@ -313,7 +313,7 @@ function renderTimeline(alerts) {
                 </div>
                 <div>
                     <div style="font-size:13px; color:var(--text);">${text}</div>
-                    <div style="font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace;">${new Date(ev.time).toLocaleTimeString()}</div>
+                    <div style="font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace;">${window.TimeUtils.formatLocalTime(ev.time).split(', ')[1] || window.TimeUtils.formatLocalTime(ev.time)}</div>
                 </div>
             </div>
         `;
@@ -377,7 +377,7 @@ async function viewAlert(id) {
             <div style="padding:12px 0; border-bottom:1px solid rgba(255,255,255,.1); font-size:13px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <strong style="text-transform:uppercase;">${l.channel_type}</strong>
-                    <span style="color:var(--muted);">${new Date(l.sent_at).toLocaleTimeString()}</span>
+                    <span style="color:var(--muted);">${window.TimeUtils.formatLocalTime(l.sent_at).split(', ')[1] || window.TimeUtils.formatLocalTime(l.sent_at)}</span>
                 </div>
                 <div style="color:var(--text);">${l.target}</div>
                 <div style="color:${l.status === 'simulated' ? 'var(--amber)' : (l.status==='sent'?'var(--ok)':'var(--hot)')}">${l.status.toUpperCase()}</div>
@@ -402,12 +402,12 @@ async function viewAlert(id) {
                     <div style="display:flex; gap:24px;">
                         <div>
                             <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Started</div>
-                            <div style="font-size:14px; font-family:monospace;">${new Date(data.started_at).toLocaleString()}</div>
+                            <div style="font-size:14px; font-family:monospace;">${window.TimeUtils.formatLocalTime(data.started_at)}</div>
                         </div>
                         ${data.resolved_at ? `
                         <div>
                             <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Resolved</div>
-                            <div style="font-size:14px; font-family:monospace;">${new Date(data.resolved_at).toLocaleString()}</div>
+                            <div style="font-size:14px; font-family:monospace;">${data.resolved_at ? window.TimeUtils.formatLocalTime(data.resolved_at) : 'N/A'}</div>
                         </div>
                         ` : ''}
                     </div>

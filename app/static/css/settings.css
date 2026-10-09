@@ -29,10 +29,10 @@
 .save-status {
     font-size: 0.85rem;
     font-weight: 500;
-    color: var(--success);
+    color: var(--green);
     background: rgba(16, 185, 129, 0.1);
     padding: 0.35rem 0.75rem;
-    border-radius: var(--radius-full);
+    border-radius: 50%;
     transition: opacity 0.3s ease;
 }
 
@@ -72,13 +72,13 @@
 }
 
 .settings-tab:hover {
-    background: var(--bg-hover);
+    background: var(--brand-glow);
     color: var(--text);
 }
 
 .settings-tab.active {
-    background: var(--primary-light);
-    color: var(--primary);
+    background: var(--brand-light);
+    color: var(--brand);
 }
 
 .settings-tab svg {
@@ -108,7 +108,7 @@
 }
 
 .settings-card {
-    background: var(--surface);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
@@ -195,7 +195,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: var(--primary);
+    background: var(--brand);
     color: white;
     display: flex;
     align-items: center;
@@ -259,7 +259,7 @@
 }
 
 input:checked + .slider {
-    background-color: var(--primary);
+    background-color: var(--brand);
 }
 
 input:checked + .slider:before {
@@ -287,7 +287,7 @@ input:checked ~ .collapsible-content {
 .theme-selector {
     display: flex;
     gap: 0.5rem;
-    background: var(--bg-hover);
+    background: var(--brand-glow);
     padding: 0.25rem;
     border-radius: var(--radius-md);
 }
@@ -313,7 +313,7 @@ input:checked ~ .collapsible-content {
 }
 
 .theme-option input:checked + span {
-    background: var(--surface);
+    background: var(--bg-surface);
     color: var(--text);
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
@@ -339,7 +339,7 @@ input:checked ~ .collapsible-content {
 }
 
 .modal {
-    background: var(--surface);
+    background: var(--bg-surface);
     width: 400px;
     max-width: 90%;
     border-radius: var(--radius-lg);

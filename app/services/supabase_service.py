@@ -2,6 +2,7 @@ import logging
 import requests
 from datetime import datetime, timezone
 from config import Config
+from app.utils.time_utils import to_utc_iso
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class SupabaseService:
         else:
             payload = {
                 "url": check.url,
-                "checked_at": check.checked_at.isoformat() if hasattr(check.checked_at, 'isoformat') else str(check.checked_at),
+                "checked_at": to_utc_iso(check.checked_at),
                 "status_code": check.status_code,
                 "response_ms": check.response_ms,
                 "is_up": check.is_up,
@@ -89,7 +90,7 @@ class SupabaseService:
             else:
                 p = {
                     "url": check.url,
-                    "checked_at": check.checked_at.isoformat() if hasattr(check.checked_at, 'isoformat') else str(check.checked_at),
+                    "checked_at": to_utc_iso(check.checked_at),
                     "status_code": check.status_code,
                     "response_ms": check.response_ms,
                     "is_up": check.is_up,

@@ -1,9 +1,13 @@
+from app.utils.time_utils import to_utc_iso
 from app.models import db
 from datetime import datetime, timezone
 
 class Check(db.Model):
     """Single CHECKS table matching the college ER diagram exactly."""
     __tablename__ = 'checks'
+    __table_args__ = (
+        db.Index('idx_url_checked_at', 'url', 'checked_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(500), nullable=False, index=True)
@@ -20,7 +24,7 @@ class Check(db.Model):
         return {
             'id': self.id,
             'url': self.url,
-            'checked_at': self.checked_at.isoformat() if self.checked_at else None,
+            'checked_at': to_utc_iso(self.checked_at),
             'status_code': self.status_code,
             'response_ms': self.response_ms,
             'is_up': self.is_up,

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}SSL Certificate Monitor{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ssl.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ssl-dashboard fade-in">
+    <!-- Header -->
+    <header class="ssl-header">
+        <div class="ssl-header-text">
+            <h1>SSL Certificate Monitoring</h1>
+            <p>Real-time security and expiration tracking across all your environments.</p>
+        </div>
+        <div class="ssl-header-actions">
+            <button class="btn btn-outline" id="btn-force-refresh">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 1 0 2.6-6.4L21 8"></path>
+                </svg>
+                Refresh All
+            </button>
+            <button class="btn btn-primary" id="btn-alerts-modal">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                Expiry Alerts
+            </button>
+        </div>
+    </header>
+
+    <!-- Top Cards -->
+    <div class="ssl-overview-grid">
+        <!-- Trust Health Card -->
+        <div class="glass-card trust-health-card">
+            <div class="card-content">
+                <div class="trust-shield" id="trust-shield-container">
+                    <!-- SVG Shield injected by JS -->
+                </div>
+                <div class="trust-stats">
+                    <h3>Trust Health</h3>
+                    <div class="stat-row">
+                        <span class="stat-value text-success" id="stat-valid">0</span>
+                        <span class="stat-label">Valid</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-value text-warning" id="stat-expiring">0</span>
+                        <span class="stat-label">Expiring Soon</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-value text-danger" id="stat-invalid">0</span>
+                        <span class="stat-label">Invalid/Expired</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiry Runway Card -->
+        <div class="glass-card expiry-runway-card">
+            <h3>Expiry Runway</h3>
+            <p class="runway-sub">Certificates expiring over the next 90 days</p>
+            <div class="runway-chart" id="runway-chart-container">
+                <!-- SVG Timeline injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="ssl-toolbar glass-panel">
+        <div class="search-box">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="ssl-search" placeholder="Search domains or issuers...">
+        </div>
+        <div class="filter-box">
+            <select id="ssl-filter">
+                <option value="all">All Certificates</option>
+                <option value="valid">Valid</option>
+                <option value="expiring">Expiring Soon</option>
+                <option value="invalid">Invalid / Expired</option>
+            </select>
+            <select id="ssl-sort">
+                <option value="expiry-asc">Expiry Date (Soonest)</option>
+                <option value="expiry-desc">Expiry Date (Furthest)</option>
+                <option value="name-asc">Domain (A-Z)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Certificate Cards Grid -->
+    <div class="ssl-grid" id="ssl-cards-container">
+        <!-- Cards injected by JS -->
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Scanning certificates...</p>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Details Drawer -->
+<div class="ssl-drawer-overlay" id="ssl-drawer-overlay"></div>
+<div class="ssl-drawer" id="ssl-drawer">
+    <div class="drawer-header">
+        <h2 id="drawer-domain">example.com</h2>
+        <button class="icon-btn" id="drawer-close">&times;</button>
+    </div>
+    <div class="drawer-content">
+        <div class="drawer-status-banner" id="drawer-banner">
+            <span id="drawer-status-icon"></span>
+            <span id="drawer-status-text">Valid</span>
+        </div>
+        
+        <div class="drawer-section">
+            <h3>Certificate Details</h3>
+            <div class="detail-row"><span>Issuer:</span> <strong id="drawer-issuer"></strong></div>
+            <div class="detail-row"><span>Valid From:</span> <strong id="drawer-valid-from"></strong></div>
+            <div class="detail-row"><span>Valid Until:</span> <strong id="drawer-valid-to"></strong></div>
+            <div class="detail-row"><span>Days Left:</span> <strong id="drawer-days-left"></strong></div>
+        </div>
+
+        <div class="drawer-section">
+            <h3>Security Checks</h3>
+            <div class="detail-row"><span>Protocol:</span> <strong id="drawer-protocol"></strong></div>
+            <div class="detail-row"><span>Cipher:</span> <strong id="drawer-cipher"></strong></div>
+            <div class="detail-row">
+                <span>SAN Match:</span> 
+                <strong id="drawer-san-match" class="badge"></strong>
+            </div>
+            <div class="detail-row">
+                <span>HSTS Enabled:</span> 
+                <strong id="drawer-hsts" class="badge"></strong>
+            </div>
+        </div>
+
+        <div class="drawer-section">
+            <h3>Chain of Trust</h3>
+            <div class="chain-list" id="drawer-chain">
+                <!-- Chain items injected by JS -->
+            </div>
+        </div>
+        
+        <div class="drawer-section" id="drawer-error-section" style="display: none;">
+            <h3>Error Details</h3>
+            <div class="error-box" id="drawer-error-msg"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Expiry Alerts Modal -->
+<div class="modal-overlay" id="alerts-modal-overlay"></div>
+<div class="modal" id="alerts-modal">
+    <div class="modal-header">
+        <h2>Configure Expiry Alerts</h2>
+        <button class="icon-btn" id="alerts-modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p>Set threshold days for SSL expiry notifications.</p>
+        <div class="form-group">
+            <label>Warning Threshold (Days)</label>
+            <input type="number" id="alert-threshold" value="30" min="1" max="90">
+        </div>
+        <p class="text-muted"><small>Alerts are integrated with the system notification channels.</small></p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" id="alerts-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="alerts-modal-save">Save Settings</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/ssl.js') }}"></script>
+{% endblock %}
