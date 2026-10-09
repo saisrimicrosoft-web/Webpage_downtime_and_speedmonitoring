@@ -1,3 +1,4 @@
+from app.utils.time_utils import to_utc_iso
 """
 Monitor model — a user-owned URL to watch.
 Replaces the flat urls.json list; every URL belongs to exactly one user.
@@ -18,7 +19,8 @@ class Monitor(db.Model):
     expected_status_code  = db.Column(db.Integer, nullable=False, default=200)
     is_active             = db.Column(db.Boolean, nullable=False, default=True)
     created_at            = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-
+    ssl_expires_at        = db.Column(db.DateTime, nullable=True)
+    ssl_status            = db.Column(db.String(50), nullable=True)
     # Relationships
     user      = db.relationship('User',      back_populates='monitors')
     checks    = db.relationship('UserCheck',    back_populates='monitor', cascade='all, delete-orphan', lazy='dynamic')
@@ -34,7 +36,7 @@ class Monitor(db.Model):
             'timeout_seconds':        self.timeout_seconds,
             'expected_status_code':   self.expected_status_code,
             'is_active':              self.is_active,
-            'created_at':             self.created_at.isoformat() if self.created_at else None,
+            'created_at':             to_utc_iso(self.created_at),
         }
         if latest_check:
             d['latest_check'] = latest_check

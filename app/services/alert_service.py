@@ -6,6 +6,7 @@ import requests
 from email.message import EmailMessage
 from datetime import datetime, timezone
 import os
+from app.utils.time_utils import to_utc_iso
 
 from app.models import db
 from app.models.alert import Alert, AlertRule, NotificationChannel, NotificationLog
@@ -112,7 +113,7 @@ class AlertEngine:
             severity=severity,
             status='active',
             title=title,
-            message=f"Detected at {now.isoformat()}",
+            message=f"Detected at {to_utc_iso(now)}",
             http_code=check.status_code,
             response_time_ms=check.response_ms,
             error_message=error_msg,

@@ -320,8 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const badgeClass = inc.status === 'Ongoing' ? 'badge-danger' : 'badge-success';
             const duration = formatDuration(inc.duration_seconds);
             
-            const startStr = inc.started_at ? new Date(inc.started_at).toLocaleString() : '--';
-            const endStr = inc.resolved_at ? new Date(inc.resolved_at).toLocaleString() : '--';
+            const startStr = inc.started_at ? window.TimeUtils.formatLocalTime(inc.started_at) : '--';
+            const endStr = inc.resolved_at ? window.TimeUtils.formatLocalTime(inc.resolved_at) : '--';
             
             html += `
                 <tr>

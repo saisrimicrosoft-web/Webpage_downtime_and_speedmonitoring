@@ -131,9 +131,7 @@
                 {% for c in checks %}
                 <tr>
                     <td class="cell-mono">
-                        <time datetime="{{ c.checked_at.isoformat() }}">
-                            {{ c.checked_at.strftime('%Y-%m-%d %H:%M:%S') }}
-                        </time>
+                        <span class="time-local" data-time="{{ c.checked_at.isoformat() }}"></span>
                     </td>
                     <td>
                         {% if c.is_up %}

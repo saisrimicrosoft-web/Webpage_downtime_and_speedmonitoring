@@ -1,3 +1,4 @@
+from app.utils.time_utils import to_utc_iso
 from app.models import db
 from datetime import datetime, timezone
 
@@ -33,10 +34,10 @@ class Alert(db.Model):
             'http_code': self.http_code,
             'response_time_ms': self.response_time_ms,
             'error_message': self.error_message,
-            'started_at': self.started_at.isoformat() if self.started_at else None,
-            'acknowledged_at': self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+            'started_at': to_utc_iso(self.started_at),
+            'acknowledged_at': to_utc_iso(self.acknowledged_at),
             'acknowledged_by': self.acknowledged_by,
-            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'resolved_at': to_utc_iso(self.resolved_at),
             'duration_seconds': self.duration_seconds,
             'notified_channels': self.notified_channels
         }
@@ -78,7 +79,7 @@ class NotificationChannel(db.Model):
             'type': self.type,
             'target': self.target,
             'enabled': self.enabled,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': to_utc_iso(self.created_at)
         }
 
 class NotificationLog(db.Model):
@@ -98,5 +99,5 @@ class NotificationLog(db.Model):
             'channel_id': self.channel_id,
             'status': self.status,
             'error': self.error,
-            'sent_at': self.sent_at.isoformat() if self.sent_at else None
+            'sent_at': to_utc_iso(self.sent_at)
         }

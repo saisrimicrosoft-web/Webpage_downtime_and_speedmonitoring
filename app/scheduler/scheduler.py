@@ -70,8 +70,14 @@ def cleanup_old_data():
             logger.info(f"Cleanup job finished. Deleted {total} old records.")
         except Exception as e:
             logger.error(f"Error in cleanup job: {str(e)}")
-
-
+def run_ssl_job():
+    if _app is None:
+        return
+    from app.services.ssl_job import run_ssl_checks_for_all
+    try:
+        run_ssl_checks_for_all(_app)
+    except Exception as e:
+        logger.error(f'SSL job error: {e}')
 def start_scheduler(app):
     global _app
     _app = app
@@ -103,12 +109,19 @@ def start_scheduler(app):
             coalesce=True,
         )
         
-        # Add daily cleanup job
         scheduler.add_job(
             func=cleanup_old_data,
             trigger="interval",
             hours=24,
             id="cleanup_job",
+            replace_existing=True
+        )
+
+        scheduler.add_job(
+            func=run_ssl_job,
+            trigger="interval",
+            hours=6,
+            id="ssl_check_job",
             replace_existing=True
         )
 

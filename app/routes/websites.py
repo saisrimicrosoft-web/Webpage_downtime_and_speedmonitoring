@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.repositories.monitoring_repository import CheckRepository
 from app.utils.url_validator import is_valid_url
-from config import load_urls, save_urls
+from config import load_urls
+from app.models.monitor import Monitor
+from app.models.user import User
+from app.models import db
 import urllib.parse
 
 websites_bp = Blueprint('websites', __name__, url_prefix='/websites')
@@ -39,13 +42,20 @@ def add_url():
             flash('Invalid URL. Must start with http:// or https://', 'error')
             return render_template('url_form.html', url=url)
 
-        urls = load_urls()
-        if url in urls:
+        existing = Monitor.query.filter_by(url=url).first()
+        if existing:
             flash('This URL is already being monitored.', 'error')
             return render_template('url_form.html', url=url)
 
-        urls.append(url)
-        save_urls(urls)
+        admin = User.query.filter_by(email='admin@monitor.local').first()
+        if not admin:
+            admin = User.query.first()
+            
+        name = url.replace('https://', '').replace('http://', '').split('/')[0]
+        new_monitor = Monitor(user_id=admin.id, name=name, url=url)
+        db.session.add(new_monitor)
+        db.session.commit()
+        
         flash(f'Added {url} to monitoring.', 'success')
         return redirect(url_for('websites.index'))
 
@@ -55,10 +65,10 @@ def add_url():
 @websites_bp.route('/remove', methods=['POST'])
 def remove_url():
     url = request.form.get('url', '').strip()
-    urls = load_urls()
-    if url in urls:
-        urls.remove(url)
-        save_urls(urls)
+    monitor = Monitor.query.filter_by(url=url).first()
+    if monitor:
+        db.session.delete(monitor)
+        db.session.commit()
         flash(f'Removed {url} from monitoring.', 'success')
     else:
         flash('URL not found.', 'error')

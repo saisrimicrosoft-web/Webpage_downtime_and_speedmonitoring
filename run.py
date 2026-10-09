@@ -42,13 +42,18 @@ def create_app(config_class=Config):
     
     from app.routes.alerts_page import alerts_page_bp
     app.register_blueprint(alerts_page_bp)
+    
+    from app.routes.auth_page import auth_page_bp
+    app.register_blueprint(auth_page_bp)
 
     from app.routes.settings_api import settings_api_bp
     app.register_blueprint(settings_api_bp, url_prefix='/api')
     
     from app.routes.settings_page import settings_page_bp
     app.register_blueprint(settings_page_bp)
-
+    
+    from app.routes.ssl import ssl_bp
+    app.register_blueprint(ssl_bp)
     # Setup database (create all tables) and seed default user
     with app.app_context():
         os.makedirs(app.instance_path, exist_ok=True)
@@ -56,9 +61,9 @@ def create_app(config_class=Config):
         _migrate_legacy_data()
 
         from app.models.user import User
-        from werkzeug.security import generate_password_hash
+        from app.utils.auth import hash_password
         if not User.query.first():
-            admin = User(name='DevOps Admin', email='admin@example.com', password_hash=generate_password_hash('admin123'))
+            admin = User(name='DevOps Admin', email='admin@example.com', password_hash=hash_password('admin123'))
             db.session.add(admin)
             db.session.commit()
 
