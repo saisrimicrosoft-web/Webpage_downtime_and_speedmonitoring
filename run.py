@@ -6,9 +6,9 @@ from app.routes.dashboard import dashboard_bp
 from app.routes.websites import websites_bp
 from app.routes.api import api_bp
 from app.routes.uptime import uptime_bp
+from app.routes.alerts import alerts_bp
 from app.scheduler.scheduler import start_scheduler
 from app.utils.logging_config import setup_logging
-
 
 def create_app(config_class=Config):
     setup_logging()
@@ -24,6 +24,10 @@ def create_app(config_class=Config):
     app.register_blueprint(websites_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(uptime_bp)
+    app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
+    
+    from app.routes.alerts_page import alerts_page_bp
+    app.register_blueprint(alerts_page_bp)
 
     # Setup database and scheduler
     with app.app_context():

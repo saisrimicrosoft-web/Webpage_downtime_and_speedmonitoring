@@ -152,8 +152,12 @@ class MonitorService:
         db.session.add(check)
         db.session.commit()
         
-        # Process for incidents
+        # Process for incidents (old system)
         process_check_for_incidents(check)
+
+        # Process for alerts (new system)
+        from app.services.alert_service import AlertEngine
+        AlertEngine.process_check(check)
 
         return logged_result
 
