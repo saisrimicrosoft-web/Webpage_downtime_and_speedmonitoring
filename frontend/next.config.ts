@@ -5,10 +5,10 @@ const nextConfig: NextConfig = {
     return [
       {
         // Proxy monitoring API calls to Flask backend.
-        // Auth routes (/api/auth/*, /api/register, etc.) are handled by
-        // Next.js Route Handlers and won't reach this rewrite.
-        source: "/api/:path*",
-        destination: process.env.NEXT_PUBLIC_FLASK_API_URL || "http://127.0.0.1:5000/api/:path*",
+        // Excludes auth routes, register, verify-email, forgot/reset-password
+        // which are all handled by Next.js Route Handlers.
+        source: "/api/((?!auth|register|verify-email|forgot-password|reset-password).*)",
+        destination: `${process.env.NEXT_PUBLIC_FLASK_API_URL || "http://127.0.0.1:5000"}/api/$1`,
       },
     ];
   },
