@@ -71,6 +71,7 @@ def cleanup_old_data():
         except Exception as e:
             logger.error(f"Error in cleanup job: {str(e)}")
 
+
 def start_scheduler(app):
     global _app
     _app = app
