@@ -3,69 +3,145 @@ import time
 from datetime import datetime, timezone
 import logging
 
-from app.models.check import Check
-from app.models import db
 from app.services.ssl_service import SSLService
-from app.services.discord_service import DiscordService
-from app.services.supabase_service import SupabaseService
 from config import Config
+
+# Supabase Pipeline Integration
+from monitoring_core.db_client import MonitoringDatabaseClient
+from monitoring_core.alert_manager import AlertManager
 
 logger = logging.getLogger(__name__)
 
+# Module-level singletons — initialized lazily on first use
+_db_client = None
+_alert_manager = None
+_init_attempted = False
+
+
+def get_pipeline():
+    """Lazily initialize the Supabase DB client and Discord AlertManager.
+
+    The DB client and alert manager are initialized independently so that
+    a missing DISCORD_WEBHOOK_URL does not prevent database operations.
+    """
+    global _db_client, _alert_manager, _init_attempted
+
+    if _init_attempted:
+        return _db_client, _alert_manager
+
+    _init_attempted = True
+
+    # 1. Initialize Supabase DB client
+    try:
+        _db_client = MonitoringDatabaseClient()
+    except ValueError as e:
+        logger.error(f"Failed to initialize Supabase DB client: {e}")
+        return None, None
+
+    # 2. Initialize AlertManager (independent — won't crash if webhook is missing)
+    try:
+        _alert_manager = AlertManager(_db_client)
+    except Exception as e:
+        logger.error(f"Failed to initialize AlertManager: {e}")
+        # DB client still works even if alerting fails
+        _alert_manager = None
+
+    return _db_client, _alert_manager
+
 
 class MonitorService:
-    """Core monitoring engine.
-    Data flow: URL → check → metrics → database → alert / visualization
+    """Core monitoring engine using Supabase and Stateful Alerting.
+
+    Data flow: URL → check → metrics → Supabase → stateful alert / dashboard
     """
 
     @staticmethod
-    def check_url(url: str) -> Check:
-        """
-        Perform a single monitoring check for a URL.
+    def check_url(url: str):
+        """Perform a single monitoring check for a URL.
+
         1. Make an HTTP GET request and measure response time.
         2. Check the SSL certificate expiry.
-        3. Store the result in the CHECKS table.
-        4. Send a Discord alert if the site is down or SSL is expiring.
-        Returns the created Check object.
+        3. Store the result in the Supabase check_results table.
+        4. Evaluate state transitions and fire Discord alerts via AlertManager.
         """
         logger.info(f"Checking URL: {url}")
 
+        db, alerter = get_pipeline()
+        if not db:
+            logger.error(
+                "No Supabase DB client available. "
+                "Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set."
+            )
+            return None
+
+        # Fetch or create target in Supabase to get the target_id
+        target = db.get_or_create_target_by_url(url)
+        if not target:
+            logger.error(f"Could not resolve target for {url}")
+            return None
+
+        target_id = target.get("id")
+
+        # ── HTTP check ──
         start_time = time.time()
         is_up = False
         status_code = None
-        error_reason = ""
 
-        # ---- HTTP check ----
         try:
-            headers = {'User-Agent': 'UniversalMonitor/1.0'}
+            headers = {"User-Agent": "UniversalMonitor/1.0"}
             response = requests.get(
                 url,
                 timeout=Config.REQUEST_TIMEOUT_SECONDS,
-                headers=headers
+                headers=headers,
             )
             status_code = response.status_code
             is_up = 200 <= status_code < 400
-            if not is_up:
-                error_reason = f"HTTP {status_code}"
         except requests.exceptions.Timeout:
-            error_reason = "Request timed out"
+            logger.warning(f"Timeout checking {url}")
         except requests.exceptions.ConnectionError:
-            error_reason = "Connection failed (DNS / network)"
+            logger.warning(f"Connection error checking {url}")
         except requests.exceptions.RequestException as e:
-            error_reason = str(e)
+            logger.warning(f"Request error checking {url}: {e}")
 
         response_ms = int((time.time() - start_time) * 1000)
 
-        # ---- SSL check ----
+        # ── SSL check ──
         ssl_days_left = None
-        ssl_valid, ssl_days = SSLService.check_ssl(url)
+        ssl_valid = False
+        ssl_is_valid, ssl_days = SSLService.check_ssl(url)
         if ssl_days is not None:
             ssl_days_left = ssl_days
+            ssl_valid = ssl_is_valid if ssl_is_valid is not None else False
 
-        # ---- Store in CHECKS table ----
+        # ── Store in Supabase check_results table ──
+        check_result = {
+            "target_id": target_id,
+            "status_code": status_code,
+            "response_time_ms": response_ms,
+            "is_up": is_up,
+            "ssl_valid": ssl_valid,
+            "ssl_days_remaining": ssl_days_left,
+        }
+
+        logged_result = db.log_check_result(check_result)
+
+        # ── Stateful Discord alerts via AlertManager ──
+        if alerter:
+            payload_for_alert = {**check_result, **logged_result, "target_id": target_id}
+            try:
+                alerter.process_check(payload_for_alert)
+            except Exception as e:
+                logger.error(f"AlertManager error for {url}: {e}")
+
+        # ── Store in local database (SQLite) ──
+        from app.models import db
+        from app.models.check import Check
+        from app.services.incident_service import process_check_for_incidents
+        
+        now_utc = datetime.now(timezone.utc)
         check = Check(
             url=url,
-            checked_at=datetime.now(timezone.utc),
+            checked_at=now_utc,
             status_code=status_code,
             response_ms=response_ms,
             is_up=is_up,
@@ -73,52 +149,24 @@ class MonitorService:
         )
         db.session.add(check)
         db.session.commit()
+        
+        # Process for incidents
+        process_check_for_incidents(check)
 
-        # ---- Supabase Sync ----
-        try:
-            SupabaseService.send_check(check)
-        except Exception as e:
-            logger.error(f"Error triggering Supabase sync: {e}")
-
-        # ---- Discord alerts ----
-        # Alert if site is down
-        if not is_up:
-            DiscordService.send_alert(
-                url=url,
-                is_up=False,
-                status_code=status_code,
-                response_ms=response_ms,
-                reason=error_reason
-            )
-
-        # Alert if SSL is expiring soon
-        if ssl_days_left is not None and ssl_days_left < Config.SSL_WARNING_DAYS and is_up:
-            DiscordService.send_alert(
-                url=url,
-                is_up=True,
-                ssl_days_left=ssl_days_left
-            )
-
-        # ---- Incident lifecycle ----
-        try:
-            from app.services.incident_service import process_check_for_incidents
-            process_check_for_incidents(check, region='Primary')
-        except Exception as e:
-            logger.error(f"Error processing incident lifecycle: {e}")
-
-        logger.info(f"Check complete: {url} | up={is_up} | {response_ms}ms | SSL={ssl_days_left}")
-        return check
+        return logged_result
 
     @staticmethod
     def check_all_urls():
-        """Check all configured URLs. Called by the scheduler."""
+        """Check all configured URLs from urls.json. Called by the scheduler."""
         from config import load_urls
+
         urls = load_urls()
         results = []
         for url in urls:
             try:
-                check = MonitorService.check_url(url)
-                results.append(check)
+                result = MonitorService.check_url(url)
+                if result:
+                    results.append(result)
             except Exception as e:
                 logger.error(f"Error checking {url}: {str(e)}")
         return results

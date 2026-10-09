@@ -1,66 +1,128 @@
-from app.models import db
-from app.models.check import Check
-from sqlalchemy import func
-
+from typing import List, Dict, Any
 
 class CheckRepository:
-    """Data access layer for the CHECKS table."""
+    """Data access layer for reading from Supabase for the dashboard."""
+
+    _db_client = None
+
+    @classmethod
+    def get_db(cls):
+        if cls._db_client is None:
+            from monitoring_core.db_client import MonitoringDatabaseClient
+            try:
+                cls._db_client = MonitoringDatabaseClient()
+            except Exception as e:
+                import logging
+                logging.error(f"Supabase DB init failed: {e}")
+        return cls._db_client
+
+    @staticmethod
+    def _map_check(check_row: Dict[str, Any], url: str) -> Any:
+        class DummyCheck:
+            def __init__(self, c_row, c_url):
+                self.url = c_url
+                self.is_up = c_row.get('is_up', False)
+                self.response_ms = c_row.get('response_time_ms')
+                self.ssl_days_left = c_row.get('ssl_days_remaining')
+                self.status_code = c_row.get('status_code')
+                
+                checked_str = c_row.get('checked_at')
+                if checked_str:
+                    from datetime import datetime
+                    try:
+                        self.checked_at = datetime.fromisoformat(checked_str.replace('Z', '+00:00'))
+                    except Exception:
+                        self.checked_at = None
+                else:
+                    self.checked_at = None
+
+                self.data = {
+                    'id': c_row.get('id'),
+                    'url': c_url,
+                    'checked_at': checked_str,
+                    'status_code': self.status_code,
+                    'response_ms': self.response_ms,
+                    'is_up': self.is_up,
+                    'ssl_days_left': self.ssl_days_left
+                }
+            def to_dict(self):
+                return self.data
+        return DummyCheck(check_row, url)
 
     @staticmethod
     def get_latest_check_per_url():
-        """Get the most recent check for each unique URL."""
-        # Subquery to get the max checked_at per URL
-        subq = db.session.query(
-            Check.url,
-            func.max(Check.checked_at).label('max_checked')
-        ).group_by(Check.url).subquery()
-
-        results = db.session.query(Check).join(
-            subq,
-            (Check.url == subq.c.url) & (Check.checked_at == subq.c.max_checked)
-        ).all()
+        db = CheckRepository.get_db()
+        if not db:
+            return []
+        
+        targets = db.get_all_targets()
+        results = []
+        for target in targets:
+            recent = db.get_recent_checks(target['id'], limit=1)
+            if recent:
+                results.append(CheckRepository._map_check(recent[0], target['url']))
         return results
 
     @staticmethod
-    def get_uptime_per_url():
-        """Calculate average uptime percentage for each URL."""
-        # We can just count total checks and up checks per url
-        results = db.session.query(
-            Check.url,
-            func.count(Check.id).label('total_checks'),
-            func.sum(db.case((Check.is_up == True, 1), else_=0)).label('up_checks')
-        ).group_by(Check.url).all()
-        
-        uptime_map = {}
-        for row in results:
-            if row.total_checks > 0:
-                uptime_map[row.url] = round((row.up_checks / row.total_checks) * 100, 2)
-            else:
-                uptime_map[row.url] = 0.0
-        return uptime_map
-
-    @staticmethod
     def get_checks_for_url(url: str, limit: int = 50):
-        """Get recent checks for a specific URL, ordered newest-first."""
-        return Check.query.filter_by(url=url).order_by(
-            Check.checked_at.desc()
-        ).limit(limit).all()
+        db = CheckRepository.get_db()
+        if not db:
+            return []
+            
+        target = db.get_or_create_target_by_url(url)
+        if not target:
+            return []
+            
+        recent = db.get_recent_checks(target['id'], limit=limit)
+        return [CheckRepository._map_check(c, url) for c in recent]
 
     @staticmethod
     def get_all_checks(limit: int = 100):
-        """Get the most recent checks across all URLs."""
-        return Check.query.order_by(
-            Check.checked_at.desc()
-        ).limit(limit).all()
+        db = CheckRepository.get_db()
+        if not db:
+            return []
+            
+        # Supabase Python client doesn't support joins elegantly yet without RPC or views.
+        # We will fetch recent checks and map them to targets.
+        response = db.supabase.table("check_results").select("*").order("checked_at", desc=True).limit(limit).execute()
+        checks = response.data if response.data else []
+        
+        targets = {t['id']: t['url'] for t in db.get_all_targets()}
+        
+        return [CheckRepository._map_check(c, targets.get(c['target_id'], 'Unknown')) for c in checks]
+
+    @staticmethod
+    def get_uptime_per_url():
+        db = CheckRepository.get_db()
+        if not db:
+            return {}
+        
+        targets = db.get_all_targets()
+        result = {}
+        for t in targets:
+            url = t['url']
+            t_id = t['id']
+            # Get total checks for this target
+            total_resp = db.supabase.table("check_results").select("id", count="exact").eq("target_id", t_id).execute()
+            total_count = total_resp.count if total_resp else 0
+            
+            if total_count == 0:
+                result[url] = 100.0
+                continue
+                
+            up_resp = db.supabase.table("check_results").select("id", count="exact").eq("target_id", t_id).eq("is_up", True).execute()
+            up_count = up_resp.count if up_resp else 0
+            
+            result[url] = round((up_count / total_count) * 100, 2)
+            
+        return result
 
     @staticmethod
     def get_summary():
-        """Get dashboard summary counts and averages."""
         from config import load_urls
         urls = load_urls()
         latest = CheckRepository.get_latest_check_per_url()
 
-        # Build a map of url -> latest check
         latest_map = {c.url: c for c in latest}
 
         total = len(urls)
@@ -74,17 +136,8 @@ class CheckRepository:
         response_count = 0
         
         latency_dist = {
-            'fast': 0,      # <100ms
-            'normal': 0,    # 100-250ms
-            'slow': 0,      # 250-500ms
-            'critical': 0   # >500ms
+            'fast': 0, 'normal': 0, 'slow': 0, 'critical': 0
         }
-
-        # Calculate uptime per site
-        # We need historical stats. Let's do a quick global query for avg uptime.
-        # Actually it's more efficient to just get all checks or query DB for aggregates.
-        # For simplicity, we'll calculate current state metrics here.
-        # The global average uptime will be calculated using a DB query.
 
         for url in urls:
             check = latest_map.get(url)
@@ -112,19 +165,23 @@ class CheckRepository:
                     else:
                         latency_dist['critical'] += 1
 
-            # SSL warning
             if check and check.ssl_days_left is not None and check.ssl_days_left < 30:
                 ssl_warning_count += 1
 
         avg_response_ms = (total_response_ms / response_count) if response_count > 0 else 0
         
-        # Calculate overall uptime percentage
-        total_checks_count = db.session.query(func.count(Check.id)).scalar()
-        up_checks_count = db.session.query(func.count(Check.id)).filter(Check.is_up == True).scalar()
-        
+        db = CheckRepository.get_db()
         avg_uptime_pct = 0
-        if total_checks_count and total_checks_count > 0:
-            avg_uptime_pct = (up_checks_count / total_checks_count) * 100
+        if db:
+            # Calculate uptime using simple count over all checks
+            total_checks_resp = db.supabase.table("check_results").select("id", count="exact").execute()
+            up_checks_resp = db.supabase.table("check_results").select("id", count="exact").eq("is_up", True).execute()
+            
+            total_checks_count = total_checks_resp.count if total_checks_resp else 0
+            up_checks_count = up_checks_resp.count if up_checks_resp else 0
+            
+            if total_checks_count and total_checks_count > 0:
+                avg_uptime_pct = (up_checks_count / total_checks_count) * 100
 
         return {
             'total': total,

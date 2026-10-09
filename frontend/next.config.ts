@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
         // Proxy monitoring API calls to Flask backend.
         // Auth routes (/api/auth/*, /api/register, etc.) are handled by
         // Next.js Route Handlers and won't reach this rewrite.
-        source: '/api/:path*',
-        destination: 'http://127.0.0.1:5000/api/:path*',
+        source: "/api/:path*",
+        destination: process.env.NEXT_PUBLIC_FLASK_API_URL || "http://127.0.0.1:5000/api/:path*",
       },
     ];
   },

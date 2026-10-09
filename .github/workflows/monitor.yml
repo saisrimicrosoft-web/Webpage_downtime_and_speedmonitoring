@@ -1,110 +1,38 @@
-# ============================================================
-# .github/workflows/monitor.yml
-# Website Monitoring — CI/CD Pipeline (Person A deliverable)
-#
-# Trigger  : every 5 minutes via cron + manual workflow_dispatch
-# Action   : run monitor_engine.py which probes every URL in
-#            urls.json and emits a JSON metrics payload to stdout.
-#            The next pipeline stages (DB insert + Discord alert)
-#            are handled by teammates and will consume that output.
-# ============================================================
-
 name: Website Monitor
 
 on:
   schedule:
-    # Run every 5 minutes (minimum GitHub Actions resolution)
-    - cron: "*/5 * * * *"
-
-  # Allow an ad-hoc run from the GitHub UI or gh CLI
-  workflow_dispatch:
-
-# Prevent parallel runs from piling up if a previous job is still running
-concurrency:
-  group: website-monitor
-  cancel-in-progress: false   # let an in-flight check finish cleanly
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   monitor:
-    name: Run Monitoring Engine
     runs-on: ubuntu-latest
-    timeout-minutes: 5        # hard-kill if something hangs
 
     steps:
-      # ------------------------------------------------------------------
-      # 1. Checkout source code
-      # ------------------------------------------------------------------
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # ------------------------------------------------------------------
-      # 2. Set up Python 3.12
-      # ------------------------------------------------------------------
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: "pip"          # cache site-packages between runs
+          python-version: '3.12'
 
-      # ------------------------------------------------------------------
-      # 3. Install dependencies
-      # ------------------------------------------------------------------
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      # ------------------------------------------------------------------
-      # 4. Execute the monitoring engine
-      #
-      #    Environment variables are injected from GitHub Secrets so that
-      #    no credentials ever appear in source code.
-      #
-      #    Secrets your teammates need to add in:
-      #      Settings → Secrets and variables → Actions → New repository secret
-      #
-      #    ┌─────────────────────────────┬──────────────────────────────────────┐
-      #    │ Secret name                 │ Purpose                              │
-      #    ├─────────────────────────────┼──────────────────────────────────────┤
-      #    │ DISCORD_WEBHOOK_URL         │ Discord channel webhook for alerts   │
-      #    │ SUPABASE_URL                │ Supabase project URL (DB host)       │
-      #    │ SUPABASE_SERVICE_ROLE_KEY   │ Supabase service-role API key        │
-      #    │ DATABASE_URI                │ Full DB connection string (optional) │
-      #    │ REQUEST_TIMEOUT_SECONDS     │ Override default 10s HTTP timeout    │
-      #    └─────────────────────────────┴──────────────────────────────────────┘
-      # ------------------------------------------------------------------
       - name: Run monitoring checks
         env:
-          # ── Monitoring tuning ──────────────────────────────────────────
-          REQUEST_TIMEOUT_SECONDS: ${{ secrets.REQUEST_TIMEOUT_SECONDS }}
-
-          # ── Database layer (Person B) ──────────────────────────────────
-          DATABASE_URI:              ${{ secrets.DATABASE_URI }}
-          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-
-          # ── Alerting layer (Person C) ──────────────────────────────────
+          DATABASE_URI: ${{ secrets.DATABASE_URI }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-
-          # ── Flask / App layer (if needed by imported modules) ──────────
-          SECRET_KEY:         ${{ secrets.SECRET_KEY }}
-          SSL_WARNING_DAYS:   ${{ secrets.SSL_WARNING_DAYS }}
-
-        run: |
-          echo "=== Monitor Engine starting at $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
-          python monitor_engine.py
-          echo "=== Monitor Engine finished ==="
-
-      # ------------------------------------------------------------------
-      # 5. (Optional) Upload the JSON payload as a workflow artifact
-      #    so teammates can inspect the raw output of each run.
-      #
-      #    Uncomment this step once monitor_engine.py writes its output
-      #    to a file (e.g. redirect stdout: python monitor_engine.py > results.json)
-      # ------------------------------------------------------------------
-      # - name: Upload metrics payload
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: monitor-results-${{ github.run_id }}
-      #     path: results.json
-      #     retention-days: 7
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -c "
+          from run import create_app;
+          from app.services.monitor import MonitorService;
+          app = create_app();
+          app.app_context().push();
+          MonitorService.check_all_urls();
+          print('All checks complete.')
+          "
