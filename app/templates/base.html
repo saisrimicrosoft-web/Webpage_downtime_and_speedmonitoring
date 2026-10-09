@@ -57,7 +57,9 @@
                 <span>Monitor Websites</span>
             </a>
 
-            <a href="{{ url_for('uptime.uptime_page') }}" class="sidebar-link" id="nav-uptime">
+            <a href="{{ url_for('uptime.uptime_page') }}"
+               class="sidebar-link {% if request.endpoint == 'uptime.uptime_page' %}active{% endif %}"
+               id="nav-uptime">
                 <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
