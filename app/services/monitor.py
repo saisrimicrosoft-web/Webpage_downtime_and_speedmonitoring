@@ -96,14 +96,16 @@ class MonitorService:
             )
             status_code = response.status_code
             is_up = 200 <= status_code < 400
+            response_ms = int((time.time() - start_time) * 1000) if is_up else None
         except requests.exceptions.Timeout:
             logger.warning(f"Timeout checking {url}")
+            response_ms = None
         except requests.exceptions.ConnectionError:
             logger.warning(f"Connection error checking {url}")
+            response_ms = None
         except requests.exceptions.RequestException as e:
             logger.warning(f"Request error checking {url}: {e}")
-
-        response_ms = int((time.time() - start_time) * 1000)
+            response_ms = None
 
         # ── SSL check ──
         ssl_days_left = None
@@ -150,8 +152,12 @@ class MonitorService:
         db.session.add(check)
         db.session.commit()
         
-        # Process for incidents
+        # Process for incidents (old system)
         process_check_for_incidents(check)
+
+        # Process for alerts (new system)
+        from app.services.alert_service import AlertEngine
+        AlertEngine.process_check(check)
 
         return logged_result
 

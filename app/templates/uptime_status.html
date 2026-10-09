@@ -1,21 +1,253 @@
 {% extends "base.html" %}
-
 {% block title %}Uptime Status{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/uptime.css') }}">
-
-<div class="uptime-page" id="uptime-page">
-
-    <!-- Back link -->
-    <a href="{{ url_for('dashboard.index') }}" class="uptime-back" aria-label="Back to Dashboard">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Dashboard
-    </a>
-
-    <!-- ── Uptime Status Component ── -->
-    {% include 'uptime_status_component.html' %}
-
+<div class="page-header">
+    <div class="page-title-group">
+        <h1 class="page-title">
+            Uptime Status
+            <span class="badge badge-success" style="margin-left: 12px;"><span class="status-dot"></span>Live</span>
+        </h1>
+        <p class="page-subtitle">Historical availability and incident tracking for all monitored websites</p>
+    </div>
+    <div class="page-actions" style="display: flex; align-items: center; gap: 16px;">
+        <span id="last-updated-text" style="color: var(--text-muted); font-size: 13px;">Last updated: just now</span>
+        <select id="time-range-selector" class="form-control" style="width: auto;">
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+        </select>
+        <button id="export-csv-btn" class="btn btn-secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Export CSV
+        </button>
+    </div>
 </div>
 
+<div id="overall-status-banner" class="alert alert-success" style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; font-weight: 600; padding: 16px 20px; border-radius: 12px;">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3"/></svg>
+    <span id="overall-status-text">All Systems Operational</span>
+</div>
+
+<div class="stats-grid" style="margin-bottom: 32px;">
+    <div class="stat-card">
+        <div class="stat-label">Overall Uptime</div>
+        <div class="stat-value" id="kpi-uptime">--%</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Downtime</div>
+        <div class="stat-value" id="kpi-downtime">--</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Incidents</div>
+        <div class="stat-value" id="kpi-incidents">--</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Avg Response Time</div>
+        <div class="stat-value" id="kpi-response">-- ms</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Longest Outage</div>
+        <div class="stat-value" id="kpi-longest">--</div>
+    </div>
+</div>
+
+<div class="section-card" style="margin-bottom: 32px;">
+    <div class="section-card-header">
+        <h2 class="section-card-title">Uptime Trend</h2>
+    </div>
+    <div class="section-card-body" style="padding: 24px;">
+        <canvas id="uptimeTrendChart" height="80"></canvas>
+    </div>
+</div>
+
+<div class="section-card" style="margin-bottom: 32px;">
+    <div class="section-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <h2 class="section-card-title">Monitored Websites</h2>
+        <div class="section-card-header-right" style="display: flex; gap: 12px; align-items: center;">
+            <div class="topbar-search" style="margin: 0; background: var(--bg-primary); border: 1px solid var(--border-color);">
+                <svg class="topbar-search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="search" id="website-search-input" placeholder="Search domains..." aria-label="Search domains">
+            </div>
+            <select id="status-filter" class="form-control" style="width: 140px;">
+                <option value="all">All Status</option>
+                <option value="operational">Online</option>
+                <option value="degraded">Degraded</option>
+                <option value="down">Offline</option>
+            </select>
+        </div>
+    </div>
+    <div class="section-card-body p-0">
+        <div id="websites-container" style="display: flex; flex-direction: column;">
+            <!-- Websites injected here -->
+            <div style="padding: 32px; text-align: center; color: var(--text-muted);" id="websites-loading">
+                Loading websites...
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-card" style="margin-bottom: 32px;">
+    <div class="section-card-header">
+        <h2 class="section-card-title">Incident History</h2>
+    </div>
+    <div class="section-card-body p-0">
+        <div class="table-responsive">
+            <table class="table" id="incidents-table">
+                <thead>
+                    <tr>
+                        <th>Website</th>
+                        <th>Status</th>
+                        <th>Started</th>
+                        <th>Resolved</th>
+                        <th>Duration</th>
+                        <th>Cause</th>
+                    </tr>
+                </thead>
+                <tbody id="incidents-tbody">
+                    <tr><td colspan="6" style="text-align: center; padding: 32px; color: var(--text-muted);">Loading incidents...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 90-day bars */
+.uptime-bar-container {
+    display: flex;
+    gap: 2px;
+    height: 36px;
+    align-items: flex-end;
+    margin-top: 12px;
+    width: 100%;
+}
+.uptime-segment {
+    flex-grow: 1;
+    border-radius: 2px;
+    background-color: var(--border-color);
+    min-width: 3px;
+    height: 100%;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    position: relative;
+}
+.uptime-segment:hover {
+    opacity: 0.8;
+}
+.segment-operational { background-color: var(--success-color); }
+.segment-degraded { background-color: var(--warning-color); }
+.segment-down { background-color: var(--danger-color); }
+.segment-nodata { background-color: var(--border-color); }
+
+/* Tooltip */
+.uptime-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background: #111827;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+.uptime-segment:hover .uptime-tooltip {
+    opacity: 1;
+}
+.uptime-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -4px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: #111827 transparent transparent transparent;
+}
+
+.website-row {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.website-row:last-child {
+    border-bottom: none;
+}
+.website-row:hover {
+    background-color: var(--bg-secondary);
+}
+.website-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.website-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.website-favicon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+.website-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.website-url {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.website-metrics {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+.metric-value {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.chart-container {
+    display: none;
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px dashed var(--border-color);
+}
+.website-row.expanded .chart-container {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/uptime.js') }}"></script>
 {% endblock %}
