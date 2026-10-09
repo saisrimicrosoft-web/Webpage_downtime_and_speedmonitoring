@@ -7,7 +7,9 @@ import MonitorWebsitesContent from '@/components/MonitorWebsitesContent';
 import DowntimeAlertsContent from '@/components/DowntimeAlertsContent';
 import UptimeStatusContent from '@/components/UptimeStatusContent';
 import SslCertificateContent from '@/components/SslCertificateContent';
+import ReportsContent from '@/components/ReportsContent';
 import SettingsContent from '@/components/SettingsContent';
+import AddWebsiteModal from '@/components/AddWebsiteModal';
 import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import {
@@ -363,7 +365,7 @@ export default function DashboardClient({
         return <SslCertificateContent />;
 
       case 'reports':
-        return <PlaceholderScreen title="Reports" icon={<FileText className="w-8 h-8" />} />;
+        return <ReportsContent />;
 
       case 'settings':
         return <SettingsContent />;
@@ -382,6 +384,20 @@ export default function DashboardClient({
       >
         {renderPageContent()}
       </DashboardLayout>
+      {/* Global Add Website Modal */}
+      <AddWebsiteModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={async (data) => {
+          try {
+            await monitorsApi.create({ url: data.url, name: data.name });
+            handleRefresh();
+          } catch (err) {
+            console.error(err);
+          }
+          setIsAddModalOpen(false);
+        }}
+      />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import ssl
 import socket
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,8 @@ class SSLService:
                     if not_after_str:
                         # Format: 'Oct 15 12:00:00 2024 GMT'
                         expiry_date = datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
-                        remaining_days = (expiry_date - datetime.utcnow()).days
+                        expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+                        remaining_days = (expiry_date - datetime.now(timezone.utc)).days
                         is_valid = remaining_days > 0
                         return is_valid, remaining_days
                     return False, 0
