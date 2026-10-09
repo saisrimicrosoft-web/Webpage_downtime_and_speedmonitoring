@@ -25,7 +25,11 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///monitor.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Webhooks for alerts
+    # JWT
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY', 'jwt-secret')
+    JWT_EXPIRY_HOURS = int(os.environ.get('JWT_EXPIRY_HOURS', 72))
+
+    # Webhooks for alerts (Discord Webhook for downtime alerts)
     DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', '')
 
     # Monitoring settings
@@ -35,7 +39,16 @@ class Config:
     # SSL warning threshold
     SSL_WARNING_DAYS = int(os.environ.get('SSL_WARNING_DAYS', 30))
 
-    # Supabase Integration settings
+    # Supabase Integration settings (optional)
     SUPABASE_URL = os.environ.get('SUPABASE_URL') or os.environ.get('NEXT_PUBLIC_SUPABASE_URL', '')
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or os.environ.get('NEXT_PUBLIC_SUPABASE_ANON_KEY', '')
 
+    # SMTP settings (optional — leave blank for log-only mode)
+    SMTP_HOST     = os.environ.get('SMTP_HOST', '')
+    SMTP_PORT     = int(os.environ.get('SMTP_PORT', 587))
+    SMTP_USER     = os.environ.get('SMTP_USER', '')
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+    SMTP_FROM     = os.environ.get('SMTP_FROM', '')
+
+    # Data retention: keep detailed checks for N days before aggregating
+    CHECK_RETENTION_DAYS = int(os.environ.get('CHECK_RETENTION_DAYS', 30))

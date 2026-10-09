@@ -16,9 +16,9 @@ export default function KPIOverview({ uptimePercentage, activeIncidents, sslWarn
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
           <Activity className="w-7 h-7" />
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Global Uptime</p>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-white mt-1">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">Global Uptime</p>
+          <p className="text-xl xl:text-2xl font-bold text-zinc-900 dark:text-white mt-1 truncate tracking-tight">
             {uptimePercentage.toFixed(2)}%
           </p>
         </div>

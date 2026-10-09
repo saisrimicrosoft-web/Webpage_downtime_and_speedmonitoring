@@ -5,22 +5,42 @@ import atexit
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler()
-
-# Store app reference for context
 _app = None
 
 
 def run_all_checks():
-    """Scheduled job: check all URLs from urls.json within an app context."""
+    """Scheduled job: run legacy checks + user-scoped monitor checks."""
     from app.services.monitor import MonitorService
+    from app.services.user_monitor_service import UserMonitorService
+
     if _app is None:
-        logger.error("No Flask app reference available for scheduler.")
+        logger.error('No Flask app reference available for scheduler.')
         return
+
     with _app.app_context():
+        # 1. Legacy URL-level checks (keeps existing dashboard working)
         try:
             MonitorService.check_all_urls()
         except Exception as e:
-            logger.error(f"Scheduler exception during monitoring: {str(e)}")
+            logger.error(f'Legacy scheduler error: {e}')
+
+        # 2. User-scoped monitor checks (new auth system)
+        try:
+            UserMonitorService.check_all_monitors()
+        except Exception as e:
+            logger.error(f'UserMonitor scheduler error: {e}')
+
+
+def run_retention():
+    """Scheduled job: prune old check rows once per day."""
+    if _app is None:
+        return
+    with _app.app_context():
+        try:
+            from app.utils.retention import run_retention as _run
+            _run()
+        except Exception as e:
+            logger.error(f'Retention job error: {e}')
 
 
 def cleanup_old_data():
@@ -52,7 +72,6 @@ def cleanup_old_data():
             logger.error(f"Error in cleanup job: {str(e)}")
 
 def start_scheduler(app):
-    """Start the background scheduler with a single repeating job."""
     global _app
     _app = app
 
@@ -71,7 +90,16 @@ def start_scheduler(app):
             id="monitor_all",
             replace_existing=True,
             max_instances=1,
-            coalesce=True
+            coalesce=True,
+        )
+        scheduler.add_job(
+            func=run_retention,
+            trigger='interval',
+            hours=24,
+            id='retention',
+            replace_existing=True,
+            max_instances=1,
+            coalesce=True,
         )
         
         # Add daily cleanup job
@@ -84,6 +112,5 @@ def start_scheduler(app):
         )
 
         scheduler.start()
-        logger.info(f"Scheduler started (interval={interval}s).")
-
+        logger.info(f"Scheduler started (interval={interval}s, retention=24h).")
         atexit.register(lambda: scheduler.shutdown(wait=False))
