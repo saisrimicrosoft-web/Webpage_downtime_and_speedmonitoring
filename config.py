@@ -29,7 +29,7 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or os.environ.get('SECRET_KEY', 'jwt-secret')
     JWT_EXPIRY_HOURS = int(os.environ.get('JWT_EXPIRY_HOURS', 72))
 
-    # Discord Webhook for alerts
+    # Webhooks for alerts (Discord Webhook for downtime alerts)
     DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL', '')
 
     # Monitoring settings
@@ -52,3 +52,4 @@ class Config:
 
     # Data retention: keep detailed checks for N days before aggregating
     CHECK_RETENTION_DAYS = int(os.environ.get('CHECK_RETENTION_DAYS', 30))
+

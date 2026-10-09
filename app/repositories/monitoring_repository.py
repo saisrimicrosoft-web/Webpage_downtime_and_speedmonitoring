@@ -1,66 +1,51 @@
-from app.models import db
+from typing import List, Dict, Any
 from app.models.check import Check
+from app.models import db
 from sqlalchemy import func
-
+from app.utils.uptime_calculator import get_uptime_stats_for_range
 
 class CheckRepository:
-    """Data access layer for the CHECKS table."""
+    """Data access layer for reading monitoring data from SQLite for the dashboard."""
 
     @staticmethod
-    def get_latest_check_per_url():
-        """Get the most recent check for each unique URL."""
-        # Subquery to get the max checked_at per URL
-        subq = db.session.query(
-            Check.url,
-            func.max(Check.checked_at).label('max_checked')
-        ).group_by(Check.url).subquery()
-
-        results = db.session.query(Check).join(
-            subq,
-            (Check.url == subq.c.url) & (Check.checked_at == subq.c.max_checked)
-        ).all()
-        return results
+    def get_latest_check_per_url() -> List[Check]:
+        # Fetch all checks, sort by checked_at descending, then get first per URL
+        checks = Check.query.order_by(Check.url, Check.checked_at.desc()).all()
+        seen_urls = set()
+        latest_checks = []
+        for c in checks:
+            if c.url not in seen_urls:
+                latest_checks.append(c)
+                seen_urls.add(c.url)
+        return latest_checks
 
     @staticmethod
-    def get_uptime_per_url():
-        """Calculate average uptime percentage for each URL."""
-        # We can just count total checks and up checks per url
-        results = db.session.query(
-            Check.url,
-            func.count(Check.id).label('total_checks'),
-            func.sum(db.case((Check.is_up == True, 1), else_=0)).label('up_checks')
-        ).group_by(Check.url).all()
-        
-        uptime_map = {}
-        for row in results:
-            if row.total_checks > 0:
-                uptime_map[row.url] = round((row.up_checks / row.total_checks) * 100, 2)
+    def get_checks_for_url(url: str, limit: int = 50) -> List[Check]:
+        return Check.query.filter_by(url=url).order_by(Check.checked_at.desc()).limit(limit).all()
+
+    @staticmethod
+    def get_all_checks(limit: int = 100) -> List[Check]:
+        return Check.query.order_by(Check.checked_at.desc()).limit(limit).all()
+
+    @staticmethod
+    def get_uptime_per_url() -> Dict[str, float]:
+        from config import load_urls
+        urls = load_urls()
+        result = {}
+        for url in urls:
+            uptime_pct, _, _, _, _ = get_uptime_stats_for_range(url=url, hours=None)
+            if uptime_pct == 0.0 and Check.query.filter_by(url=url).count() == 0:
+                result[url] = 100.0 # No checks means default to 100.0 like before to match expectations
             else:
-                uptime_map[row.url] = 0.0
-        return uptime_map
+                result[url] = uptime_pct
+        return result
 
     @staticmethod
-    def get_checks_for_url(url: str, limit: int = 50):
-        """Get recent checks for a specific URL, ordered newest-first."""
-        return Check.query.filter_by(url=url).order_by(
-            Check.checked_at.desc()
-        ).limit(limit).all()
-
-    @staticmethod
-    def get_all_checks(limit: int = 100):
-        """Get the most recent checks across all URLs."""
-        return Check.query.order_by(
-            Check.checked_at.desc()
-        ).limit(limit).all()
-
-    @staticmethod
-    def get_summary():
-        """Get dashboard summary counts and averages."""
+    def get_summary() -> Dict[str, Any]:
         from config import load_urls
         urls = load_urls()
         latest = CheckRepository.get_latest_check_per_url()
 
-        # Build a map of url -> latest check
         latest_map = {c.url: c for c in latest}
 
         total = len(urls)
@@ -74,17 +59,8 @@ class CheckRepository:
         response_count = 0
         
         latency_dist = {
-            'fast': 0,      # <100ms
-            'normal': 0,    # 100-250ms
-            'slow': 0,      # 250-500ms
-            'critical': 0   # >500ms
+            'fast': 0, 'normal': 0, 'slow': 0, 'critical': 0
         }
-
-        # Calculate uptime per site
-        # We need historical stats. Let's do a quick global query for avg uptime.
-        # Actually it's more efficient to just get all checks or query DB for aggregates.
-        # For simplicity, we'll calculate current state metrics here.
-        # The global average uptime will be calculated using a DB query.
 
         for url in urls:
             check = latest_map.get(url)
@@ -112,19 +88,12 @@ class CheckRepository:
                     else:
                         latency_dist['critical'] += 1
 
-            # SSL warning
             if check and check.ssl_days_left is not None and check.ssl_days_left < 30:
                 ssl_warning_count += 1
 
         avg_response_ms = (total_response_ms / response_count) if response_count > 0 else 0
         
-        # Calculate overall uptime percentage
-        total_checks_count = db.session.query(func.count(Check.id)).scalar()
-        up_checks_count = db.session.query(func.count(Check.id)).filter(Check.is_up == True).scalar()
-        
-        avg_uptime_pct = 0
-        if total_checks_count and total_checks_count > 0:
-            avg_uptime_pct = (up_checks_count / total_checks_count) * 100
+        avg_uptime_pct, _, _, _, _ = get_uptime_stats_for_range(hours=None)
 
         return {
             'total': total,

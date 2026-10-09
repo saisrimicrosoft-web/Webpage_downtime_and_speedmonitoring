@@ -109,6 +109,7 @@
              style="width: {{ uptime_pct }}%"></div>
     </div>
 </div>
+{% endif %}
 
 <!-- ── Websites Table ── -->
 <div class="section-card" aria-labelledby="status-table-heading">
@@ -126,10 +127,17 @@
             </div>
 
             <select class="filter-select" id="filter-status" aria-label="Filter by status">
-                <option value="">▼ All Status</option>
+                <option value="all">▼ All Status</option>
                 <option value="online">Online</option>
                 <option value="offline">Offline</option>
+                <option value="degraded">Degraded</option>
                 <option value="pending">Pending</option>
+            </select>
+
+            <select class="filter-select" id="filter-ssl" aria-label="Filter by SSL">
+                <option value="all">▼ All SSL</option>
+                <option value="valid">Valid</option>
+                <option value="warning">Expiring Soon</option>
             </select>
 
             <button class="btn btn-sm" onclick="window.location.reload()" aria-label="Refresh data">
@@ -139,27 +147,6 @@
                 </svg>
                 Refresh
             </button>
-        </div>
-    </div>
-
-    <!-- Toolbar / Filtering -->
-    <div class="toolbar">
-        <div class="search-box">
-            <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="domain-search" class="search-input" placeholder="Filter domains..." oninput="filterTable()">
-        </div>
-        <div class="filter-group">
-            <select id="status-filter" class="filter-select" onchange="filterTable()">
-                <option value="all">Status: All</option>
-                <option value="online">Online</option>
-                <option value="degraded">Degraded</option>
-                <option value="down">Down</option>
-            </select>
-            <select id="ssl-filter" class="filter-select" onchange="filterTable()">
-                <option value="all">SSL: All</option>
-                <option value="valid">Valid</option>
-                <option value="warning">Expiring Soon</option>
-            </select>
         </div>
     </div>
 
@@ -291,16 +278,53 @@
 // Table search filter
 const tableSearch = document.getElementById('table-search');
 const filterStatus = document.getElementById('filter-status');
+const filterSsl = document.getElementById('filter-ssl');
+
 function applyFilters() {
     const q = (tableSearch ? tableSearch.value : '').toLowerCase();
-    const status = filterStatus ? filterStatus.value : '';
+    const status = (filterStatus ? filterStatus.value : 'all').toLowerCase();
+    const ssl = (filterSsl ? filterSsl.value : 'all').toLowerCase();
+    
+    let visibleCount = 0;
+    
     document.querySelectorAll('#website-tbody tr').forEach(row => {
-        const matchQ = !q || row.textContent.toLowerCase().includes(q);
-        const matchStatus = !status || row.dataset.status === status;
-        row.style.display = (matchQ && matchStatus) ? '' : 'none';
+        const text = row.textContent.toLowerCase();
+        const matchQ = !q || text.includes(q);
+        
+        let matchStatus = true;
+        const rowStatus = row.dataset.status;
+        if (status !== 'all') {
+            matchStatus = rowStatus === status;
+        }
+        
+        let matchSsl = true;
+        if (ssl !== 'all') {
+            const isWarning = text.includes('expiring soon') || text.includes('crit') || text.includes('warn');
+            if (ssl === 'warning') matchSsl = isWarning;
+            if (ssl === 'valid') matchSsl = !isWarning;
+        }
+        
+        if (matchQ && matchStatus && matchSsl) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
     });
+    
+    const noResults = document.getElementById('no-results');
+    if (noResults) {
+        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
 }
+
 if (tableSearch) tableSearch.addEventListener('input', applyFilters);
 if (filterStatus) filterStatus.addEventListener('change', applyFilters);
+if (filterSsl) filterSsl.addEventListener('change', applyFilters);
+
+// Auto-refresh every 60 seconds
+setTimeout(() => {
+    window.location.reload();
+}, 60000);
 </script>
 {% endblock %}
