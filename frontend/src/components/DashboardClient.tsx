@@ -11,9 +11,10 @@ import PerformanceSpeedContent from '@/components/PerformanceSpeedContent';
 import DowntimeAlertsContent from '@/components/DowntimeAlertsContent';
 import UptimeStatusContent from '@/components/UptimeStatusContent';
 import SslCertificateContent from '@/components/SslCertificateContent';
+import ReportsContent from '@/components/ReportsContent';
 import SettingsContent from '@/components/SettingsContent';
 import AddWebsiteModal from '@/components/AddWebsiteModal';
-import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
+import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, addUrl, CheckLog } from '@/lib/api';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import {
   Activity, RefreshCw, Radio, Database, Clock, Gauge, TrendingUp,
@@ -201,7 +202,7 @@ export default function DashboardClient({
         return <SslCertificateContent />;
 
       case 'reports':
-        return <PlaceholderScreen title="Reports" icon={<FileText className="w-8 h-8" />} />;
+        return <ReportsContent />;
 
       case 'settings':
         return <SettingsContent />;
@@ -225,8 +226,17 @@ export default function DashboardClient({
       <AddWebsiteModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSave={(data) => {
-          console.log('New website saved:', data);
+        onSave={async (data) => {
+          try {
+            const res = await addUrl(data.url);
+            if (res.success) {
+              handleRefresh();
+            } else {
+              alert(res.message);
+            }
+          } catch (err) {
+            console.error(err);
+          }
           setIsAddModalOpen(false);
         }}
       />
