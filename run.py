@@ -16,6 +16,7 @@ from app.scheduler.scheduler import start_scheduler
 from app.utils.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
+
 def create_app(config_class=Config):
     setup_logging()
 

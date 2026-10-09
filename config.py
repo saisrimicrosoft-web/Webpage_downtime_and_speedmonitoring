@@ -52,3 +52,4 @@ class Config:
 
     # Data retention: keep detailed checks for N days before aggregating
     CHECK_RETENTION_DAYS = int(os.environ.get('CHECK_RETENTION_DAYS', 30))
+
