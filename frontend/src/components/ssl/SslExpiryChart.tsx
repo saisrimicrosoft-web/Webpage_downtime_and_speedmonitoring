@@ -20,23 +20,23 @@ interface TooltipProps {
   payload?: Array<{ payload: BucketEntry }>;
 }
 
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 shadow-lg text-xs max-w-[200px]">
+      <p className="font-bold text-zinc-800 dark:text-zinc-200 mb-1">{d.name} — {d.count} cert{d.count !== 1 ? 's' : ''}</p>
+      {d.domains.slice(0, 5).map((dom: string) => (
+        <p key={dom} className="text-zinc-500 truncate">· {dom}</p>
+      ))}
+      {d.domains.length > 5 && <p className="text-zinc-400">+{d.domains.length - 5} more</p>}
+    </div>
+  );
+};
+
 export default function SslExpiryChart({ certs }: Props) {
   const buckets = getSslBuckets(certs.map(c => ({ hostname: c.hostname, ssl_days_left: c.ssl_days_left })));
   const data: BucketEntry[] = buckets.map(b => ({ name: b.label, count: b.count, domains: b.domains, color: b.barColor }));
-
-  const CustomTooltip = ({ active, payload }: TooltipProps) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 shadow-lg text-xs max-w-[200px]">
-        <p className="font-bold text-zinc-800 dark:text-zinc-200 mb-1">{d.name} — {d.count} cert{d.count !== 1 ? 's' : ''}</p>
-        {d.domains.slice(0, 5).map((dom: string) => (
-          <p key={dom} className="text-zinc-500 truncate">· {dom}</p>
-        ))}
-        {d.domains.length > 5 && <p className="text-zinc-400">+{d.domains.length - 5} more</p>}
-      </div>
-    );
-  };
 
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-xs">

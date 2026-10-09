@@ -37,7 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     const stored = localStorage.getItem('auth_token');
-    if (!stored) { setLoading(false); return; }
+    if (!stored) {
+      Promise.resolve().then(() => setLoading(false));
+      return;
+    }
     try {
       const { user: u } = await authApi.me();
       setToken(stored);

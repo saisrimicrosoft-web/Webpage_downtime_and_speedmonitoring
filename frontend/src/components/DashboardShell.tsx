@@ -8,33 +8,31 @@
 
 import React, { useState, useEffect } from 'react';
 import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory, CheckLog } from '@/lib/api';
+import { monitorsApi, MonitorRecord } from '@/lib/flaskApi';
 import { Activity, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import to avoid SSR issues (the component uses useState/useEffect)
 const DashboardClient = dynamic(() => import('./DashboardClient'), { ssr: false });
 
-interface Props {
-  onAddMonitor: () => void;
-}
-
 const EMPTY_KPIS = { uptimePercentage: 100, activeIncidents: 0, sslWarnings: 0, totalUrls: 0 };
 
-export default function DashboardShell({ onAddMonitor }: Props) {
+export default function DashboardShell() {
   const [ready, setReady]     = useState(false);
   const [kpis,  setKpis]      = useState(EMPTY_KPIS);
   const [logs,  setLogs]      = useState<CheckLog[]>([]);
   const [urls,  setUrls]      = useState<string[]>([]);
+  const [monitors, setMonitors] = useState<MonitorRecord[]>([]);
   const [chartUrl,  setChartUrl]  = useState('');
   const [chartData, setChartData] = useState<CheckLog[]>([]);
 
   useEffect(() => {
     async function load() {
       try {
-        const [k, l, u] = await Promise.all([
-          getGlobalKPIs(), getRecentLogs(50), getUniqueUrls(),
+        const [k, l, u, mList] = await Promise.all([
+          getGlobalKPIs(), getRecentLogs(50), getUniqueUrls(), monitorsApi.list().catch(() => [])
         ]);
-        setKpis(k); setLogs(l); setUrls(u);
+        setKpis(k); setLogs(l); setUrls(u); setMonitors(mList);
         if (u.length > 0) {
           setChartUrl(u[0]);
           const cd = await getUrlHistory(u[0]);
@@ -67,6 +65,7 @@ export default function DashboardShell({ onAddMonitor }: Props) {
       initialKpis={kpis}
       initialLogs={logs}
       initialUrls={urls}
+      initialMonitors={monitors}
       initialChartUrl={chartUrl}
       initialChartData={chartData}
     />
