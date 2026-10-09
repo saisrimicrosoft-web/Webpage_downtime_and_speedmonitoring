@@ -11,12 +11,11 @@ from app.routes.uptime import uptime_bp
 from app.routes.auth import auth_bp
 from app.routes.monitors import monitors_bp
 from app.routes.profile import profile_bp
+from app.routes.alerts import alerts_bp
 from app.scheduler.scheduler import start_scheduler
 from app.utils.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
-
-
 def create_app(config_class=Config):
     setup_logging()
 
@@ -38,12 +37,32 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(monitors_bp, url_prefix='/api/monitors')
     app.register_blueprint(profile_bp, url_prefix='/api/profile')
+    app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
+    
+    from app.routes.alerts_page import alerts_page_bp
+    app.register_blueprint(alerts_page_bp)
+
+    from app.routes.settings_api import settings_api_bp
+    app.register_blueprint(settings_api_bp, url_prefix='/api')
+    
+    from app.routes.settings_page import settings_page_bp
+    app.register_blueprint(settings_page_bp)
 
     # Setup database (create all tables) and seed default user
     with app.app_context():
         os.makedirs(app.instance_path, exist_ok=True)
         db.create_all()
         _migrate_legacy_data()
+
+        from app.models.user import User
+        from werkzeug.security import generate_password_hash
+        if not User.query.first():
+            admin = User(name='DevOps Admin', email='admin@example.com', password_hash=generate_password_hash('admin123'))
+            db.session.add(admin)
+            db.session.commit()
+
+        from app.services.settings_service import SettingsService
+        SettingsService.seed_defaults()
         # Start the background scheduler
         if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
             start_scheduler(app)
