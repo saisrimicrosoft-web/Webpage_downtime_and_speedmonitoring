@@ -13,7 +13,7 @@ uptime_bp = Blueprint('uptime', __name__)
 
 # ── Page route ────────────────────────────────────────────────────
 
-@uptime_bp.route('/uptime')
+@uptime_bp.route('/uptime-status')
 def uptime_page():
     """Render the Uptime Status page."""
     urls = load_urls()
