@@ -1,1 +1,9 @@
-["https://api.pulseguard.io", "https://app.acme-store.com", "tcp://db.acme-store.com:5432", "https://checkout.acme-store.com", "http://staging.acme.dev"]
+[
+    "https://www.google.com",
+    "https://example.com",
+    "https://api.pulseguard.io",
+    "https://app.acme-store.com",
+    "tcp://db.acme-store.com:5432",
+    "https://checkout.acme-store.com",
+    "http://staging.acme.dev"
+]

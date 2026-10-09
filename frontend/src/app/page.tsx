@@ -1,26 +1,23 @@
+'use client';
+
 import React from 'react';
-import DashboardClient from '@/components/DashboardClient';
-import { getGlobalKPIs, getRecentLogs, getUniqueUrls, getUrlHistory } from '@/lib/api';
+import AuthGuard from '@/components/AuthGuard';
+import DashboardShell from '@/components/DashboardShell';
 
-export const revalidate = 30; // Revalidate static generation every 30 seconds
-
-export default async function DashboardPage() {
-  const [kpis, recentLogs, uniqueUrls] = await Promise.all([
-    getGlobalKPIs(),
-    getRecentLogs(50),
-    getUniqueUrls(),
-  ]);
-
-  const initialChartUrl = uniqueUrls.length > 0 ? uniqueUrls[0] : '';
-  const initialChartData = initialChartUrl ? await getUrlHistory(initialChartUrl) : [];
-
+export default function HomePage() {
   return (
-    <DashboardClient
-      initialKpis={kpis}
-      initialLogs={recentLogs}
-      initialUrls={uniqueUrls}
-      initialChartUrl={initialChartUrl}
-      initialChartData={initialChartData}
-    />
+    <AuthGuard>
+      <DashboardPage />
+    </AuthGuard>
+  );
+}
+
+function DashboardPage() {
+  return (
+    <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+      <main className="flex-1 overflow-y-auto">
+        <DashboardShell />
+      </main>
+    </div>
   );
 }
