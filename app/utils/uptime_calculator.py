@@ -30,9 +30,7 @@ def get_uptime_stats_for_range(url: str = None, hours: int = 24):
     
     # Average response time (excluding failed checks where response_ms is None)
     resp_query = query.filter(Check.response_ms != None)
-    avg_response_row = db.session.query(db.func.avg(Check.response_ms)).filter(
-        *resp_query.whereclause.clauses if hasattr(resp_query, 'whereclause') and resp_query.whereclause is not None else []
-    ).scalar()
+    avg_response_row = resp_query.with_entities(db.func.avg(Check.response_ms)).scalar()
     
     # Actually simpler:
     resp_times = [c.response_ms for c in resp_query.all() if c.response_ms is not None]

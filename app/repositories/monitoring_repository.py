@@ -98,10 +98,14 @@ class CheckRepository:
         return {
             'total': total,
             'up': up_count,
+            'online': up_count,
             'degraded': degraded_count,
             'down': down_count,
+            'offline': down_count,
             'ssl_warning': ssl_warning_count,
             'unchecked': unchecked,
+            'pending': unchecked,
+            'overall uptime': round(avg_uptime_pct, 2),
             'avg_response_ms': round(avg_response_ms),
             'avg_uptime_pct': round(avg_uptime_pct, 2),
             'latency_dist': latency_dist
