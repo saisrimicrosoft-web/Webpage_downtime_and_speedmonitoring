@@ -289,13 +289,13 @@ def get_pulse():
     # query failed checks
     from app.models.check import Check
     # We group by 30-min intervals. Since SQLite lacks nice DATE_TRUNC, we can fetch and group in Python.
-    checks = Check.query.filter(Check.timestamp >= start_time, Check.status_code != 200).all()
+    checks = Check.query.filter(Check.checked_at >= start_time, Check.status_code != 200).all()
     
     buckets = [0] * 36
     bucket_sec = 30 * 60
     
     for c in checks:
-        diff_sec = (c.timestamp - start_time).total_seconds()
+        diff_sec = (c.checked_at - start_time).total_seconds()
         idx = int(diff_sec // bucket_sec)
         if 0 <= idx < 36:
             buckets[idx] += 1

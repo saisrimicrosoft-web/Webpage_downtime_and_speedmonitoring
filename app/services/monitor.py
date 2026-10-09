@@ -88,10 +88,12 @@ class MonitorService:
         status_code = None
 
         try:
+            from app.services.settings_service import SettingsService
+            timeout_sec = int(SettingsService.get_setting('request_timeout', '10'))
             headers = {"User-Agent": "UniversalMonitor/1.0"}
             response = requests.get(
                 url,
-                timeout=Config.REQUEST_TIMEOUT_SECONDS,
+                timeout=timeout_sec,
                 headers=headers,
             )
             status_code = response.status_code
