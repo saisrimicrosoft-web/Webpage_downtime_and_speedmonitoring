@@ -71,10 +71,10 @@ const Heartbeat = ({ status }: { status: string }) => {
     <div className="w-[300px] h-[40px] overflow-hidden relative" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
       <div className="absolute top-0 left-0 h-full w-[600px] flex animate-ecg" style={{ animation: 'ecg-slide 3.5s linear infinite' }}>
          <svg className="w-[300px] h-[40px] shrink-0" viewBox="0 0 300 40">
-            <path d={path} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ filter: \`drop-shadow(0 0 4px \${color})\` }} />
+            <path d={path} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
          </svg>
          <svg className="w-[300px] h-[40px] shrink-0" viewBox="0 0 300 40">
-            <path d={path} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ filter: \`drop-shadow(0 0 4px \${color})\` }} />
+            <path d={path} stroke={color} strokeWidth="1.75" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
          </svg>
       </div>
     </div>
@@ -90,12 +90,12 @@ const MonitorRow = ({ monitor, isSelected, onClick }: { monitor: any, isSelected
     <button 
       onClick={onClick}
       aria-pressed={isSelected}
-      aria-label={\`\${monitor.name}, \${monitor.status}, \${monitor.uptime !== null ? monitor.uptime + '%' : 'paused'}\`}
-      className={\`w-full grid items-center text-left px-[14px] rounded-[12px] transition-colors border outline-none font-inter
-        \${isSelected 
+      aria-label={`${monitor.name}, ${monitor.status}, ${monitor.uptime !== null ? monitor.uptime + '%' : 'paused'}`}
+      className={`w-full grid items-center text-left px-[14px] rounded-[12px] transition-colors border outline-none font-inter
+        ${isSelected 
           ? 'bg-[rgba(124,92,255,0.08)] border-[#7c5cff] shadow-[0_0_0_1px_rgba(124,92,255,0.25),0_0_24px_rgba(124,92,255,0.18)]' 
           : 'bg-[var(--row)] border-[var(--border)]'}
-        \${isPaused ? 'opacity-60' : 'opacity-100'}\`}
+        ${isPaused ? 'opacity-60' : 'opacity-100'}`}
       style={{ gridTemplateColumns: '28px 1fr 300px auto', height: '56px' }}
     >
       <div className="shrink-0 flex items-center justify-center w-4 h-4">
@@ -109,7 +109,7 @@ const MonitorRow = ({ monitor, isSelected, onClick }: { monitor: any, isSelected
       <div className="truncate flex-1 pr-4 min-w-0 flex flex-col justify-center">
         <div className="text-[13px] font-[600] text-[var(--text)] truncate">{monitor.name}</div>
         <div className="text-[11px] text-[var(--muted)] truncate">
-          {monitor.protocol} · {isPaused ? 'paused' : \`\${monitor.regions} region\${monitor.regions > 1 ? 's' : ''}\`}
+          {monitor.protocol} · {isPaused ? 'paused' : `${monitor.regions} region${monitor.regions > 1 ? 's' : ''}`}
         </div>
       </div>
       
@@ -122,7 +122,7 @@ const MonitorRow = ({ monitor, isSelected, onClick }: { monitor: any, isSelected
           <span className="text-[15px] font-[600] text-[var(--faint)]">Paused</span>
         ) : (
           <span className="text-[15px] font-[700] tabular-nums" style={{ color }}>
-            {monitor.uptime === 100 ? '100%' : \`\${monitor.uptime}%\`}
+            {monitor.uptime === 100 ? '100%' : `${monitor.uptime}%`}
           </span>
         )}
       </div>
@@ -138,8 +138,8 @@ const UptimeHeatmap = ({ monitorId }: { monitorId: string }) => {
         {history.map((status, i) => (
           <div 
             key={i} 
-            title={\`\${status}\`}
-            className={\`w-[15px] h-[15px] rounded-[3px] \${status === 'perfect' ? 'bg-[var(--green)]' : status === 'slow' ? 'bg-[var(--amber)]' : 'bg-[var(--red)]'}\`} 
+            title={`${status}`}
+            className={`w-[15px] h-[15px] rounded-[3px] ${status === 'perfect' ? 'bg-[var(--green)]' : status === 'slow' ? 'bg-[var(--amber)]' : 'bg-[var(--red)]'}`} 
           />
         ))}
       </div>
@@ -167,11 +167,11 @@ const IncidentLog = ({ monitorId, now }: { monitorId: string, now: number }) => 
               const diffMs = Math.max(0, now - inc.startedAt);
               const minutes = Math.floor(diffMs / 60000);
               const seconds = Math.floor((diffMs % 60000) / 1000);
-              displayDuration = \`\${minutes}m \${seconds}s\`;
+              displayDuration = `${minutes}m ${seconds}s`;
             }
             
             return (
-              <div key={i} className={\`py-[12px] flex items-start justify-between \${i !== 0 ? 'border-t border-[var(--border)]' : ''}\`}>
+              <div key={i} className={`py-[12px] flex items-start justify-between ${i !== 0 ? 'border-t border-[var(--border)]' : ''}`}>
                 <div className="flex items-start gap-3">
                   {isOngoing ? (
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] bg-[rgba(248,113,113,0.12)] text-[var(--red)] text-[11px] font-[600] border border-[rgba(248,113,113,0.35)] mt-0.5">
@@ -204,7 +204,7 @@ const IncidentLog = ({ monitorId, now }: { monitorId: string, now: number }) => 
 export default function UptimeStatus() {
   const [selectedMonitor, setSelectedMonitor] = useState<string>('checkout');
   const [range, setRange] = useState<'24h' | '7d' | '30d' | '90d'>('90d');
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -251,11 +251,11 @@ export default function UptimeStatus() {
           <button
             key={r}
             onClick={() => setRange(r)}
-            className={\`h-[32px] px-[14px] text-[12px] font-[500] rounded-[8px] transition-colors shrink-0 \${
+            className={`h-[32px] px-[14px] text-[12px] font-[500] rounded-[8px] transition-colors shrink-0 ${
               range === r 
                 ? 'bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.28)] text-[#fff]' 
                 : 'bg-transparent border border-[rgba(255,255,255,0.14)] text-[#c9c9d3] hover:border-[rgba(255,255,255,0.28)]'
-            }\`}
+            }`}
           >
             {r}
           </button>

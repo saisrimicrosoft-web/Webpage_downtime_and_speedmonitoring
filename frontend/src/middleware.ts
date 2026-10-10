@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 const publicRoutes = [
   "/login",
@@ -11,47 +11,18 @@ const publicRoutes = [
 
 const authApiRoutes = ["/api/auth"];
 
-export default auth((req) => {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth;
 
-  // Allow Auth.js API routes to pass through
-  if (authApiRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-
-  // Allow public API routes (registration, forgot-password, etc.)
-  if (pathname.startsWith("/api/register") ||
-      pathname.startsWith("/api/verify-email") ||
-      pathname.startsWith("/api/forgot-password") ||
-      pathname.startsWith("/api/reset-password")) {
-    return NextResponse.next();
-  }
-
-  // Flask proxy routes — let them pass through
-  // These are handled by next.config.ts rewrites
+  // Allow API routes to pass through
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
-  // Public pages: redirect authenticated users to dashboard
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/", req.nextUrl));
-    }
-    return NextResponse.next();
-  }
-
-  // Protected pages: redirect unauthenticated users to login
-  // TODO: re-enable once DATABASE_URL is configured
-  // if (!isLoggedIn) {
-  //   const loginUrl = new URL("/login", req.nextUrl);
-  //   loginUrl.searchParams.set("callbackUrl", pathname);
-  //   return NextResponse.redirect(loginUrl);
-  // }
-
+  // We are not enforcing auth on the edge since the backend handles it.
+  // The client side will redirect if it's not authenticated.
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

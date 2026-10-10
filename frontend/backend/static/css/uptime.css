@@ -1,0 +1,1088 @@
+/* =========================================================
+   Uptime Status — Dedicated Stylesheet
+   Professional observability console aesthetic
+   Reuses the EarlyWarning design system tokens
+   ========================================================= */
+
+/* ── Layout ── */
+.uptime-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ── Back Link ── */
+.uptime-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color var(--transition);
+    margin-bottom: -8px;
+}
+.uptime-back:hover { color: var(--brand); }
+.uptime-back svg { flex-shrink: 0; }
+
+/* ── Website Selector ── */
+.uptime-selector {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.uptime-selector-dropdown {
+    position: relative;
+    flex: 1 1 300px;
+    max-width: 420px;
+}
+.uptime-select {
+    width: 100%;
+    padding: 10px 36px 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--bg-card);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all var(--transition);
+}
+.uptime-select:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-glow);
+}
+.uptime-selector-dropdown::after {
+    content: '';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--text-muted);
+    pointer-events: none;
+}
+
+.uptime-selector-env {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.uptime-selector-env svg { width: 12px; height: 12px; }
+
+/* ── Status Banner ── */
+.uptime-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 28px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-card);
+    gap: 20px;
+    flex-wrap: wrap;
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.uptime-banner.status-operational {
+    border-left: 4px solid var(--green);
+}
+.uptime-banner.status-degraded {
+    border-left: 4px solid var(--amber);
+}
+.uptime-banner.status-down {
+    border-left: 4px solid var(--red);
+}
+.uptime-banner.status-unknown {
+    border-left: 4px solid var(--text-faint);
+}
+
+.uptime-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1 1 auto;
+}
+
+.uptime-status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+.uptime-status-icon.operational {
+    background: var(--green-bg);
+    color: var(--green);
+}
+.uptime-status-icon.degraded {
+    background: var(--amber-bg);
+    color: var(--amber);
+}
+.uptime-status-icon.down {
+    background: var(--red-bg);
+    color: var(--red);
+}
+.uptime-status-icon.unknown {
+    background: var(--neutral-bg);
+    color: var(--text-faint);
+}
+/* Pulse ring for operational */
+.uptime-status-icon.operational::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    opacity: 0;
+    animation: status-pulse 2.5s ease-in-out infinite;
+}
+@keyframes status-pulse {
+    0%, 100% { opacity: 0; transform: scale(0.95); }
+    50% { opacity: 0.3; transform: scale(1.05); }
+}
+
+.uptime-status-icon .status-dot-inner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.uptime-banner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.uptime-banner-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.uptime-banner-label.operational { color: var(--green); }
+.uptime-banner-label.degraded { color: var(--amber); }
+.uptime-banner-label.down { color: var(--red); }
+.uptime-banner-label.unknown { color: var(--text-faint); }
+
+.uptime-banner-message {
+    font-size: 0.9rem;
+    color: var(--text);
+    font-weight: 500;
+}
+.uptime-banner-url {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.uptime-banner-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.uptime-last-checked {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.uptime-live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 100px;
+}
+.uptime-live-indicator.live {
+    background: var(--green-bg);
+    color: #047857;
+    border: 1px solid var(--green-border);
+}
+.uptime-live-indicator.reconnecting {
+    background: var(--amber-bg);
+    color: #b45309;
+    border: 1px solid var(--amber-border);
+}
+.uptime-live-indicator.offline {
+    background: var(--red-bg);
+    color: #b91c1c;
+    border: 1px solid var(--red-border);
+}
+.uptime-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* ── Filters Bar ── */
+.uptime-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.uptime-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.uptime-filter-btn {
+    padding: 7px 14px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+    border-right: 1px solid var(--border);
+}
+.uptime-filter-btn:last-child { border-right: none; }
+.uptime-filter-btn:hover { color: var(--text); background: var(--neutral-bg); }
+.uptime-filter-btn.active {
+    color: var(--brand);
+    background: var(--brand-glow);
+    font-weight: 600;
+}
+.uptime-filter-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-faint);
+    margin-right: 6px;
+    white-space: nowrap;
+}
+
+/* ── Two Column Layout ── */
+.uptime-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 992px) {
+    .uptime-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Timeline Section ── */
+.uptime-timeline-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+.uptime-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.uptime-timeline-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.uptime-timeline-header h2 svg { color: var(--text-muted); }
+
+.uptime-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.uptime-pct.good { color: #047857; }
+.uptime-pct.warn { color: #b45309; }
+.uptime-pct.bad { color: #b91c1c; }
+
+.uptime-timeline-body {
+    padding: 16px 20px 12px;
+}
+
+/* Timeline Bar */
+.uptime-bar-wrap {
+    position: relative;
+}
+.uptime-bar {
+    display: flex;
+    height: 32px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--neutral-bg);
+    gap: 1px;
+}
+.uptime-bar-segment {
+    flex: 1;
+    min-width: 2px;
+    height: 100%;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+    position: relative;
+}
+.uptime-bar-segment:hover {
+    transform: scaleY(1.15);
+    filter: brightness(0.9);
+    z-index: 2;
+}
+.uptime-bar-segment.operational { background: var(--green); }
+.uptime-bar-segment.degraded { background: var(--amber); }
+.uptime-bar-segment.down { background: var(--red); }
+.uptime-bar-segment.unknown { background: #cbd5e1; }
+
+.uptime-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Timeline Tooltip */
+.uptime-tooltip {
+    position: fixed;
+    z-index: 500;
+    background: var(--text);
+    color: white;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    max-width: 240px;
+    white-space: nowrap;
+}
+.uptime-tooltip.visible { opacity: 1; }
+.uptime-tooltip-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.uptime-tooltip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.uptime-tooltip-detail {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.72rem;
+}
+
+/* ── Sidebar Panel ── */
+.uptime-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Regional Status */
+.uptime-regions {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+.uptime-regions-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.uptime-regions-header h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.uptime-region-list {
+    padding: 4px 0;
+}
+.uptime-region-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    font-size: 0.82rem;
+    transition: background var(--transition);
+}
+.uptime-region-item:hover { background: #fafbfc; }
+.uptime-region-name {
+    font-weight: 500;
+    color: var(--text);
+}
+.uptime-region-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.uptime-region-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+.uptime-region-dot.operational { background: var(--green); }
+.uptime-region-dot.degraded { background: var(--amber); }
+.uptime-region-dot.down { background: var(--red); }
+.uptime-region-dot.unknown { background: var(--text-faint); }
+.uptime-region-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* Response Time Summary */
+.uptime-response-summary {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+.uptime-response-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+.uptime-response-header h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.uptime-response-body {
+    padding: 14px 18px;
+}
+.uptime-response-current {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.uptime-response-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+}
+.uptime-response-unit {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.uptime-response-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.uptime-response-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.uptime-response-stat-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text-faint);
+}
+.uptime-response-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Mini sparkline */
+.uptime-sparkline {
+    margin-top: 12px;
+    height: 40px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+}
+.uptime-spark-bar {
+    flex: 1;
+    min-width: 2px;
+    background: var(--brand);
+    border-radius: 2px 2px 0 0;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+.uptime-spark-bar:hover { opacity: 1; }
+
+/* ── Downtime / Incidents Section ── */
+.uptime-incidents-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+.uptime-incidents-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.uptime-incidents-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.uptime-incident-count {
+    background: var(--red-bg);
+    color: #b91c1c;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+.uptime-incident-count.zero {
+    background: var(--green-bg);
+    color: #047857;
+}
+
+.uptime-incidents-body {
+    padding: 0;
+}
+
+.uptime-incident-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+.uptime-incident-item:last-child { border-bottom: none; }
+.uptime-incident-item:hover { background: #fafbfc; }
+
+.uptime-incident-severity {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.uptime-incident-severity.down {
+    background: var(--red-bg);
+    color: var(--red);
+}
+.uptime-incident-severity.degraded {
+    background: var(--amber-bg);
+    color: var(--amber);
+}
+
+.uptime-incident-info { flex: 1; min-width: 0; }
+.uptime-incident-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+.uptime-incident-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.uptime-incident-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.uptime-incident-status-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    align-self: center;
+}
+.uptime-incident-status-badge.open {
+    background: var(--red-bg);
+    color: #b91c1c;
+}
+.uptime-incident-status-badge.resolved {
+    background: var(--green-bg);
+    color: #047857;
+}
+
+/* Empty incident state */
+.uptime-incidents-empty {
+    text-align: center;
+    padding: 40px 24px;
+}
+.uptime-incidents-empty-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--green-bg);
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+.uptime-incidents-empty h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.uptime-incidents-empty p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+/* ── Status History Table ── */
+.uptime-history-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+.uptime-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.uptime-history-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.uptime-history-header h2 svg { color: var(--text-muted); }
+
+.uptime-table-wrap {
+    overflow-x: auto;
+}
+
+.uptime-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+.uptime-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.uptime-table th {
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-faint);
+    background: #f8f9fc;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
+}
+.uptime-table th.sortable {
+    cursor: pointer;
+}
+.uptime-table th.sortable:hover {
+    color: var(--text-muted);
+}
+.uptime-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.82rem;
+    vertical-align: middle;
+    color: var(--text);
+}
+.uptime-table tbody tr {
+    transition: background var(--transition);
+}
+.uptime-table tbody tr:hover {
+    background: #fafbfc;
+}
+.uptime-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Table cells */
+.uptime-cell-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.uptime-cell-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.uptime-cell-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.uptime-cell-status-dot.operational { background: var(--green); }
+.uptime-cell-status-dot.degraded { background: var(--amber); }
+.uptime-cell-status-dot.down { background: var(--red); }
+.uptime-cell-status-dot.unknown { background: var(--text-faint); }
+.uptime-cell-status-text {
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+.uptime-cell-response {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.uptime-cell-response.fast { color: #047857; }
+.uptime-cell-response.normal { color: var(--text); }
+.uptime-cell-response.slow { color: #b45309; }
+.uptime-cell-response.timeout { color: #b91c1c; font-weight: 600; }
+
+.uptime-cell-region {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.uptime-cell-event {
+    font-size: 0.78rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+.uptime-cell-event.health-check {
+    background: var(--neutral-bg);
+    color: var(--text-muted);
+}
+.uptime-cell-event.incident {
+    background: var(--red-bg);
+    color: #b91c1c;
+}
+.uptime-cell-event.slow-response {
+    background: var(--amber-bg);
+    color: #b45309;
+}
+
+/* Pagination */
+.uptime-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    background: #fafbfc;
+}
+.uptime-pagination-info {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.uptime-pagination-btns {
+    display: flex;
+    gap: 4px;
+}
+.uptime-page-btn {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.uptime-page-btn:hover:not(:disabled) {
+    border-color: var(--brand);
+    color: var(--brand);
+}
+.uptime-page-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.uptime-page-btn.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: white;
+}
+
+/* ── Incident Detail Drawer ── */
+.uptime-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.uptime-drawer-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.uptime-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    max-width: 90vw;
+    height: 100vh;
+    z-index: 950;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    box-shadow: -12px 0 40px rgba(0,0,0,0.08);
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.uptime-drawer.open {
+    transform: translateX(0);
+}
+
+.uptime-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.uptime-drawer-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.uptime-drawer-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--neutral-bg);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    font-size: 1.1rem;
+}
+.uptime-drawer-close:hover {
+    background: var(--red-bg);
+    color: var(--red);
+}
+
+.uptime-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+.uptime-drawer-field {
+    margin-bottom: 18px;
+}
+.uptime-drawer-field-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+}
+.uptime-drawer-field-value {
+    font-size: 0.88rem;
+    color: var(--text);
+    font-weight: 500;
+}
+.uptime-drawer-field-value.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+}
+
+.uptime-drawer-severity {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 20px;
+}
+.uptime-drawer-severity.down {
+    background: var(--red-bg);
+    color: #b91c1c;
+    border: 1px solid var(--red-border);
+}
+.uptime-drawer-severity.degraded {
+    background: var(--amber-bg);
+    color: #b45309;
+    border: 1px solid var(--amber-border);
+}
+.uptime-drawer-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+}
+
+/* ── Loading states ── */
+.uptime-loading {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+}
+.uptime-skeleton {
+    height: 14px;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    border-radius: 6px;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+.uptime-skeleton.wide { width: 100%; height: 32px; }
+.uptime-skeleton.medium { width: 70%; }
+.uptime-skeleton.short { width: 40%; }
+.uptime-skeleton.bar { width: 100%; height: 32px; border-radius: 6px; }
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Error state ── */
+.uptime-error {
+    text-align: center;
+    padding: 40px 24px;
+}
+.uptime-error-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--red-bg);
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.2rem;
+}
+.uptime-error h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.uptime-error p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .uptime-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .uptime-banner-right {
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 12px;
+    }
+    .uptime-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .uptime-filter-group {
+        width: 100%;
+    }
+    .uptime-filter-btn {
+        flex: 1;
+        text-align: center;
+    }
+    .uptime-grid {
+        grid-template-columns: 1fr;
+    }
+    .uptime-table {
+        min-width: 600px;
+    }
+    .uptime-drawer {
+        width: 100vw;
+        max-width: 100vw;
+    }
+}
+
+@media (max-width: 480px) {
+    .uptime-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .uptime-selector-dropdown {
+        max-width: none;
+    }
+    .uptime-bar {
+        height: 24px;
+    }
+}
