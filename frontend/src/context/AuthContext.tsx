@@ -36,17 +36,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    const stored = localStorage.getItem('auth_token');
-    if (!stored) {
-      Promise.resolve().then(() => setLoading(false));
-      return;
-    }
     try {
-      const { user: u } = await authApi.me();
-      setToken(stored);
-      setUser(u);
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      if (!stored) {
+        setToken(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      const data = await authApi.me();
+      if (data && data.user) {
+        setToken(stored);
+        setUser(data.user);
+      } else {
+        throw new Error('Invalid user response');
+      }
     } catch {
-      localStorage.removeItem('auth_token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+      }
       setToken(null);
       setUser(null);
     } finally {

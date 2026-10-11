@@ -1,5 +1,16 @@
 'use client';
 
+const getBaseUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://127.0.0.1:5000';
+    }
+  }
+  return '';
+};
+
 // Helper to get auth headers from localStorage
 function getAuthHeaders(): HeadersInit {
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -21,6 +32,15 @@ async function handleResponse(res: Response) {
     throw error;
   }
   return data;
+}
+
+function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, {
+    ...options,
+    signal: options.signal || controller.signal,
+  }).finally(() => clearTimeout(timeoutId));
 }
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -100,7 +120,7 @@ export interface AlertSettings {
 
 export const authApi = {
   async signup(name: string, email: string, password: string, confirm_password?: string) {
-    const res = await fetch('/api/auth/signup', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password, confirm_password: confirm_password || password }),
@@ -109,7 +129,7 @@ export const authApi = {
   },
 
   async login(email: string, password: string) {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -118,14 +138,14 @@ export const authApi = {
   },
 
   async me() {
-    const res = await fetch('/api/auth/me', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/auth/me`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async logout() {
-    const res = await fetch('/api/auth/logout', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/auth/logout`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -137,14 +157,14 @@ export const authApi = {
 
 export const monitorsApi = {
   async list(): Promise<MonitorRecord[]> {
-    const res = await fetch('/api/monitors', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async get(id: number): Promise<MonitorRecord> {
-    const res = await fetch(`/api/monitors/${id}`, {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/${id}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
@@ -157,7 +177,7 @@ export const monitorsApi = {
     timeout_seconds?: number;
     expected_status_code?: number;
   }): Promise<MonitorRecord> {
-    const res = await fetch('/api/monitors', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -166,7 +186,7 @@ export const monitorsApi = {
   },
 
   async update(id: number, data: Partial<MonitorRecord>): Promise<MonitorRecord> {
-    const res = await fetch(`/api/monitors/${id}`, {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/${id}`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -175,7 +195,7 @@ export const monitorsApi = {
   },
 
   async delete(id: number): Promise<{ message: string }> {
-    const res = await fetch(`/api/monitors/${id}`, {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -183,7 +203,7 @@ export const monitorsApi = {
   },
 
   async runCheck(id: number): Promise<CheckRecord> {
-    const res = await fetch(`/api/monitors/${id}/check`, {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/${id}/check`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -191,7 +211,7 @@ export const monitorsApi = {
   },
 
   async checkAll(): Promise<{ status: string }> {
-    const res = await fetch('/api/monitors/check_all', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/check_all`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -199,28 +219,28 @@ export const monitorsApi = {
   },
 
   async checks(id: number, hours: number = 24, limit: number = 200): Promise<CheckRecord[]> {
-    const res = await fetch(`/api/monitors/${id}/checks?hours=${hours}&limit=${limit}`, {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/${id}/checks?hours=${hours}&limit=${limit}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async incidents(id: number, hours: number = 720): Promise<IncidentRecord[]> {
-    const res = await fetch(`/api/monitors/${id}/incidents?hours=${hours}`, {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/${id}/incidents?hours=${hours}`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async summary(): Promise<any> {
-    const res = await fetch('/api/monitors/summary', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/summary`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async history(): Promise<any> {
-    const res = await fetch('/api/monitors/history', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/monitors/history`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
@@ -231,14 +251,14 @@ export const monitorsApi = {
 
 export const profileApi = {
   async get(): Promise<ProfileData> {
-    const res = await fetch('/api/profile', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/profile`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async update(data: { name?: string; avatar_url?: string | null }): Promise<ProfileData> {
-    const res = await fetch('/api/profile', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/profile`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -247,7 +267,7 @@ export const profileApi = {
   },
 
   async changePassword(current_password: string, new_password: string, confirm_password?: string) {
-    const res = await fetch('/api/profile/password', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/profile/password`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ current_password, new_password, confirm_password: confirm_password || new_password }),
@@ -256,14 +276,14 @@ export const profileApi = {
   },
 
   async getAlertSettings(): Promise<AlertSettings> {
-    const res = await fetch('/api/profile/alert-settings', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/profile/alert-settings`, {
       headers: getAuthHeaders(),
     });
     return handleResponse(res);
   },
 
   async updateAlertSettings(data: Partial<AlertSettings>): Promise<AlertSettings> {
-    const res = await fetch('/api/profile/alert-settings', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/profile/alert-settings`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -272,7 +292,7 @@ export const profileApi = {
   },
 
   async deleteAccount(confirm: boolean) {
-    const res = await fetch('/api/profile/delete', {
+    const res = await fetchWithTimeout(`${getBaseUrl()}/api/profile/delete`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
       body: JSON.stringify({ confirm }),
