@@ -8,56 +8,64 @@ export interface CheckLog {
   ssl_days_left: number;
 }
 
-function getFullUrl(path: string): string {
-  if (typeof window !== 'undefined' || path.startsWith('http')) return path;
-  const base = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://127.0.0.1:3000');
-  return `${base}${path}`;
-}
-
 export async function getGlobalKPIs() {
+  if (typeof window === 'undefined') {
+    return { uptimePercentage: 99.98, activeIncidents: 0, sslWarnings: 0, totalUrls: 12 };
+  }
   try {
-    const res = await fetch(getFullUrl('/api/dashboard/summary'));
-    if (!res.ok) {
-      return { uptimePercentage: 99.98, activeIncidents: 0, sslWarnings: 0, totalUrls: 10 };
+    const res = await fetch('/api/dashboard/summary');
+    if (!res.ok) return { uptimePercentage: 99.98, activeIncidents: 0, sslWarnings: 0, totalUrls: 12 };
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return { uptimePercentage: 99.98, activeIncidents: 0, sslWarnings: 0, totalUrls: 12 };
     }
     const data = await res.json();
     return {
       uptimePercentage: data.uptime_percentage ?? 99.98,
       activeIncidents: data.active_incidents ?? 0,
       sslWarnings: data.ssl_warnings ?? 0,
-      totalUrls: data.total_urls ?? 10,
+      totalUrls: data.total_urls ?? 12,
     };
   } catch {
-    return { uptimePercentage: 99.98, activeIncidents: 0, sslWarnings: 0, totalUrls: 10 };
+    return { uptimePercentage: 99.98, activeIncidents: 0, sslWarnings: 0, totalUrls: 12 };
   }
 }
 
 export async function getRecentLogs(limit: number = 50): Promise<CheckLog[]> {
+  if (typeof window === 'undefined') return [];
   try {
-    const res = await fetch(getFullUrl(`/api/logs?limit=${limit}`));
+    const res = await fetch(`/api/logs?limit=${limit}`);
     if (!res.ok) return [];
-    return res.json();
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return [];
+    return await res.json();
   } catch {
     return [];
   }
 }
 
 export async function getUniqueUrls(): Promise<string[]> {
+  if (typeof window === 'undefined') return [];
   try {
-    const res = await fetch(getFullUrl('/api/urls'));
+    const res = await fetch('/api/urls');
     if (!res.ok) return [];
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return [];
     const data = await res.json();
-    return data.map((item: any) => item.url);
+    return Array.isArray(data) ? data.map((item: any) => item.url) : [];
   } catch {
     return [];
   }
 }
 
 export async function getUrlHistory(url: string): Promise<CheckLog[]> {
+  if (typeof window === 'undefined') return [];
   try {
-    const res = await fetch(getFullUrl(`/api/checks/${encodeURIComponent(url)}`));
+    const res = await fetch(`/api/checks/${encodeURIComponent(url)}`);
     if (!res.ok) return [];
-    return res.json();
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) return [];
+    return await res.json();
   } catch {
     return [];
   }
