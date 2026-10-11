@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search, Filter, ChevronDown, Zap, Globe, Gauge, Activity, 
   TrendingDown, TrendingUp, AlertOctagon, MapPin, Map, AlertTriangle, Play, CheckCircle
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, CartesianGrid } from 'recharts';
 import PerformanceSpeedDrawer from './PerformanceSpeedDrawer';
+import { getLatestPerUrl, CheckRow } from '@/lib/api';
 
 export interface PerformanceSite {
   id: string;
@@ -25,17 +26,6 @@ export interface PerformanceSite {
   };
 }
 
-const SAMPLE_PERFORMANCE: PerformanceSite[] = [
-  { id: '1', name: 'google.com', url: 'https://google.com', responseTime: 42, loadTime: 0.8, score: 98, region: 'US-East N.Virginia', lastTested: '2m ago', status: 'Excellent', vitals: { lcp: 1.2, fid: 12, cls: 0.01 } },
-  { id: '2', name: 'github.com', url: 'https://github.com', responseTime: 118, loadTime: 1.2, score: 92, region: 'EU-Central Frankfurt', lastTested: '5m ago', status: 'Good', vitals: { lcp: 1.8, fid: 45, cls: 0.04 } },
-  { id: '3', name: 'amazon.in', url: 'https://amazon.in', responseTime: 380, loadTime: 3.5, score: 65, region: 'India - Mumbai', lastTested: '1m ago', status: 'Slow', vitals: { lcp: 3.8, fid: 120, cls: 0.12 } },
-  { id: '4', name: 'openai.com', url: 'https://openai.com', responseTime: 88, loadTime: 1.0, score: 95, region: 'US-West California', lastTested: '10m ago', status: 'Excellent', vitals: { lcp: 1.5, fid: 22, cls: 0.02 } },
-  { id: '5', name: 'spotify.com', url: 'https://spotify.com', responseTime: 160, loadTime: 1.8, score: 85, region: 'EU-West London', lastTested: '15m ago', status: 'Good', vitals: { lcp: 2.1, fid: 65, cls: 0.05 } },
-  { id: '6', name: 'netflix.com', url: 'https://netflix.com', responseTime: 92, loadTime: 1.1, score: 94, region: 'US-East Ohio', lastTested: '8m ago', status: 'Excellent', vitals: { lcp: 1.6, fid: 28, cls: 0.03 } },
-  { id: '7', name: 'flipkart.com', url: 'https://flipkart.com', responseTime: 680, loadTime: 5.2, score: 42, region: 'India - Delhi NCR', lastTested: '3m ago', status: 'Critical', vitals: { lcp: 5.5, fid: 310, cls: 0.25 } },
-  { id: '8', name: 'myntra.com', url: 'https://myntra.com', responseTime: 135, loadTime: 1.5, score: 88, region: 'India - Bengaluru', lastTested: '12m ago', status: 'Good', vitals: { lcp: 1.9, fid: 55, cls: 0.06 } },
-];
-
 const TREND_DATA = [
   { time: '00:00', ms: 120 }, { time: '04:00', ms: 135 }, { time: '08:00', ms: 280 },
   { time: '12:00', ms: 142 }, { time: '16:00', ms: 155 }, { time: '20:00', ms: 110 },
@@ -48,16 +38,93 @@ const ALERTS = [
   { id: 3, type: 'success', message: 'amazon.in response time recovered to normal levels', time: '1h ago' },
 ];
 
+function rowToPerformanceSite(row: CheckRow): PerformanceSite {
+  const ms = row.response_ms ?? 0;
+  const status: PerformanceSite['status'] =
+    ms < 150  ? 'Excellent' :
+    ms < 400  ? 'Good'      :
+    ms < 800  ? 'Slow'      : 'Critical';
+  const score = Math.max(0, Math.min(100, Math.round(100 - ms / 20)));
+  const loadTime = parseFloat((ms / 1000).toFixed(2));
+
+  let name = row.url;
+  try { name = new URL(row.url).hostname; } catch {}
+
+  // Relative time from checked_at
+  const diff = Math.floor((Date.now() - new Date(row.checked_at).getTime()) / 1000);
+  const lastTested =
+    diff < 60  ? `${diff}s ago`  :
+    diff < 3600 ? `${Math.floor(diff / 60)}m ago` :
+    `${Math.floor(diff / 3600)}h ago`;
+
+  return {
+    id: row.url,
+    name,
+    url: row.url,
+    responseTime: ms,
+    loadTime,
+    score,
+    region: 'Unknown',
+    lastTested,
+    status,
+    vitals: {
+      lcp: parseFloat((loadTime * 0.8).toFixed(1)),
+      fid: Math.round(ms * 0.1),
+      cls: 0.01,
+    },
+  };
+}
+
 export default function PerformanceSpeedContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [timeFilter, setTimeFilter] = useState('24h');
   const [selectedSite, setSelectedSite] = useState<PerformanceSite | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [sites, setSites] = useState<PerformanceSite[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredSites = SAMPLE_PERFORMANCE.filter(site => 
+  const fetchData = async () => {
+    try {
+      const rows = await getLatestPerUrl();
+      setSites(rows.map(rowToPerformanceSite));
+      setError(null);
+    } catch (e: any) {
+      setError(e.message ?? 'Failed to load performance data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const doFetch = async () => {
+      try {
+        const rows = await getLatestPerUrl();
+        if (!cancelled) {
+          setSites(rows.map(rowToPerformanceSite));
+          setError(null);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e.message ?? 'Failed to load performance data');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    doFetch();
+    const id = setInterval(doFetch, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  const filteredSites = sites.filter(site =>
     site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     site.url.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const avgResponseTime = sites.length > 0 ? Math.round(sites.reduce((s, x) => s + x.responseTime, 0) / sites.length) : 0;
+  const fastestResponseTime = sites.length > 0 ? Math.min(...sites.map(s => s.responseTime)) : 0;
+  const slowestResponseTime = sites.length > 0 ? Math.max(...sites.map(s => s.responseTime)) : 0;
+  const avgScore = sites.length > 0 ? Math.round(sites.reduce((s, x) => s + x.score, 0) / sites.length) : 0;
 
   const handleRunGlobalTest = () => {
     setIsTesting(true);
@@ -111,9 +178,26 @@ export default function PerformanceSpeedContent() {
     );
   };
 
+  if (loading) return (
+    <div className="px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center space-y-3">
+        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-zinc-500">Loading performance data…</p>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {/* Error Banner */}
+        {error && (
+          <div className="mb-4 p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 rounded-xl flex items-center justify-between">
+            <p className="text-sm text-rose-700 dark:text-rose-400 font-medium">{error}</p>
+            <button onClick={fetchData} className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors cursor-pointer">Retry</button>
+          </div>
+        )}
         
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -164,7 +248,7 @@ export default function PerformanceSpeedContent() {
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Avg Response Time</p>
               <p className="text-xl font-extrabold text-zinc-900 dark:text-white flex items-baseline gap-1">
-                142 <span className="text-xs font-semibold text-zinc-500">ms</span>
+                {avgResponseTime} <span className="text-xs font-semibold text-zinc-500">ms</span>
               </p>
             </div>
             <div className="w-16 h-8 opacity-70">
@@ -179,7 +263,7 @@ export default function PerformanceSpeedContent() {
              <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Fastest Website</p>
               <p className="text-xl font-extrabold text-zinc-900 dark:text-white flex items-baseline gap-1">
-                42 <span className="text-xs font-semibold text-zinc-500">ms</span>
+                {fastestResponseTime} <span className="text-xs font-semibold text-zinc-500">ms</span>
               </p>
             </div>
             <span className="px-2 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-200 dark:border-emerald-800">
@@ -190,7 +274,7 @@ export default function PerformanceSpeedContent() {
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Slowest Website</p>
               <p className="text-xl font-extrabold text-zinc-900 dark:text-white flex items-baseline gap-1">
-                680 <span className="text-xs font-semibold text-zinc-500">ms</span>
+                {slowestResponseTime} <span className="text-xs font-semibold text-zinc-500">ms</span>
               </p>
             </div>
             <span className="px-2 py-1 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] font-bold rounded-lg border border-amber-200 dark:border-amber-800">
@@ -200,14 +284,16 @@ export default function PerformanceSpeedContent() {
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Performance Score</p>
-              <p className="text-xl font-extrabold text-zinc-900 dark:text-white">94/100</p>
+              <p className="text-xl font-extrabold text-zinc-900 dark:text-white">{avgScore}/100</p>
             </div>
             <div className="relative w-10 h-10 flex items-center justify-center">
               <svg className="w-10 h-10 transform -rotate-90">
                 <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-zinc-200 dark:text-zinc-800" />
-                <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray="100" strokeDashoffset="6" className="text-purple-500" />
+                <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray="100" strokeDashoffset={100 - avgScore} className="text-purple-500" />
               </svg>
-              <span className="absolute text-[10px] font-bold text-zinc-700 dark:text-zinc-300">A</span>
+              <span className="absolute text-[10px] font-bold text-zinc-700 dark:text-zinc-300">
+                {avgScore >= 90 ? 'A' : avgScore >= 70 ? 'B' : avgScore >= 50 ? 'C' : 'D'}
+              </span>
             </div>
           </div>
         </div>
@@ -351,7 +437,9 @@ export default function PerformanceSpeedContent() {
                 ))}
                 {filteredSites.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-5 py-8 text-center text-zinc-500 text-sm">No websites found.</td>
+                    <td colSpan={8} className="px-5 py-8 text-center text-zinc-500 text-sm">
+                      {sites.length === 0 ? 'No data yet — add URLs to urls.json and start the Python engine to begin monitoring.' : 'No websites found.'}
+                    </td>
                   </tr>
                 )}
               </tbody>

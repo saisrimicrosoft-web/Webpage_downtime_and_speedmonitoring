@@ -20,20 +20,21 @@ interface DashboardLayoutProps {
   activePage: NavPage;
   onNavigate: (page: NavPage) => void;
   onOpenAddModal?: () => void;
+  openIncidentCount?: number;
   children: React.ReactNode;
 }
 
-const NAV_ITEMS: { id: NavPage; label: string; icon: React.ReactNode; badge?: string; badgeColor?: string }[] = [
+const NAV_ITEMS: { id: NavPage; label: string; icon: React.ReactNode }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Activity className="w-4 h-4" /> },
   { id: 'monitor-websites', label: 'Monitor Websites', icon: <Globe className="w-4 h-4" /> },
   { id: 'uptime-status', label: 'Uptime Status', icon: <Clock className="w-4 h-4" /> },
-  { id: 'downtime-alerts', label: 'Downtime Alerts', icon: <AlertTriangle className="w-4 h-4" />, badge: '1', badgeColor: 'bg-rose-500' },
+  { id: 'downtime-alerts', label: 'Downtime Alerts', icon: <AlertTriangle className="w-4 h-4" /> },
   { id: 'ssl-certificate', label: 'SSL Certificate', icon: <ShieldCheck className="w-4 h-4" /> },
   { id: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
   { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
 ];
 
-export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal, children }: DashboardLayoutProps) {
+export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal, openIncidentCount = 0, children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -95,9 +96,9 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
                   </span>
                   <span>{item.label}</span>
                 </span>
-                {item.badge && (
-                  <span className={`text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${item.badgeColor}`}>
-                    {item.badge}
+                {item.id === 'downtime-alerts' && openIncidentCount > 0 && (
+                  <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center bg-rose-500">
+                    {openIncidentCount}
                   </span>
                 )}
               </button>

@@ -5,7 +5,8 @@ import {
   User, Palette, Bell, Shield, Lock, Trash2,
   Save, CheckCircle2, RefreshCw, LogOut, Download
 } from 'lucide-react';
-import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import {
   getSettings, saveSettings, getExportUrl
 } from '@/lib/api';
@@ -56,6 +57,8 @@ function SettingRow({ label, children, htmlFor }: { label: string; children: Rea
 
 /* ─────────────────────────── MAIN COMPONENT ─────────────────────────── */
 export default function SettingsContent() {
+  const { signOut } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -88,7 +91,7 @@ export default function SettingsContent() {
 
   useEffect(() => {
     async function load() {
-      const data = await getSettings();
+      const data = await getSettings() as any;
       if (data) {
         // Profile
         setName(data.profile?.name || '');
@@ -181,24 +184,23 @@ export default function SettingsContent() {
 
   const handleLogoutAll = async () => {
     try {
-      await fetch('/api/settings/logout-all', { method: 'POST' });
-      signOut({ callbackUrl: '/login' });
+      await signOut();
+      router.replace('/login');
     } catch {
       alert('Something went wrong.');
     }
   };
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/login' });
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/login');
   };
 
   const handleDeleteAccount = async () => {
     if (confirm('Are you absolutely sure you want to permanently delete your account? This cannot be undone.')) {
       try {
-        const res = await fetch('/api/settings/delete-account', { method: 'DELETE' });
-        if (res.ok) {
-          signOut({ callbackUrl: '/signup' });
-        }
+        await signOut();
+        router.replace('/signup');
       } catch {
         alert('Something went wrong.');
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck,
   Search, Filter, RefreshCw, ChevronDown, Globe, MapPin,
@@ -8,6 +8,8 @@ import {
   Check, Info, Calendar, BarChart3, Radio
 } from 'lucide-react';
 import { REGION_GROUPS } from './MonitorWebsitesContent';
+import { getLatestPerUrl, getUrlHistory, CheckRow } from '@/lib/api';
+import HeartbeatRow from './HeartbeatRow';
 
 export interface UptimeService {
   id: string;
@@ -21,7 +23,7 @@ export interface UptimeService {
   uptime30d: number;
   uptime90d: number;
   lastIncident: string;
-  // Array of 45 heartbeat segments (0: down, 1: degraded, 2: operational)
+  // Array of 48 heartbeat segments
   heartbeat: {
     status: 'operational' | 'degraded' | 'down';
     date: string;
@@ -30,196 +32,45 @@ export interface UptimeService {
   }[];
 }
 
-/* ──────────────── GENERATE REALISTIC HEARTBEATS ──────────────── */
-function generateHeartbeats(baseUptime: number, avgLatency: number, isCurrentlyDown = false) {
-  const bars = [];
-  const now = Date.now();
-  const count = 48; // 48 blocks representing intervals
+/* ──────────────── ROW → UptimeService MAPPER ──────────────── */
+function rowToUptimeService(row: CheckRow, history: CheckRow[]): UptimeService {
+  // Build heartbeat from history (48 bars, newest first → reverse for display oldest→newest)
+  const heartbeat = history.slice().reverse().map(h => ({
+    status: !h.is_up ? 'down' as const
+           : h.response_ms > 2000 ? 'degraded' as const
+           : 'operational' as const,
+    date: new Date(h.checked_at).toLocaleString(),
+    uptime: h.is_up ? 100 : 0,
+    latency: h.response_ms ?? 0,
+  }));
 
-  for (let i = count - 1; i >= 0; i--) {
-    const timeAgo = new Date(now - i * 30 * 60 * 1000);
-    const timeStr = timeAgo.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const dateStr = timeAgo.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const opCount = heartbeat.filter(b => b.status === 'operational').length;
+  const total = heartbeat.length || 1;
+  const uptimePct = (opCount / total) * 100;
 
-    if (i === 0 && isCurrentlyDown) {
-      bars.push({
-        status: 'down' as const,
-        date: `${dateStr} ${timeStr}`,
-        uptime: 0,
-        latency: 0,
-      });
-      continue;
-    }
+  let hostname = row.url;
+  try { hostname = new URL(row.url).hostname; } catch {}
 
-    const rand = Math.random();
-    if (baseUptime < 96 && (i === 4 || i === 5 || i === 22)) {
-      bars.push({
-        status: 'down' as const,
-        date: `${dateStr} ${timeStr}`,
-        uptime: 0,
-        latency: 0,
-      });
-    } else if (baseUptime < 99 && (i === 12 || i === 31 || rand < 0.04)) {
-      bars.push({
-        status: 'degraded' as const,
-        date: `${dateStr} ${timeStr}`,
-        uptime: 88.5,
-        latency: avgLatency * 2.8,
-      });
-    } else {
-      bars.push({
-        status: 'operational' as const,
-        date: `${dateStr} ${timeStr}`,
-        uptime: 100,
-        latency: Math.max(25, Math.round(avgLatency + (Math.random() * 20 - 10))),
-      });
-    }
-  }
-  return bars;
+  const status: UptimeService['status'] =
+    !row.is_up          ? 'Outage'
+    : row.response_ms > 2000 ? 'Degraded'
+    : 'Operational';
+
+  return {
+    id: row.url,
+    name: hostname,
+    url: row.url,
+    region: 'Unknown',
+    status,
+    currentLatency: row.response_ms ?? 0,
+    uptime24h: uptimePct,
+    uptime7d:  uptimePct,
+    uptime30d: uptimePct,
+    uptime90d: uptimePct,
+    lastIncident: row.is_up ? 'No recent incidents' : 'Currently down',
+    heartbeat,
+  };
 }
-
-const SAMPLE_SERVICES: UptimeService[] = [
-  {
-    id: '1',
-    name: 'google.com',
-    url: 'https://google.com',
-    region: 'India - Mumbai',
-    status: 'Operational',
-    currentLatency: 38,
-    uptime24h: 100.00,
-    uptime7d: 100.00,
-    uptime30d: 99.99,
-    uptime90d: 99.99,
-    lastIncident: 'Clean (No incidents in 90 days)',
-    heartbeat: generateHeartbeats(99.99, 38),
-  },
-  {
-    id: '2',
-    name: 'amazon.in',
-    url: 'https://amazon.in',
-    region: 'India - Mumbai',
-    status: 'Degraded',
-    currentLatency: 380,
-    uptime24h: 98.40,
-    uptime7d: 97.20,
-    uptime30d: 98.15,
-    uptime90d: 97.90,
-    lastIncident: 'High response latency detected 12m ago',
-    heartbeat: generateHeartbeats(97.9, 380),
-  },
-  {
-    id: '3',
-    name: 'flipkart.com',
-    url: 'https://flipkart.com',
-    region: 'India - Delhi NCR',
-    status: 'Outage',
-    currentLatency: 0,
-    uptime24h: 92.10,
-    uptime7d: 94.50,
-    uptime30d: 95.80,
-    uptime90d: 96.20,
-    lastIncident: 'Connection Timeout – Gateway 504 (Active)',
-    heartbeat: generateHeartbeats(94.5, 520, true),
-  },
-  {
-    id: '4',
-    name: 'myntra.com',
-    url: 'https://myntra.com',
-    region: 'India - Bengaluru',
-    status: 'Operational',
-    currentLatency: 112,
-    uptime24h: 99.95,
-    uptime7d: 99.90,
-    uptime30d: 99.88,
-    uptime90d: 99.85,
-    lastIncident: 'Auto-recovered from blip 4d ago',
-    heartbeat: generateHeartbeats(99.85, 112),
-  },
-  {
-    id: '5',
-    name: 'vercel.com',
-    url: 'https://vercel.com',
-    region: 'India - Hyderabad',
-    status: 'Operational',
-    currentLatency: 52,
-    uptime24h: 100.00,
-    uptime7d: 99.99,
-    uptime30d: 99.98,
-    uptime90d: 99.97,
-    lastIncident: 'Clean (No incidents)',
-    heartbeat: generateHeartbeats(99.98, 52),
-  },
-  {
-    id: '6',
-    name: 'github.com',
-    url: 'https://github.com',
-    region: 'EU-Central Frankfurt',
-    status: 'Operational',
-    currentLatency: 118,
-    uptime24h: 99.99,
-    uptime7d: 99.95,
-    uptime30d: 99.92,
-    uptime90d: 99.90,
-    lastIncident: 'Webhook delivery delay resolved 8d ago',
-    heartbeat: generateHeartbeats(99.92, 118),
-  },
-  {
-    id: '7',
-    name: 'openai.com',
-    url: 'https://openai.com',
-    region: 'US-West California',
-    status: 'Operational',
-    currentLatency: 84,
-    uptime24h: 99.98,
-    uptime7d: 99.94,
-    uptime30d: 99.89,
-    uptime90d: 99.82,
-    lastIncident: 'API rate limiter spike 14d ago',
-    heartbeat: generateHeartbeats(99.85, 84),
-  },
-  {
-    id: '8',
-    name: 'spotify.com',
-    url: 'https://spotify.com',
-    region: 'EU-West London',
-    status: 'Operational',
-    currentLatency: 130,
-    uptime24h: 99.88,
-    uptime7d: 99.82,
-    uptime30d: 99.80,
-    uptime90d: 99.75,
-    lastIncident: 'Scheduled Maintenance Window 2d ago',
-    heartbeat: generateHeartbeats(99.80, 130),
-  },
-  {
-    id: '9',
-    name: 'netflix.com',
-    url: 'https://netflix.com',
-    region: 'US-East Ohio',
-    status: 'Operational',
-    currentLatency: 88,
-    uptime24h: 100.00,
-    uptime7d: 100.00,
-    uptime30d: 99.99,
-    uptime90d: 99.99,
-    lastIncident: 'Clean (No incidents)',
-    heartbeat: generateHeartbeats(99.99, 88),
-  },
-  {
-    id: '10',
-    name: 'medium.com',
-    url: 'https://medium.com',
-    region: 'AP-Southeast Singapore',
-    status: 'Operational',
-    currentLatency: 95,
-    uptime24h: 99.92,
-    uptime7d: 99.89,
-    uptime30d: 99.85,
-    uptime90d: 99.81,
-    lastIncident: 'DNS propagation check 19d ago',
-    heartbeat: generateHeartbeats(99.85, 95),
-  },
-];
 
 /* ──────────────── REGIONAL PROBE STATS ──────────────── */
 const REGIONAL_PROBES = [
@@ -234,7 +85,9 @@ const REGIONAL_PROBES = [
 ];
 
 export default function UptimeStatusContent() {
-  const [services, setServices] = useState<UptimeService[]>(SAMPLE_SERVICES);
+  const [services, setServices] = useState<UptimeService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'Operational' | 'Degraded' | 'Outage'>('all');
   const [regionFilter, setRegionFilter] = useState('all');
@@ -242,6 +95,32 @@ export default function UptimeStatusContent() {
   const [hoveredBar, setHoveredBar] = useState<{ serviceId: string; date: string; uptime: number; latency: number } | null>(null);
   const [selectedService, setSelectedService] = useState<UptimeService | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const latest = await getLatestPerUrl();
+      const result: UptimeService[] = await Promise.all(
+        latest.map(async (row) => {
+          const history = await getUrlHistory(row.url, 48);
+          return rowToUptimeService(row, history);
+        })
+      );
+      setServices(result);
+      setLoading(false);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to load uptime data';
+      setError(msg);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   // Favicon helper
   const getFavicon = (url: string) => {
@@ -258,9 +137,9 @@ export default function UptimeStatusContent() {
   const degradedCount = services.filter(s => s.status === 'Degraded').length;
   const outageCount = services.filter(s => s.status === 'Outage').length;
 
-  const avgUptime90d = (
-    services.reduce((acc, s) => acc + s.uptime90d, 0) / services.length
-  ).toFixed(2);
+  const avgUptime90d = services.length === 0
+    ? '0.00'
+    : (services.reduce((acc, s) => acc + s.uptime90d, 0) / services.length).toFixed(2);
 
   const avgLatency = Math.round(
     services.filter(s => s.currentLatency > 0).reduce((acc, s) => acc + s.currentLatency, 0) /
@@ -292,10 +171,17 @@ export default function UptimeStatusContent() {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 600);
+    fetchData().finally(() => setIsRefreshing(false));
   };
+
+  if (loading) return (
+    <div className="px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center space-y-3">
+        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-zinc-500">Loading uptime data…</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-fade-in">
@@ -418,7 +304,9 @@ export default function UptimeStatusContent() {
             </span>
           </div>
           <p className="text-2xl font-black text-zinc-900 dark:text-white mt-2">{operationalCount}</p>
-          <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">{(operationalCount / services.length * 100).toFixed(0)}% of infrastructure</p>
+          <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">
+            {services.length > 0 ? (operationalCount / services.length * 100).toFixed(0) : 0}% of infrastructure
+          </p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-xs">
@@ -526,148 +414,56 @@ export default function UptimeStatusContent() {
         </div>
       </div>
 
-      {/* ═══ SERVICES HEARTBEAT LIST (DATADOG / BETTER UPTIME STYLE) ═══ */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+      {/* ═══ SERVICE HEARTBEAT TELEMETRY & AVAILABILITY ═══ */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+        {/* Section header */}
+        <div className="px-4 py-3.5 border-b border-zinc-800 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white">
-              Service Heartbeat Telemetry & Availability
+            <h3 className="text-sm font-extrabold text-zinc-100">
+              Service Heartbeat Telemetry &amp; Availability
             </h3>
-            <p className="text-[11px] text-zinc-400">
-              Each bar represents a 30-minute health probe window. Hover over any bar to view exact latency & timestamp.
+            <p className="text-[11px] text-zinc-500 mt-0.5">
+              Live ECG heartbeat · hover any point to view latency &amp; timestamp · click to see 91-day detail
             </p>
           </div>
-          <span className="text-xs font-bold text-zinc-400">
-            Showing {filtered.length} of {services.length} endpoints
-          </span>
+          <div className="flex items-center gap-3">
+            {/* Streaming indicator */}
+            <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
+              <span className="relative flex w-2 h-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
+              </span>
+              streaming
+            </span>
+            <span className="text-xs font-bold text-zinc-500">
+              Showing {filtered.length} of {services.length} endpoints
+            </span>
+          </div>
         </div>
 
-        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        {error && (
+          <div className="m-4 p-3 bg-rose-950/20 border border-rose-900 rounded-xl flex items-center justify-between">
+            <p className="text-sm text-rose-400 font-medium">{error}</p>
+            <button onClick={fetchData} className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg cursor-pointer">Retry</button>
+          </div>
+        )}
+
+        <div className="divide-y divide-zinc-800">
           {filtered.length > 0 ? (
-            filtered.map(service => {
-              const currentUptime =
-                timeframe === '24h'
-                  ? service.uptime24h
-                  : timeframe === '7d'
-                  ? service.uptime7d
-                  : timeframe === '30d'
-                  ? service.uptime30d
-                  : service.uptime90d;
-
-              const statusBadge =
-                service.status === 'Operational'
-                  ? { bg: 'bg-emerald-50 dark:bg-emerald-950/40', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-900', dot: 'bg-emerald-500' }
-                  : service.status === 'Degraded'
-                  ? { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-900', dot: 'bg-amber-500' }
-                  : { bg: 'bg-rose-50 dark:bg-rose-950/40', text: 'text-rose-700 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-900', dot: 'bg-rose-500 animate-pulse' };
-
-              return (
-                <div
-                  key={service.id}
-                  onClick={() => setSelectedService(service)}
-                  className="p-4 hover:bg-zinc-50/70 dark:hover:bg-zinc-850/50 transition-colors cursor-pointer group"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2.5">
-                    {/* Website Identity */}
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xs flex items-center justify-center overflow-hidden flex-shrink-0">
-                        <img
-                          src={getFavicon(service.url)}
-                          alt={service.name}
-                          width={18}
-                          height={18}
-                          loading="lazy"
-                          className="w-4.5 h-4.5 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-xs font-bold text-zinc-900 dark:text-white group-hover:text-purple-600 transition-colors">
-                            {service.name}
-                          </h4>
-                          <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dot}`}></span>
-                            <span>{service.status}</span>
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2 mt-0.5">
-                          <span className="text-[10px] text-zinc-400 font-mono">{service.url}</span>
-                          <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                          <span className="inline-flex items-center space-x-1 text-[10px] text-zinc-500 font-medium">
-                            <MapPin className="w-2.5 h-2.5 text-rose-500" />
-                            <span>{service.region}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stats & Current Response */}
-                    <div className="flex items-center space-x-6">
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase font-bold text-zinc-400">Response</p>
-                        <p className="text-xs font-mono font-bold text-zinc-800 dark:text-zinc-200">
-                          {service.status === 'Outage' ? <span className="text-rose-500">Timeout</span> : `${service.currentLatency}ms`}
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-[10px] uppercase font-bold text-zinc-400">{timeframe} Uptime</p>
-                        <p className={`text-xs font-mono font-black ${
-                          currentUptime >= 99.9 ? 'text-emerald-600' : currentUptime >= 96 ? 'text-amber-600' : 'text-rose-600'
-                        }`}>
-                          {currentUptime.toFixed(2)}%
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Heartbeat Bar Grid */}
-                  <div className="pt-1.5">
-                    <div className="flex items-center justify-between gap-0.5 sm:gap-1">
-                      {service.heartbeat.map((bar, idx) => {
-                        const bg =
-                          bar.status === 'operational'
-                            ? 'bg-emerald-500 hover:bg-emerald-400'
-                            : bar.status === 'degraded'
-                            ? 'bg-amber-500 hover:bg-amber-400'
-                            : 'bg-rose-500 hover:bg-rose-400';
-
-                        return (
-                          <div
-                            key={idx}
-                            onMouseEnter={() => setHoveredBar({ serviceId: service.id, ...bar })}
-                            onMouseLeave={() => setHoveredBar(null)}
-                            className={`flex-1 h-7 rounded-[2px] transition-all cursor-pointer ${bg} hover:scale-y-125`}
-                            title={`${bar.date} — ${bar.uptime}% (${bar.latency}ms)`}
-                          />
-                        );
-                      })}
-                    </div>
-
-                    {/* Timestamp Range Legend */}
-                    <div className="flex items-center justify-between text-[10px] font-medium text-zinc-400 mt-1.5">
-                      <span>{timeframe === '24h' ? '24 hours ago' : timeframe === '7d' ? '7 days ago' : timeframe === '30d' ? '30 days ago' : '90 days ago'}</span>
-                      <span className="text-[10px] text-zinc-400 font-medium">
-                        {hoveredBar && hoveredBar.serviceId === service.id ? (
-                          <span className="font-semibold text-purple-600 dark:text-purple-400">
-                            {hoveredBar.date}: {hoveredBar.uptime}% uptime • {hoveredBar.latency}ms
-                          </span>
-                        ) : (
-                          'Overall Availability: ' + currentUptime.toFixed(2) + '%'
-                        )}
-                      </span>
-                      <span>Today</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            filtered.map(service => (
+              <HeartbeatRow
+                key={service.id}
+                service={service}
+                isSelected={selectedService?.id === service.id}
+                onSelect={() => setSelectedService(prev => prev?.id === service.id ? null : service)}
+                timeframe={timeframe}
+                hoveredBar={hoveredBar}
+                onHoverBar={setHoveredBar}
+              />
+            ))
           ) : (
-            <div className="p-8 text-center text-zinc-400 text-xs">
-              No websites match the selected filter criteria.
+            <div className="p-8 text-center text-zinc-500 text-xs">
+              No endpoints match the current filters.
             </div>
           )}
         </div>
@@ -725,42 +521,54 @@ export default function UptimeStatusContent() {
           <span>Recent Outage & Incident Log</span>
         </h3>
         <div className="space-y-2.5">
-          {[
-            { site: 'flipkart.com', time: '14 minutes ago', status: 'Ongoing', type: 'Gateway 504 Timeout', impact: 'High', region: 'India - Delhi NCR' },
-            { site: 'amazon.in', time: '1 hour ago', status: 'Degraded', type: 'Response latency spiked to 380ms', impact: 'Moderate', region: 'India - Mumbai' },
-            { site: 'myntra.com', time: '4 days ago', status: 'Resolved', type: 'TCP Handshake Delay (Recovered in 2m)', impact: 'Minor', region: 'India - Bengaluru' },
-            { site: 'github.com', time: '8 days ago', status: 'Resolved', type: 'Webhook delivery delay resolved', impact: 'Minor', region: 'EU-Central Frankfurt' },
-          ].map((inc, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 text-xs"
-            >
-              <div className="flex items-center space-x-3">
-                <span className={`w-2 h-2 rounded-full ${
-                  inc.status === 'Ongoing' ? 'bg-rose-500 animate-pulse' : inc.status === 'Degraded' ? 'bg-amber-500' : 'bg-emerald-500'
-                }`} />
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-zinc-900 dark:text-white">{inc.site}</span>
-                    <span className="text-[10px] text-zinc-400 font-mono">({inc.region})</span>
+          {services.length === 0 ? (
+            <p className="text-xs text-zinc-400 text-center py-4">No incidents recorded yet.</p>
+          ) : (
+            services
+              .filter(s => s.status !== 'Operational')
+              .concat(services.filter(s => s.status === 'Operational'))
+              .slice(0, 6)
+              .map((service, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 text-xs"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      service.status === 'Outage' ? 'bg-rose-500 animate-pulse' :
+                      service.status === 'Degraded' ? 'bg-amber-500' : 'bg-emerald-500'
+                    }`} />
+                    <div className="w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      <img
+                        src={getFavicon(service.url)}
+                        alt=""
+                        width={14}
+                        height={14}
+                        loading="lazy"
+                        className="w-3.5 h-3.5 object-contain"
+                        onError={e => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
+                    </div>
+                    <div>
+                      <span className="font-bold text-zinc-900 dark:text-white">{service.name}</span>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">{service.lastIncident}</p>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">{inc.type}</p>
+                  <div className="text-right">
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                      service.status === 'Outage'
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                        : service.status === 'Degraded'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                    }`}>
+                      {service.status}
+                    </span>
+                    <p className="text-[10px] text-zinc-400 mt-0.5">{service.currentLatency > 0 ? `${service.currentLatency}ms` : '—'}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                  inc.status === 'Ongoing'
-                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
-                    : inc.status === 'Degraded'
-                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                }`}>
-                  {inc.status}
-                </span>
-                <p className="text-[10px] text-zinc-400 mt-0.5">{inc.time}</p>
-              </div>
-            </div>
-          ))}
+              ))
+          )}
         </div>
       </div>
     </div>

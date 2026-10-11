@@ -1,7 +1,5 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
-
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
-}
+// AuthProvider is now a thin re-export from AuthContext so existing
+// imports of this file keep working without changes.
+export { AuthProvider } from '@/context/AuthContext';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Globe, Shield, Bell, Cpu, Check, Layers, Clock, MapPin, Zap } from 'lucide-react';
 
 interface AddWebsiteModalProps {
@@ -32,13 +32,70 @@ const MONITOR_TYPES = ['HTTP', 'HTTPS', 'Ping', 'TCP Port', 'DNS Lookup', 'API E
 
 const ALERT_CHANNELS = ['Email', 'Slack', 'Discord', 'Telegram', 'SMS', 'Microsoft Teams'];
 
+/** Map the browser's IANA timezone to the closest monitoring region label. */
+function detectRegionFromTimezone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // India
+    if (tz.startsWith('Asia/Kolkata') || tz.startsWith('Asia/Calcutta')) return 'India - Mumbai';
+    // Southeast Asia
+    if (tz.startsWith('Asia/Singapore') || tz.startsWith('Asia/Kuala'))    return 'AP-Southeast Singapore';
+    if (tz.startsWith('Asia/Bangkok') || tz.startsWith('Asia/Ho_Chi'))     return 'AP-Southeast Singapore';
+    if (tz.startsWith('Asia/Jakarta') || tz.startsWith('Asia/Bali'))       return 'AP-Southeast Singapore';
+    // East Asia
+    if (tz.startsWith('Asia/Tokyo') || tz.startsWith('Asia/Osaka'))        return 'AP-Northeast Tokyo';
+    if (tz.startsWith('Asia/Seoul'))                                        return 'AP-Northeast Seoul';
+    if (tz.startsWith('Asia/Hong_Kong') || tz.startsWith('Asia/Taipei'))   return 'AP-East Hong Kong';
+    if (tz.startsWith('Asia/Shanghai') || tz.startsWith('Asia/Beijing') || tz.startsWith('Asia/Chongqing')) return 'AP-East Hong Kong';
+    // Oceania
+    if (tz.startsWith('Australia/Sydney') || tz.startsWith('Australia/Melbourne')) return 'AP-Southeast Sydney';
+    if (tz.startsWith('Pacific/Auckland'))                                  return 'AP-Southeast Auckland';
+    // Middle East
+    if (tz.startsWith('Asia/Dubai') || tz.startsWith('Asia/Muscat'))       return 'ME-Central UAE Dubai';
+    if (tz.startsWith('Asia/Riyadh') || tz.startsWith('Asia/Qatar'))       return 'ME-Central Riyadh';
+    if (tz.startsWith('Asia/Bahrain'))                                      return 'ME-South Bahrain';
+    // Europe
+    if (tz.startsWith('Europe/London') || tz.startsWith('Europe/Dublin'))  return 'EU-West London';
+    if (tz.startsWith('Europe/Berlin') || tz.startsWith('Europe/Frankfurt') || tz.startsWith('Europe/Vienna') || tz.startsWith('Europe/Zurich')) return 'EU-Central Frankfurt';
+    if (tz.startsWith('Europe/Paris') || tz.startsWith('Europe/Brussels')) return 'EU-South Paris';
+    if (tz.startsWith('Europe/Amsterdam'))                                  return 'EU-West Amsterdam';
+    if (tz.startsWith('Europe/Stockholm') || tz.startsWith('Europe/Oslo') || tz.startsWith('Europe/Helsinki')) return 'EU-North Stockholm';
+    if (tz.startsWith('Europe/Warsaw') || tz.startsWith('Europe/Kyiv') || tz.startsWith('Europe/Moscow'))     return 'EU-East Warsaw';
+    // North America
+    if (tz.startsWith('America/New_York') || tz.startsWith('America/Toronto') || tz.startsWith('America/Detroit')) return 'US-East N.Virginia';
+    if (tz.startsWith('America/Chicago') || tz.startsWith('America/Winnipeg'))                                   return 'US-Central Iowa';
+    if (tz.startsWith('America/Denver') || tz.startsWith('America/Phoenix'))                                     return 'US-West Oregon';
+    if (tz.startsWith('America/Los_Angeles') || tz.startsWith('America/Vancouver'))                              return 'US-West California';
+    if (tz.startsWith('America/Dallas') || tz.startsWith('America/Houston'))                                     return 'US-South Texas';
+    if (tz.startsWith('America/Montreal'))                                                                        return 'CA-Central Montreal';
+    // South America
+    if (tz.startsWith('America/Sao_Paulo') || tz.startsWith('America/Recife'))  return 'SA-East São Paulo';
+    if (tz.startsWith('America/Santiago'))                                        return 'SA-West Santiago';
+    if (tz.startsWith('America/Bogota'))                                          return 'SA-North Bogotá';
+    if (tz.startsWith('America/Buenos_Aires') || tz.startsWith('America/Argentina')) return 'SA-South Buenos Aires';
+    // Africa
+    if (tz.startsWith('Africa/Johannesburg') || tz.startsWith('Africa/Cape_Town')) return 'AF-South Johannesburg';
+    if (tz.startsWith('Africa/Cairo'))                                              return 'AF-North Cairo';
+    if (tz.startsWith('Africa/Lagos'))                                              return 'AF-West Lagos';
+    if (tz.startsWith('Africa/Nairobi'))                                            return 'AF-East Nairobi';
+  } catch {
+    // Intl API not available — fallback
+  }
+  return 'India - Mumbai'; // Global fallback
+}
+
 export default function AddWebsiteModal({ isOpen, onClose, onSave }: AddWebsiteModalProps) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [description, setDescription] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['HTTPS', 'HTTP']);
   const [pollingInterval, setPollingInterval] = useState('1 Minute');
-  const [selectedRegions, setSelectedRegions] = useState<string[]>(['India - Mumbai', 'India - Bengaluru', 'Singapore']);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>(() => {
+    const detected = detectRegionFromTimezone();
+    // Always include the detected region; add a secondary if it's not already the default
+    const secondary = detected === 'India - Mumbai' ? 'India - Bengaluru' : 'India - Mumbai';
+    return [detected, secondary];
+  });
   const [sslEnabled, setSslEnabled] = useState(true);
   const [sslDaysThreshold, setSslDaysThreshold] = useState(30);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>(['Email', 'Discord', 'Slack']);
@@ -64,6 +121,12 @@ export default function AddWebsiteModal({ isOpen, onClose, onSave }: AddWebsiteM
     );
   };
 
+  /**
+   * NOTE: The Python engine reads its list of URLs from urls.json on disk.
+   * Submitting this form does NOT automatically add the URL to the engine's
+   * monitoring list. To start monitoring a new URL, manually add it to
+   * c:\Users\Rakshana\100%working\urls.json and restart the engine (run.py).
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !url) return;

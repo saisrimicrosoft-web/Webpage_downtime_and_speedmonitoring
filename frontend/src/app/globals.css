@@ -1,96 +1,250 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   AURORA GLASS THEME — v2
+   Background: #05060d near-black with aurora glow overlay
+   Cards: dark semi-transparent, NO content blur
+   Text: crisp white — blur is ONLY on aurora blobs in background
+   To change colors: edit --aurora-* vars in :root
+   To change animation speed: edit the animation seconds below
+   To change shapes: edit AuroraBackground.tsx
+═══════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:         #05060d;
+  --bg-soft:    #0d0f1e;
+  --surface:    rgba(255,255,255,0.05);
+  --border:     rgba(255,255,255,0.10);
+  --text:       #f4f4f8;
+  --text-muted: rgba(244,244,248,0.55);
+
+  --aurora-orange: #ff7a3d;
+  --aurora-pink:   #ff3d8b;
+  --aurora-purple: #7b3dff;
+  --aurora-blue:   #2d6bff;
+  --aurora-teal:   #22d3c5;
+
+  /* Tailwind dark: utilities compat */
+  --background: #05060d;
+  --foreground: #f4f4f8;
 }
 
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --animate-slide-left: slide-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-fade-in: fade-in 0.25s ease-out;
-  --animate-scale-in: scale-in 0.2s ease-out;
+  --color-foreground:  var(--foreground);
+  --font-sans: var(--font-plus-jakarta), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --animate-slide-left: slide-left 0.3s cubic-bezier(0.16,1,0.3,1);
+  --animate-fade-in:    fade-in 0.25s ease-out;
+  --animate-scale-in:   scale-in 0.2s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ── Prevent white flash before CSS loads ──────────────── */
 html {
   scroll-behavior: smooth;
+  background-color: #05060d;
 }
-
+html, body { height: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
 }
 
-/* Custom Keyframes */
+/* ── Noise grain overlay — CSS-only depth texture ──────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GLOBAL TAILWIND OVERRIDES
+   Force every Tailwind bg- surface to be dark so the aurora
+   shows through. Text classes are kept as-is (they inherit).
+══════════════════════════════════════════════════════════ */
+
+/* Light page backgrounds → dark */
+.bg-white           { background-color: rgba(13,15,30,0.85) !important; }
+.bg-zinc-50         { background-color: rgba(10,12,22,0.70) !important; }
+.bg-zinc-100        { background-color: rgba(18,20,36,0.75) !important; }
+
+/* Dark mode surfaces that Tailwind renders as zinc-900/950 */
+.dark\:bg-zinc-900,
+.bg-zinc-900        { background-color: rgba(8,10,20,0.80) !important; }
+.dark\:bg-zinc-950,
+.bg-zinc-950        { background-color: rgba(5,6,13,0.92) !important; }
+
+/* Input fields */
+.dark\:bg-zinc-800,
+.bg-zinc-800        { background-color: rgba(15,18,35,0.80) !important; }
+
+/* Borders — keep existing border colours but slightly brighter */
+.dark\:border-zinc-800,
+.border-zinc-800    { border-color: rgba(255,255,255,0.10) !important; }
+.dark\:border-zinc-700,
+.border-zinc-700    { border-color: rgba(255,255,255,0.12) !important; }
+.border-zinc-200    { border-color: rgba(255,255,255,0.10) !important; }
+
+/* Text — bright and readable on dark aurora background */
+.dark\:text-white,
+.text-white          { color: #ffffff !important; }
+.text-zinc-900       { color: #f4f4f8 !important; }
+.dark\:text-zinc-200 { color: rgba(244,244,248,0.95) !important; }
+.dark\:text-zinc-300 { color: rgba(244,244,248,0.92) !important; }
+.dark\:text-zinc-400 { color: rgba(244,244,248,0.82) !important; }
+.text-zinc-600       { color: rgba(244,244,248,0.82) !important; }
+.text-zinc-500       { color: rgba(244,244,248,0.72) !important; }
+.text-zinc-400       { color: rgba(244,244,248,0.72) !important; }
+.dark\:hover\:text-white:hover { color: #ffffff !important; }
+.hover\:text-zinc-900:hover    { color: #ffffff !important; }
+
+/* ── Active sidebar nav bar — vivid purple highlight ── */
+/* DashboardLayout active: bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 */
+.dark\:bg-purple-950\/40 { background-color: rgba(88,28,255,0.28) !important; }
+.dark\:text-purple-400   { color: #c084fc !important; }
+.text-purple-700         { color: #c084fc !important; }
+.dark\:border-purple-800\/50 { border-color: rgba(139,92,246,0.60) !important; }
+/* Active icon colour */
+.dark\:text-purple-400 { color: #c084fc !important; }
+
+/* ══════════════════════════════════════════════════════════
+   AURORA KEYFRAMES
+══════════════════════════════════════════════════════════ */
+@keyframes aurora-1 {
+  0%   { transform: translate(0px,0px)    scale(1);    opacity:.72; }
+  50%  { transform: translate(40px,-30px) scale(1.12); opacity:.88; }
+  100% { transform: translate(-20px,20px) scale(.95);  opacity:.72; }
+}
+@keyframes aurora-2 {
+  0%   { transform: translate(0px,0px)    rotate(0deg)  scale(1);    opacity:.60; }
+  50%  { transform: translate(-50px,30px) rotate(15deg) scale(1.15); opacity:.80; }
+  100% { transform: translate(30px,-20px) rotate(-8deg) scale(.92);  opacity:.60; }
+}
+@keyframes aurora-3 {
+  0%   { transform: translate(0px,0px)     scale(1);    opacity:.45; }
+  50%  { transform: translate(20px,40px)   scale(1.08); opacity:.60; }
+  100% { transform: translate(-30px,-15px) scale(1.03); opacity:.45; }
+}
+
+/* ── 3-D float keyframes ───────────────────────────────── */
+@keyframes float-a {
+  0%,100% { transform:translateY(0px)   rotateX(0deg)   rotateY(0deg);  }
+  50%     { transform:translateY(-15px) rotateX(20deg)  rotateY(30deg); }
+}
+@keyframes float-b {
+  0%,100% { transform:translateY(0px)   rotateX(0deg)   rotateY(0deg);  }
+  50%     { transform:translateY(-12px) rotateX(-15deg) rotateY(25deg); }
+}
+@keyframes float-c {
+  0%,100% { transform:translateY(0px)  rotateZ(0deg); }
+  50%     { transform:translateY(-10px) rotateZ(20deg); }
+}
+@keyframes float-ring {
+  0%,100% { transform:translateY(0px)   rotateX(70deg) rotateY(0deg);  }
+  50%     { transform:translateY(-14px) rotateX(50deg) rotateY(45deg); }
+}
+
+/* ── App keyframes (unchanged) ─────────────────────────── */
 @keyframes slide-left {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform:translateX(100%); opacity:0; }
+  to   { transform:translateX(0);    opacity:1; }
 }
-
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity:0; transform:translateY(4px); }
+  to   { opacity:1; transform:translateY(0);   }
 }
-
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity:0; transform:scale(.95); }
+  to   { opacity:1; transform:scale(1);   }
 }
 
-/* Custom scrollbar for drawer */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #a1a1aa;
-  border-radius: 9999px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #71717a;
+/* ── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob,
+  .shape-cube,
+  .shape-ring,
+  .shape-hex { animation:none !important; }
 }
 
-/* Sidebar nav scrollbar hidden */
-nav::-webkit-scrollbar {
-  width: 0;
+/* ── Glass card — NO backdrop blur (blur = blurry content = bad) ── */
+/* backdrop-filter is intentionally removed. Dark bg provides depth. */
+.glass-card {
+  background: rgba(13,15,30,0.75);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  box-shadow: 0 1px 0 0 rgba(255,255,255,.06) inset;
+  transition: transform .22s ease, border-color .22s ease;
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,.20);
 }
 
-/* Full-height dashboard layout */
-html, body {
-  height: 100%;
+/* ── Scrollbar ─────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar       { width:4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background:transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.28); }
+nav::-webkit-scrollbar { width:0; }
+
+/* ── Size utilities ────────────────────────────────────── */
+.w-4\.5 { width:1.125rem; }
+.h-4\.5 { height:1.125rem; }
+
+/* ══════════════════════════════════════════════════════════
+   CONTRAST & LEGIBILITY FIXES  (WCAG AAA dark-mode targets)
+   All !important rules here override Tailwind utility classes
+   that are too dim against the dark aurora background.
+══════════════════════════════════════════════════════════ */
+
+/* ── Muted text: bump 72% opacity → 85-88% for readability */
+.text-zinc-400 { color: rgba(244,244,248,0.88) !important; }
+.text-zinc-500 { color: rgba(244,244,248,0.82) !important; }
+.text-zinc-600 { color: rgba(244,244,248,0.85) !important; }
+
+/* ── Colored status sub-labels (too dark on aurora bg) ─── */
+/* e.g. "100% of infrastructure", "High response times"     */
+.text-emerald-600 { color: #34d399 !important; }
+.text-amber-600   { color: #fbbf24 !important; }
+.text-rose-600    { color: #fb7185 !important; }
+.text-purple-600  { color: #c084fc !important; }
+.text-blue-600    { color: #60a5fa !important; }
+.text-orange-600  { color: #fb923c !important; }
+.text-indigo-600  { color: #a5b4fc !important; }
+
+/* Keep dark: variants equally vivid */
+.dark\:text-emerald-400 { color: #34d399 !important; }
+.dark\:text-amber-400   { color: #fbbf24 !important; }
+.dark\:text-rose-400    { color: #fb7185 !important; }
+.dark\:text-blue-400    { color: #60a5fa !important; }
+.dark\:text-purple-400  { color: #c084fc !important; }
+
+/* ── KPI cards — crisp border + inner highlight glow ───── */
+/* Targets every bg-zinc-900 / bg-white card on the page    */
+.dark\:bg-zinc-900,
+.bg-zinc-900 {
+  border-color: rgba(255,255,255,0.16) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.07) inset,
+    0 6px 28px rgba(0,0,0,0.50),
+    0 1px 0 rgba(255,255,255,0.10) inset !important;
 }
 
-/* Custom size utilities not in default Tailwind */
-.w-4\.5 { width: 1.125rem; }
-.h-4\.5 { height: 1.125rem; }
+/* ── Secondary info lines below big numbers ────────────── */
+/* e.g. "50% of infrastructure", "High response times"      */
+.text-\[11px\] { color: rgba(244,244,248,0.84) !important; }
+.text-\[10px\] { color: rgba(244,244,248,0.80) !important; }
+
+/* ── Sidebar: hover states fully opaque ────────────────── */
+.dark\:hover\:text-white:hover { color: #ffffff !important; }
+.hover\:text-zinc-900:hover    { color: #ffffff !important; }
+
+/* ── Input / select contrast ────────────────────────────── */
+input::placeholder { color: rgba(244,244,248,0.36) !important; }
+select             { color: rgba(244,244,248,0.88) !important; }

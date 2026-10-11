@@ -36,7 +36,7 @@ export default function SslDetailDrawer({ cert, onClose }: Props) {
   useEffect(() => {
     if (!cert) return;
     setHistLoading(true);
-    getSslHistory(cert.url, 30)
+    getSslHistory(cert.url)
       .then(setHistory)
       .finally(() => setHistLoading(false));
   }, [cert]);

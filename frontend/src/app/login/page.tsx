@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Activity, AlertCircle, Loader2 } from 'lucide-react';
-import { authApi } from '@/lib/flaskApi';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading, login } = useAuth();
+  const { user, loading, signIn } = useAuth();
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
@@ -27,11 +26,10 @@ export default function LoginPage() {
     setError('');
     setBusy(true);
     try {
-      const { token, user: u } = await authApi.login(email.trim().toLowerCase(), password);
-      login(token, u);
+      await signIn(email.trim().toLowerCase(), password);
       router.replace('/');
     } catch (err: any) {
-      setError(err?.body?.errors?.general || err?.message || 'Sign in failed');
+      setError(err?.message || 'Sign in failed');
     } finally {
       setBusy(false);
     }
