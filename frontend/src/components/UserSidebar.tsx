@@ -5,6 +5,7 @@ import {
   LogOut, User, Bell, ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useProfile } from '@/context/ProfileContext';
 import { useRouter } from 'next/navigation';
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 
 export default function UserSidebar({ onAddMonitor }: Props) {
   const { user, signOut } = useAuth();
+  const { name: profileName } = useProfile();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -25,7 +27,9 @@ export default function UserSidebar({ onAddMonitor }: Props) {
   }
 
   const email = user?.email ?? '';
-  const initials = email ? email[0].toUpperCase() : 'U';
+  const metaName = (user?.user_metadata?.name as string | undefined) ?? (user?.user_metadata?.full_name as string | undefined) ?? '';
+  const displayName = profileName.trim() || metaName.trim() || email;
+  const initials = displayName ? displayName[0].toUpperCase() : 'U';
 
   return (
     <aside className="h-full flex flex-col bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 w-[260px] flex-shrink-0">
@@ -40,7 +44,7 @@ export default function UserSidebar({ onAddMonitor }: Props) {
             {initials}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">{email}</p>
+            <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">{displayName}</p>
           </div>
           <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
         </button>

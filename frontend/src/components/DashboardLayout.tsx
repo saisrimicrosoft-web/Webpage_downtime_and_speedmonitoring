@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Activity, Globe, Clock, Bell, Gauge, ShieldCheck, FileText,
+  Activity, Globe, Clock, Bell, ShieldCheck, FileText,
   Settings, ChevronDown, Search, Plus, Menu, X,
-  AlertTriangle, History
+  AlertTriangle, LogOut, User
 } from 'lucide-react';
+import { useProfile } from '@/context/ProfileContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export type NavPage =
   | 'dashboard'
@@ -25,21 +28,66 @@ interface DashboardLayoutProps {
 }
 
 const NAV_ITEMS: { id: NavPage; label: string; icon: React.ReactNode }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <Activity className="w-4 h-4" /> },
+  { id: 'dashboard',        label: 'Dashboard',        icon: <Activity className="w-4 h-4" /> },
   { id: 'monitor-websites', label: 'Monitor Websites', icon: <Globe className="w-4 h-4" /> },
-  { id: 'uptime-status', label: 'Uptime Status', icon: <Clock className="w-4 h-4" /> },
-  { id: 'downtime-alerts', label: 'Downtime Alerts', icon: <AlertTriangle className="w-4 h-4" /> },
-  { id: 'ssl-certificate', label: 'SSL Certificate', icon: <ShieldCheck className="w-4 h-4" /> },
-  { id: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
-  { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
+  { id: 'uptime-status',    label: 'Uptime Status',    icon: <Clock className="w-4 h-4" /> },
+  { id: 'downtime-alerts',  label: 'Downtime Alerts',  icon: <AlertTriangle className="w-4 h-4" /> },
+  { id: 'ssl-certificate',  label: 'SSL Certificate',  icon: <ShieldCheck className="w-4 h-4" /> },
+  { id: 'reports',          label: 'Reports',          icon: <FileText className="w-4 h-4" /> },
+  { id: 'settings',         label: 'Settings',         icon: <Settings className="w-4 h-4" /> },
 ];
 
-export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal, openIncidentCount = 0, children }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  activePage,
+  onNavigate,
+  onOpenAddModal,
+  openIncidentCount = 0,
+  children,
+}: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const { name, email: profileEmail } = useProfile();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+
+  // Derive display name: ProfileContext override > user_metadata.name > full_name > email prefix > fallback
+  const authFullName  = (user?.user_metadata?.name as string | undefined) ?? (user?.user_metadata?.full_name as string | undefined) ?? '';
+  const authEmail     = user?.email ?? '';
+  const emailPrefix   = authEmail ? authEmail.split('@')[0] : '';
+  const displayName   = name.trim() || authFullName.trim() || emailPrefix || 'DevOps Admin';
+
+  // Login time: formatted as "Logged in HH:MM AM/PM" using last_sign_in_at from Supabase session
+  const [loginTime, setLoginTime] = useState<string>('');
+  useEffect(() => {
+    if (user?.last_sign_in_at) {
+      const d = new Date(user.last_sign_in_at);
+      const formatted = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setLoginTime(`Logged in ${formatted}`);
+    }
+  }, [user?.last_sign_in_at]);
+
+  const displaySub = loginTime || (profileEmail.trim() ? profileEmail.trim() : 'Cloud Ops');
+
+  const initials = displayName
+    .split(' ')
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .slice(0, 2)
+    .join('') || 'DA';
+
+  // Sidebar bottom user
+  const sidebarEmail    = authEmail || profileEmail || '';
+  const sidebarInitials = sidebarEmail ? sidebarEmail[0].toUpperCase() : initials;
+
+  async function handleLogout() {
+    await signOut();
+    router.replace('/login');
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
-      {/* Mobile sidebar overlay */}
+
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden"
@@ -68,7 +116,10 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
               </span>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-zinc-400 hover:text-zinc-700 cursor-pointer">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1 text-zinc-400 hover:text-zinc-700 cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -106,19 +157,62 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
           })}
         </nav>
 
+        {/* Bottom: User profile */}
+        <div className="border-t border-zinc-100 dark:border-zinc-800 relative">
+          <button
+            onClick={() => setProfileOpen(v => !v)}
+            className="w-full flex items-center space-x-2.5 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {sidebarInitials}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">{sidebarEmail}</p>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+          </button>
+
+          {profileOpen && (
+            <div className="absolute bottom-full left-2 right-2 mb-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg py-1 z-50 text-xs">
+              <button
+                onClick={() => { setProfileOpen(false); router.push('/profile'); }}
+                className="w-full flex items-center space-x-2 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+              >
+                <User className="w-4 h-4" /><span>Profile</span>
+              </button>
+              <button
+                onClick={() => { setProfileOpen(false); onNavigate('settings'); }}
+                className="w-full flex items-center space-x-2 px-3 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+              >
+                <Bell className="w-4 h-4" /><span>Alert Settings</span>
+              </button>
+              <div className="my-1 border-t border-zinc-100 dark:border-zinc-700" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-2 px-3 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-600 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" /><span>Sign out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* ═══════════ MAIN AREA ═══════════ */}
       <div className="flex-1 flex flex-col min-w-0">
+
         {/* ─── TOP HEADER BAR ─── */}
         <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-            {/* Left: Hamburger + Search */}
+
+            {/* Left: Hamburger (mobile) + Search */}
             <div className="flex items-center space-x-4">
-              <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 text-zinc-500 hover:text-zinc-800 cursor-pointer">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-1.5 text-zinc-500 hover:text-zinc-800 cursor-pointer"
+              >
                 <Menu className="w-5 h-5" />
               </button>
-
               <div className="hidden sm:flex relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
@@ -131,7 +225,6 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
 
             {/* Right: Actions */}
             <div className="flex items-center space-x-3">
-              {/* Monitor New Website button */}
               {onOpenAddModal && (
                 <button
                   onClick={onOpenAddModal}
@@ -148,14 +241,14 @@ export default function DashboardLayout({ activePage, onNavigate, onOpenAddModal
                 <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-zinc-900"></span>
               </button>
 
-              {/* User avatar */}
+              {/* User avatar — updates live from ProfileContext */}
               <div className="flex items-center space-x-2 pl-2 border-l border-zinc-200 dark:border-zinc-800 ml-1">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
-                  DA
+                  {initials}
                 </div>
                 <div className="hidden sm:block">
-                  <p className="text-xs font-bold text-zinc-900 dark:text-white leading-tight">DevOps Admin</p>
-                  <p className="text-[10px] text-zinc-500">Cloud Ops</p>
+                  <p className="text-xs font-bold text-zinc-900 dark:text-white leading-tight">{displayName}</p>
+                  <p className="text-[10px] text-zinc-500">{displaySub}</p>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400 hidden sm:block" />
               </div>

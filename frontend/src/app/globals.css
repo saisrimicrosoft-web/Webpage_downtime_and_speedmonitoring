@@ -1,22 +1,28 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════
-   AURORA GLASS THEME — v2
+   AURORA GLASS THEME — v3  (High-Contrast Edition)
    Background: #05060d near-black with aurora glow overlay
    Cards: dark semi-transparent, NO content blur
    Text: crisp white — blur is ONLY on aurora blobs in background
-   To change colors: edit --aurora-* vars in :root
-   To change animation speed: edit the animation seconds below
-   To change shapes: edit AuroraBackground.tsx
+   ─────────────────────────────────────────────────────────
+   VISIBILITY RULES
+   • Primary text   → 100% white / #f4f4f8
+   • Secondary text → 92% opacity (was 55% — far too dim)
+   • Muted labels   → 82% opacity minimum
+   • Dividers/borders → rgba(255,255,255,0.18) minimum
+   • Table headers  → bold + 95% brightness
 ═══════════════════════════════════════════════════════════ */
 
 :root {
   --bg:         #05060d;
   --bg-soft:    #0d0f1e;
-  --surface:    rgba(255,255,255,0.05);
-  --border:     rgba(255,255,255,0.10);
+  --surface:    rgba(255,255,255,0.06);
+  --border:     rgba(255,255,255,0.18);   /* ↑ was 0.10 */
+
   --text:       #f4f4f8;
-  --text-muted: rgba(244,244,248,0.55);
+  --text-sub:   rgba(244,244,248,0.92);   /* ↑ was 0.55 */
+  --text-muted: rgba(244,244,248,0.80);   /* ↑ was 0.55 */
 
   --aurora-orange: #ff7a3d;
   --aurora-pink:   #ff3d8b;
@@ -49,6 +55,11 @@ body {
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  /* Professional font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
 
 /* ── Noise grain overlay — CSS-only depth texture ──────── */
@@ -66,52 +77,193 @@ body::after {
 /* ══════════════════════════════════════════════════════════
    GLOBAL TAILWIND OVERRIDES
    Force every Tailwind bg- surface to be dark so the aurora
-   shows through. Text classes are kept as-is (they inherit).
+   shows through.
 ══════════════════════════════════════════════════════════ */
 
 /* Light page backgrounds → dark */
-.bg-white           { background-color: rgba(13,15,30,0.85) !important; }
-.bg-zinc-50         { background-color: rgba(10,12,22,0.70) !important; }
-.bg-zinc-100        { background-color: rgba(18,20,36,0.75) !important; }
+.bg-white           { background-color: rgba(13,15,30,0.88) !important; }
+.bg-zinc-50         { background-color: rgba(10,12,22,0.75) !important; }
+.bg-zinc-100        { background-color: rgba(18,20,36,0.80) !important; }
 
-/* Dark mode surfaces that Tailwind renders as zinc-900/950 */
+/* Dark mode surfaces */
 .dark\:bg-zinc-900,
-.bg-zinc-900        { background-color: rgba(8,10,20,0.80) !important; }
+.bg-zinc-900        { background-color: rgba(8,10,20,0.85) !important; }
 .dark\:bg-zinc-950,
-.bg-zinc-950        { background-color: rgba(5,6,13,0.92) !important; }
+.bg-zinc-950        { background-color: rgba(5,6,13,0.95) !important; }
 
 /* Input fields */
 .dark\:bg-zinc-800,
-.bg-zinc-800        { background-color: rgba(15,18,35,0.80) !important; }
+.bg-zinc-800        { background-color: rgba(20,23,42,0.85) !important; }
 
-/* Borders — keep existing border colours but slightly brighter */
+/* ── BORDERS: bright & crisp ─────────────────────────────
+   Old values (0.10–0.12) were invisible on dark aurora.
+   New values (0.22–0.28) make every card/table edge clear.
+────────────────────────────────────────────────────────── */
 .dark\:border-zinc-800,
-.border-zinc-800    { border-color: rgba(255,255,255,0.10) !important; }
+.border-zinc-800    { border-color: rgba(255,255,255,0.18) !important; }
 .dark\:border-zinc-700,
-.border-zinc-700    { border-color: rgba(255,255,255,0.12) !important; }
-.border-zinc-200    { border-color: rgba(255,255,255,0.10) !important; }
+.border-zinc-700    { border-color: rgba(255,255,255,0.22) !important; }
+.border-zinc-200    { border-color: rgba(255,255,255,0.18) !important; }
+.border-zinc-100    { border-color: rgba(255,255,255,0.14) !important; }
 
-/* Text — bright and readable on dark aurora background */
+/* ── DIVIDERS: table row separators ────────────────────────
+   divide-zinc-100 / divide-zinc-800 are the main table row lines.
+   Old: rgba(255,255,255,0.05) — near-invisible.
+   New: rgba(255,255,255,0.12) — clearly visible highlight.
+────────────────────────────────────────────────────────── */
+.divide-zinc-100 > * + *,
+.dark\:divide-zinc-800 > * + *,
+.divide-zinc-800 > * + * {
+  border-top-color: rgba(255,255,255,0.13) !important;
+}
+.divide-zinc-200 > * + * {
+  border-top-color: rgba(255,255,255,0.12) !important;
+}
+
+/* ── TEXT — MAXIMUM LEGIBILITY ──────────────────────────── */
 .dark\:text-white,
 .text-white          { color: #ffffff !important; }
 .text-zinc-900       { color: #f4f4f8 !important; }
-.dark\:text-zinc-200 { color: rgba(244,244,248,0.95) !important; }
-.dark\:text-zinc-300 { color: rgba(244,244,248,0.92) !important; }
-.dark\:text-zinc-400 { color: rgba(244,244,248,0.82) !important; }
-.text-zinc-600       { color: rgba(244,244,248,0.82) !important; }
-.text-zinc-500       { color: rgba(244,244,248,0.72) !important; }
-.text-zinc-400       { color: rgba(244,244,248,0.72) !important; }
+
+/* Primary content text — near white */
+.dark\:text-zinc-100 { color: #f4f4f8 !important; }
+.dark\:text-zinc-200 { color: rgba(244,244,248,0.97) !important; }
+.dark\:text-zinc-300 { color: rgba(244,244,248,0.94) !important; }
+
+/* Secondary / sub-label text — was too dim, now clearly readable */
+.dark\:text-zinc-400,
+.text-zinc-400       { color: rgba(244,244,248,0.88) !important; }
+
+/* Muted labels (table headers, small caps) */
+.dark\:text-zinc-500,
+.text-zinc-500       { color: rgba(244,244,248,0.82) !important; }
+
+/* Slightly muted but still strong */
+.text-zinc-600       { color: rgba(244,244,248,0.88) !important; }
+
+/* Hover states */
 .dark\:hover\:text-white:hover { color: #ffffff !important; }
 .hover\:text-zinc-900:hover    { color: #ffffff !important; }
 
-/* ── Active sidebar nav bar — vivid purple highlight ── */
-/* DashboardLayout active: bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 */
-.dark\:bg-purple-950\/40 { background-color: rgba(88,28,255,0.28) !important; }
+/* ── Active sidebar nav bar — vivid purple highlight ─────── */
+.dark\:bg-purple-950\/40 { background-color: rgba(88,28,255,0.30) !important; }
 .dark\:text-purple-400   { color: #c084fc !important; }
 .text-purple-700         { color: #c084fc !important; }
-.dark\:border-purple-800\/50 { border-color: rgba(139,92,246,0.60) !important; }
-/* Active icon colour */
-.dark\:text-purple-400 { color: #c084fc !important; }
+.dark\:border-purple-800\/50 { border-color: rgba(139,92,246,0.65) !important; }
+
+/* ── STATUS COLORS — vivid on dark background ─────────────
+   These are the colored numbers/badges throughout the app.
+────────────────────────────────────────────────────────── */
+.text-emerald-600,
+.dark\:text-emerald-400 { color: #34d399 !important; }
+
+.text-amber-600,
+.dark\:text-amber-400   { color: #fbbf24 !important; }
+
+.text-rose-600,
+.dark\:text-rose-400    { color: #fb7185 !important; }
+
+.text-purple-600,
+.dark\:text-purple-400  { color: #c084fc !important; }
+
+.text-blue-600,
+.dark\:text-blue-400    { color: #60a5fa !important; }
+
+.text-orange-600        { color: #fb923c !important; }
+.text-indigo-600        { color: #a5b4fc !important; }
+
+/* amber-500 (used inline in status badges) */
+.text-amber-500         { color: #f59e0b !important; }
+.text-emerald-500       { color: #10b981 !important; }
+.text-rose-500          { color: #f43f5e !important; }
+
+/* ── KPI CARDS — crisp border + inner highlight glow ─────── */
+.dark\:bg-zinc-900,
+.bg-zinc-900 {
+  border-color: rgba(255,255,255,0.20) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 8px 32px rgba(0,0,0,0.55),
+    0 1px 0 rgba(255,255,255,0.12) inset !important;
+}
+
+/* ── TABLE HEADERS — bold, bright, uppercase ──────────────
+   thead cells with text-zinc-500/400 get a visibility boost.
+   All table header text is now bright with stronger tracking.
+────────────────────────────────────────────────────────── */
+thead th {
+  color: rgba(244,244,248,0.92) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* Table header background — slightly elevated from row bg */
+thead {
+  background-color: rgba(20,22,45,0.90) !important;
+}
+
+/* Table rows — subtle alternating highlight on hover */
+tbody tr:hover {
+  background-color: rgba(139,92,246,0.08) !important;
+}
+
+/* ── SECTION HEADINGS (h1, h2, h3 inside dashboard) ───────── */
+h1, h2, h3 {
+  color: #f4f4f8;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Dashboard page title "Website Monitoring Dashboard" */
+.text-xl.font-extrabold,
+.text-2xl.font-bold,
+.text-lg.font-bold {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+/* Sub-description lines below headings */
+.text-xs.text-zinc-500,
+.text-xs.text-zinc-400 {
+  color: rgba(244,244,248,0.80) !important;
+  font-weight: 500 !important;
+}
+
+/* ── SMALL CAPS / UPPERCASE LABELS (KPI card labels) ──────── */
+/* e.g. "GLOBAL UPTIME", "ACTIVE INCIDENTS" */
+.uppercase.tracking-wider {
+  color: rgba(244,244,248,0.90) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* ── TINY TEXT sizes (11px, 10px sub-labels) ──────────────── */
+.text-\[11px\] { color: rgba(244,244,248,0.88) !important; font-weight: 500 !important; }
+.text-\[10px\] { color: rgba(244,244,248,0.84) !important; font-weight: 500 !important; }
+
+/* ── INPUT / FORM FIELDS ────────────────────────────────── */
+input, select, textarea {
+  color: rgba(244,244,248,0.96) !important;
+  font-weight: 500;
+}
+input::placeholder  { color: rgba(244,244,248,0.38) !important; }
+select              { color: rgba(244,244,248,0.92) !important; }
+
+/* Focus ring — purple glow */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(139,92,246,0.55) !important;
+}
+
+/* ── SIDEBAR TEXT ───────────────────────────────────────── */
+nav a, nav button {
+  font-weight: 600;
+}
+
+/* ── BADGE / PILL TEXT ──────────────────────────────────── */
+.font-semibold { font-weight: 650 !important; }
+.font-bold     { font-weight: 700 !important; }
+.font-extrabold{ font-weight: 800 !important; }
 
 /* ══════════════════════════════════════════════════════════
    AURORA KEYFRAMES
@@ -150,7 +302,7 @@ body::after {
   50%     { transform:translateY(-14px) rotateX(50deg) rotateY(45deg); }
 }
 
-/* ── App keyframes (unchanged) ─────────────────────────── */
+/* ── Slide / Fade / Scale keyframes ───────────────────── */
 @keyframes slide-left {
   from { transform:translateX(100%); opacity:0; }
   to   { transform:translateX(0);    opacity:1; }
@@ -172,79 +324,28 @@ body::after {
   .shape-hex { animation:none !important; }
 }
 
-/* ── Glass card — NO backdrop blur (blur = blurry content = bad) ── */
-/* backdrop-filter is intentionally removed. Dark bg provides depth. */
+/* ── Glass card ─────────────────────────────────────────── */
 .glass-card {
-  background: rgba(13,15,30,0.75);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(13,15,30,0.80);
+  border: 1px solid rgba(255,255,255,0.16);
   border-radius: 16px;
-  box-shadow: 0 1px 0 0 rgba(255,255,255,.06) inset;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,.08) inset,
+    0 8px 32px rgba(0,0,0,0.50);
   transition: transform .22s ease, border-color .22s ease;
 }
 .glass-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(255,255,255,.20);
+  border-color: rgba(255,255,255,.28);
 }
 
 /* ── Scrollbar ─────────────────────────────────────────── */
 .custom-scrollbar::-webkit-scrollbar       { width:4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background:transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:9999px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.28); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background:rgba(255,255,255,.20); border-radius:9999px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.35); }
 nav::-webkit-scrollbar { width:0; }
 
 /* ── Size utilities ────────────────────────────────────── */
 .w-4\.5 { width:1.125rem; }
 .h-4\.5 { height:1.125rem; }
-
-/* ══════════════════════════════════════════════════════════
-   CONTRAST & LEGIBILITY FIXES  (WCAG AAA dark-mode targets)
-   All !important rules here override Tailwind utility classes
-   that are too dim against the dark aurora background.
-══════════════════════════════════════════════════════════ */
-
-/* ── Muted text: bump 72% opacity → 85-88% for readability */
-.text-zinc-400 { color: rgba(244,244,248,0.88) !important; }
-.text-zinc-500 { color: rgba(244,244,248,0.82) !important; }
-.text-zinc-600 { color: rgba(244,244,248,0.85) !important; }
-
-/* ── Colored status sub-labels (too dark on aurora bg) ─── */
-/* e.g. "100% of infrastructure", "High response times"     */
-.text-emerald-600 { color: #34d399 !important; }
-.text-amber-600   { color: #fbbf24 !important; }
-.text-rose-600    { color: #fb7185 !important; }
-.text-purple-600  { color: #c084fc !important; }
-.text-blue-600    { color: #60a5fa !important; }
-.text-orange-600  { color: #fb923c !important; }
-.text-indigo-600  { color: #a5b4fc !important; }
-
-/* Keep dark: variants equally vivid */
-.dark\:text-emerald-400 { color: #34d399 !important; }
-.dark\:text-amber-400   { color: #fbbf24 !important; }
-.dark\:text-rose-400    { color: #fb7185 !important; }
-.dark\:text-blue-400    { color: #60a5fa !important; }
-.dark\:text-purple-400  { color: #c084fc !important; }
-
-/* ── KPI cards — crisp border + inner highlight glow ───── */
-/* Targets every bg-zinc-900 / bg-white card on the page    */
-.dark\:bg-zinc-900,
-.bg-zinc-900 {
-  border-color: rgba(255,255,255,0.16) !important;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.07) inset,
-    0 6px 28px rgba(0,0,0,0.50),
-    0 1px 0 rgba(255,255,255,0.10) inset !important;
-}
-
-/* ── Secondary info lines below big numbers ────────────── */
-/* e.g. "50% of infrastructure", "High response times"      */
-.text-\[11px\] { color: rgba(244,244,248,0.84) !important; }
-.text-\[10px\] { color: rgba(244,244,248,0.80) !important; }
-
-/* ── Sidebar: hover states fully opaque ────────────────── */
-.dark\:hover\:text-white:hover { color: #ffffff !important; }
-.hover\:text-zinc-900:hover    { color: #ffffff !important; }
-
-/* ── Input / select contrast ────────────────────────────── */
-input::placeholder { color: rgba(244,244,248,0.36) !important; }
-select             { color: rgba(244,244,248,0.88) !important; }

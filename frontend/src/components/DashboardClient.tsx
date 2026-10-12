@@ -20,6 +20,39 @@ export default function DashboardClient() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [savedToast, setSavedToast] = useState('');
 
+  // Check URL query param ?page=settings on load
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const p = params.get('page') as NavPage | null;
+      const validPages: NavPage[] = [
+        'dashboard',
+        'monitor-websites',
+        'uptime-status',
+        'downtime-alerts',
+        'ssl-certificate',
+        'reports',
+        'settings'
+      ];
+      if (p && validPages.includes(p)) {
+        setActivePage(p);
+      }
+    }
+  }, []);
+
+  const handlePageChange = (page: NavPage) => {
+    setActivePage(page);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (page === 'dashboard') {
+        url.searchParams.delete('page');
+      } else {
+        url.searchParams.set('page', page);
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
   const store = useMonitoring();
   const kpis  = selectKPIs(store.websites, store.incidents);
 
@@ -210,7 +243,7 @@ export default function DashboardClient() {
     <>
       <DashboardLayout
         activePage={activePage}
-        onNavigate={setActivePage}
+        onNavigate={handlePageChange}
         openIncidentCount={kpis.activeIncidents}
         onOpenAddModal={() => setIsAddModalOpen(true)}
       >

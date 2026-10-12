@@ -11,6 +11,7 @@ export default function SignupPage() {
   const { user, loading, signUp } = useAuth();
 
   const [email,   setEmail]   = useState('');
+  const [name,    setName]    = useState('');
   const [pw,      setPw]      = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPw,  setShowPw]  = useState(false);
@@ -35,8 +36,11 @@ export default function SignupPage() {
     }
     setBusy(true);
     try {
-      await signUp(email.trim().toLowerCase(), pw);
+      await signUp(email.trim().toLowerCase(), pw, name.trim());
       setDone(true);
+      setTimeout(() => {
+        router.replace('/?page=settings');
+      }, 1200);
     } catch (err: any) {
       setError(err?.message || 'Sign up failed');
     } finally {
@@ -49,15 +53,21 @@ export default function SignupPage() {
   if (done) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
-        <div className="w-full max-w-md text-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-10">
+        <div className="w-full max-w-md text-center bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-10 animate-in fade-in zoom-in-95 duration-200">
           <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2">Check your email</h2>
+          <h2 className="text-xl font-extrabold text-zinc-900 dark:text-white mb-2">Account Created Successfully!</h2>
           <p className="text-sm text-zinc-500 mb-6">
-            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then sign in.
+            Welcome, <strong>{name}</strong>! Your account information has been saved. Redirecting to your Settings page...
           </p>
-          <Link href="/login" className="inline-block px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-sm font-bold shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all">
-            Back to Sign in
-          </Link>
+          <div className="flex items-center justify-center space-x-2 text-xs font-semibold text-purple-600 dark:text-purple-400 mb-6">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Opening Settings...</span>
+          </div>
+          <div>
+            <Link href="/?page=settings" className="inline-block px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-sm font-bold shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all">
+              Go to Settings now
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -86,6 +96,20 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name */}
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">Name</label>
+              <input
+                type="text"
+                autoComplete="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+                placeholder="Your name"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition"
+              />
+            </div>
+
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">Email address</label>

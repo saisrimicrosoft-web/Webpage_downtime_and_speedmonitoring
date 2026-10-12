@@ -8,7 +8,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -25,18 +25,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialise from existing session
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    // Safety fallback timeout to prevent infinite loading if Supabase is unreachable
+    const timeout = setTimeout(() => {
       setLoading(false);
-    });
+    }, 3000);
+
+    // Initialise from existing session
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        setUser(data?.session?.user ?? null);
+      })
+      .catch((err) => {
+        console.warn('Supabase auth session fetch failed:', err);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
 
     // Listen for auth state changes (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -44,13 +59,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+  const signUp = async (email: string, password: string, name?: string) => {
+    let apiSuccess = false;
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Sign up failed');
+      }
+      apiSuccess = true;
+    } catch (err: any) {
+      if (apiSuccess || (err?.message && !err.message.includes('fetch') && !err.message.includes('Network'))) {
+        throw err;
+      }
+      // Fallback directly to client SDK
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: name ? { data: { name, email } } : undefined,
+      });
+      if (error) throw error;
+    }
+
+    // Auto sign in immediately so user is authenticated right away
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (!signInError && signInData?.user) {
+      setUser(signInData.user);
+    }
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
+    setUser(null);
     if (error) throw error;
   };
 

@@ -254,12 +254,175 @@ export async function getSslHistory(_id: string): Promise<SslHistoryPoint[]> {
   return [];
 }
 
-export async function getSettings(): Promise<Record<string, unknown>> {
-  return {};
+export async function getProfile() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    let dbProfile: any = null;
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (!error && data) dbProfile = data;
+    } catch {
+      // Table doesn't exist yet
+    }
+
+    const metaName = user.user_metadata?.name || user.user_metadata?.full_name || '';
+    const metaEmail = user.email || user.user_metadata?.email || '';
+    const metaPhone = user.user_metadata?.phone || '';
+
+    return {
+      id: user.id,
+      name: dbProfile?.name || metaName || (metaEmail ? metaEmail.split('@')[0] : 'User'),
+      email: dbProfile?.email || metaEmail,
+      phone: dbProfile?.phone || metaPhone,
+      avatar_url: dbProfile?.avatar_url || user.user_metadata?.avatar_url || '',
+      created_at: user.created_at,
+    };
+  } catch (err) {
+    console.warn('getProfile error:', err);
+    return null;
+  }
 }
 
-export async function saveSettings(_data: unknown): Promise<boolean> {
-  return true;
+export async function getSettings(): Promise<Record<string, unknown>> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return {};
+
+    let dbProfile: any = null;
+    let dbSettings: any = null;
+
+    try {
+      const [{ data: profile, error: pErr }, { data: settings, error: sErr }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('user_settings').select('*').eq('user_id', user.id).single(),
+      ]);
+      if (!pErr && profile) dbProfile = profile;
+      if (!sErr && settings) dbSettings = settings;
+    } catch {
+      // Ignored if tables do not exist
+    }
+
+    // Check localStorage cache
+    let localCache: any = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`nexora_settings_${user.id}`);
+        if (stored) localCache = JSON.parse(stored);
+      } catch {}
+    }
+
+    const meta = user.user_metadata || {};
+    const metaSettings = meta.settings || {};
+
+    const name = dbProfile?.name || meta.name || meta.full_name || localCache?.profile?.name || (user.email ? user.email.split('@')[0] : '');
+    const email = dbProfile?.email || user.email || meta.email || localCache?.profile?.email || '';
+    const phone = dbProfile?.phone || meta.phone || localCache?.profile?.phone || '';
+
+    return {
+      profile: {
+        name,
+        email,
+        phone,
+      },
+      appearance: {
+        theme:    dbSettings?.theme     ?? metaSettings.theme     ?? localCache?.appearance?.theme     ?? 'System',
+        fontSize: dbSettings?.font_size ?? metaSettings.fontSize ?? localCache?.appearance?.fontSize ?? 'medium',
+        language: dbSettings?.language  ?? metaSettings.language  ?? localCache?.appearance?.language  ?? 'English',
+      },
+      notifications: {
+        email:     dbSettings?.email_notif     ?? metaSettings.emailNotif     ?? localCache?.notifications?.email     ?? true,
+        push:      dbSettings?.push_notif      ?? metaSettings.pushNotif      ?? localCache?.notifications?.push      ?? false,
+        marketing: dbSettings?.marketing_notif ?? metaSettings.marketingNotif ?? localCache?.notifications?.marketing ?? false,
+      },
+      privacy: {
+        publicProfile: dbSettings?.public_profile ?? metaSettings.publicProfile ?? localCache?.privacy?.publicProfile ?? false,
+        showOnline:    dbSettings?.show_online     ?? metaSettings.showOnline     ?? localCache?.privacy?.showOnline     ?? true,
+      },
+      security: {
+        twoFactor: dbSettings?.two_factor ?? metaSettings.twoFactor ?? localCache?.security?.twoFactor ?? false,
+      },
+    };
+  } catch (err) {
+    console.warn('getSettings error:', err);
+    return {};
+  }
+}
+
+export async function saveSettings(data: unknown): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const payload = data as Record<string, any>;
+
+    // 1. Update Supabase Auth user_metadata (always works)
+    try {
+      await supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          name: payload.profile?.name ?? user.user_metadata?.name,
+          phone: payload.profile?.phone ?? user.user_metadata?.phone,
+          settings: {
+            theme: payload.appearance?.theme,
+            fontSize: payload.appearance?.fontSize,
+            language: payload.appearance?.language,
+            emailNotif: payload.notifications?.email,
+            pushNotif: payload.notifications?.push,
+            marketingNotif: payload.notifications?.marketing,
+            publicProfile: payload.privacy?.publicProfile,
+            showOnline: payload.privacy?.showOnline,
+            twoFactor: payload.security?.twoFactor,
+          },
+        },
+      });
+    } catch (authErr) {
+      console.warn('Failed to update user_metadata in auth:', authErr);
+    }
+
+    // 2. Persist in localStorage for instant retrieval
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`nexora_settings_${user.id}`, JSON.stringify(payload));
+        if (payload.profile) {
+          localStorage.setItem(`nexora_profile_${user.id}`, JSON.stringify(payload.profile));
+        }
+      } catch {}
+    }
+
+    // 3. Sync to Supabase tables if they exist
+    try {
+      if (payload.profile) {
+        await supabase.from('profiles').upsert({
+          id:    user.id,
+          name:  payload.profile.name,
+          email: payload.profile.email,
+          phone: payload.profile.phone ?? '',
+        });
+      }
+
+      await supabase.from('user_settings').upsert({
+        user_id:         user.id,
+        theme:           payload.appearance?.theme     ?? 'System',
+        font_size:       payload.appearance?.fontSize ?? 'medium',
+        language:        payload.appearance?.language ?? 'English',
+        email_notif:     payload.notifications?.email     ?? true,
+        push_notif:      payload.notifications?.push      ?? false,
+        marketing_notif: payload.notifications?.marketing ?? false,
+        public_profile:  payload.privacy?.publicProfile ?? false,
+        show_online:     payload.privacy?.showOnline     ?? true,
+        two_factor:      payload.security?.twoFactor     ?? false,
+      });
+    } catch {
+      // Gracefully ignore if tables don't exist yet
+    }
+
+    return true;
+  } catch (err) {
+    console.error('saveSettings error:', err);
+    return false;
+  }
 }
 
 // ─── New website-table queries ─────────────────────────────────────────────

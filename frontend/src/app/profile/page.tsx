@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { getProfile } from '@/lib/api';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function ProfilePage() {
@@ -13,8 +14,15 @@ export default function ProfilePage() {
 function ProfileContent() {
   const router = useRouter();
   const { user } = useAuth();
+  const [profile, setProfile] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
 
-  const email = user?.email ?? '—';
+  useEffect(() => {
+    getProfile().then(p => setProfile(p ?? null));
+  }, []);
+
+  const name  = profile?.name || user?.user_metadata?.name || '';
+  const email = profile?.email ?? user?.email ?? '—';
+  const phone = profile?.phone || '—';
   const createdAt = user?.created_at
     ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : '—';
@@ -35,7 +43,7 @@ function ProfileContent() {
             <User className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white">{email}</h1>
+            <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white">{name || email}</h1>
             <p className="text-sm text-zinc-500 mt-0.5">Member since {createdAt}</p>
           </div>
         </div>
@@ -44,8 +52,16 @@ function ProfileContent() {
           <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">Account Details</h2>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
+              <span className="text-zinc-500">Name</span>
+              <span className="font-medium text-zinc-900 dark:text-white">{name || '—'}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-zinc-500">Email</span>
               <span className="font-medium text-zinc-900 dark:text-white">{email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500">Phone</span>
+              <span className="font-medium text-zinc-900 dark:text-white">{phone}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-500">User ID</span>

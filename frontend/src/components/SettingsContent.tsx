@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useProfile } from '@/context/ProfileContext';
 import {
   getSettings, saveSettings, getExportUrl
 } from '@/lib/api';
@@ -57,18 +58,21 @@ function SettingRow({ label, children, htmlFor }: { label: string; children: Rea
 
 /* ─────────────────────────── MAIN COMPONENT ─────────────────────────── */
 export default function SettingsContent() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const { updateProfile, name: contextName, email: contextEmail } = useProfile();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Profile
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [profilePhoto, setProfilePhoto] = useState('https://ui-avatars.com/api/?name=User&background=random');
+  // Profile - pre-initialize from Auth / Context immediately
+  const [name, setName] = useState(contextName || user?.user_metadata?.name || user?.user_metadata?.full_name || '');
+  const [email, setEmail] = useState(contextEmail || user?.email || user?.user_metadata?.email || '');
+  const [phone, setPhone] = useState(user?.user_metadata?.phone || '');
+  const [profilePhoto, setProfilePhoto] = useState(
+    user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(contextName || user?.user_metadata?.name || 'User')}&background=8b5cf6&color=fff`
+  );
 
   // Appearance
   const [theme, setTheme] = useState('System');
@@ -88,42 +92,59 @@ export default function SettingsContent() {
   const [twoFactor, setTwoFactor] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
+  const [pwMsg, setPwMsg] = useState({ text: '', isError: false });
 
   useEffect(() => {
     async function load() {
-      const data = await getSettings() as any;
-      if (data) {
-        // Profile
-        setName(data.profile?.name || '');
-        setEmail(data.profile?.email || '');
-        setPhone(data.profile?.phone || '');
-        
-        // Appearance
-        setTheme(data.appearance?.theme || 'System');
-        setFontSize(data.appearance?.fontSize || 'medium');
-        setLanguage(data.appearance?.language || 'English');
+      try {
+        const data = await getSettings() as any;
+        if (data) {
+          // Profile
+          const loadedName = data.profile?.name || contextName || user?.user_metadata?.name || '';
+          const loadedEmail = data.profile?.email || contextEmail || user?.email || '';
+          const loadedPhone = data.profile?.phone || user?.user_metadata?.phone || '';
 
-        // Notifications
-        setEmailNotif(data.notifications?.email ?? true);
-        setPushNotif(data.notifications?.push ?? false);
-        setMarketingNotif(data.notifications?.marketing ?? false);
+          if (loadedName) setName(loadedName);
+          if (loadedEmail) setEmail(loadedEmail);
+          if (loadedPhone) setPhone(loadedPhone);
+          if (loadedName || loadedEmail) updateProfile(loadedName, loadedEmail);
 
-        // Privacy
-        setPublicProfile(data.privacy?.publicProfile ?? false);
-        setShowOnline(data.privacy?.showOnline ?? true);
+          if (user?.user_metadata?.avatar_url) {
+            setProfilePhoto(user.user_metadata.avatar_url);
+          } else if (loadedName) {
+            setProfilePhoto(`https://ui-avatars.com/api/?name=${encodeURIComponent(loadedName)}&background=8b5cf6&color=fff`);
+          }
+          
+          // Appearance
+          setTheme(data.appearance?.theme || 'System');
+          setFontSize(data.appearance?.fontSize || 'medium');
+          setLanguage(data.appearance?.language || 'English');
 
-        // Security
-        setTwoFactor(data.security?.twoFactor ?? false);
+          // Notifications
+          setEmailNotif(data.notifications?.email ?? true);
+          setPushNotif(data.notifications?.push ?? false);
+          setMarketingNotif(data.notifications?.marketing ?? false);
+
+          // Privacy
+          setPublicProfile(data.privacy?.publicProfile ?? false);
+          setShowOnline(data.privacy?.showOnline ?? true);
+
+          // Security
+          setTwoFactor(data.security?.twoFactor ?? false);
+        }
+      } catch (err) {
+        console.warn('Error loading settings:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
-  }, []);
+  }, [user, contextName, contextEmail, updateProfile]);
 
   const handleSave = async () => {
     setSaving(true);
     const payload = {
-      profile: { name, email, phone },
+      profile: { name, email, phone, avatar_url: profilePhoto },
       appearance: { theme, fontSize, language },
       notifications: { email: emailNotif, push: pushNotif, marketing: marketingNotif },
       privacy: { publicProfile, showOnline },
@@ -132,8 +153,9 @@ export default function SettingsContent() {
     const success = await saveSettings(payload);
     setSaving(false);
     if (success) {
+      updateProfile(name, email);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      setTimeout(() => setSaved(false), 3000);
     }
   };
 
@@ -159,26 +181,27 @@ export default function SettingsContent() {
   );
 
   const handleChangePassword = async () => {
-    if (!password || !currentPassword) {
-      alert('Please enter both current and new passwords.');
+    if (!password) {
+      setPwMsg({ text: 'Please enter a new password.', isError: true });
+      return;
+    }
+    if (password.length < 8) {
+      setPwMsg({ text: 'Password must be at least 8 characters.', isError: true });
       return;
     }
     try {
-      const res = await fetch('/api/settings/password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentPassword, newPassword: password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || 'Failed to update password.');
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        setPwMsg({ text: error.message, isError: true });
         return;
       }
-      alert('Password updated successfully!');
+      setPwMsg({ text: 'Password updated successfully!', isError: false });
       setPassword('');
       setCurrentPassword('');
+      setTimeout(() => setPwMsg({ text: '', isError: false }), 4000);
     } catch {
-      alert('Something went wrong.');
+      setPwMsg({ text: 'Something went wrong updating password.', isError: true });
     }
   };
 
@@ -335,12 +358,17 @@ export default function SettingsContent() {
                       className="w-48 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
                   </div>
                   <div className="flex items-center space-x-3">
-                    <input type="password" placeholder="New Password" value={password} onChange={e => setPassword(e.target.value)}
+                    <input type="password" placeholder="New Password (min 8 chars)" value={password} onChange={e => setPassword(e.target.value)}
                       className="w-48 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
-                    <button onClick={handleChangePassword} className="px-3 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-bold border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
-                      Update
+                    <button onClick={handleChangePassword} className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs">
+                      Update Password
                     </button>
                   </div>
+                  {pwMsg.text && (
+                    <p className={`text-xs font-semibold ${pwMsg.isError ? 'text-rose-500' : 'text-emerald-500'}`}>
+                      {pwMsg.text}
+                    </p>
+                  )}
                 </div>
               </SettingRow>
               <SettingRow label="Two-factor authentication">
