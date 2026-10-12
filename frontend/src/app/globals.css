@@ -349,3 +349,14 @@ nav::-webkit-scrollbar { width:0; }
 /* ── Size utilities ────────────────────────────────────── */
 .w-4\.5 { width:1.125rem; }
 .h-4\.5 { height:1.125rem; }
+
+/* ── Prevent harsh browser autofill backgrounds ───────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px transparent !important;
+}
+

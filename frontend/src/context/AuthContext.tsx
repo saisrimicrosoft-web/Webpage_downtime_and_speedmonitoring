@@ -96,9 +96,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut error:', err);
+    }
     setUser(null);
-    if (error) throw error;
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.clear();
+        const toRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('nexora_') || key.startsWith('sb-') || key.includes('profile') || key.includes('user'))) {
+            toRemove.push(key);
+          }
+        }
+        toRemove.forEach(k => localStorage.removeItem(k));
+      } catch (e) {
+        console.warn('Storage clear error:', e);
+      }
+    }
   };
 
   return (
