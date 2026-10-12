@@ -5,7 +5,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck,
   Search, Filter, RefreshCw, ChevronDown, Globe, MapPin,
   TrendingUp, Activity, Server, AlertOctagon, ArrowUpRight,
-  Check, Info, Calendar, BarChart3, Radio
+  Check, Info, Calendar, BarChart3, Radio, Flag
 } from 'lucide-react';
 import { REGION_GROUPS } from './MonitorWebsitesContent';
 import { getLatestPerUrl, getUrlHistory, CheckRow } from '@/lib/api';
@@ -188,17 +188,17 @@ export default function UptimeStatusContent() {
       {/* ═══ HEADER & GLOBAL SLA STATUS ═══ */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2.5">
-            <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+          <div className="flex items-center space-x-2.5 flex-wrap gap-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.4)]">
               Uptime Status & System Availability
             </h1>
-            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
-              <Radio className="w-3 h-3 animate-pulse" />
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-950/60 text-purple-300 border border-purple-500/40 shadow-xs">
+              <Radio className="w-3.5 h-3.5 animate-pulse text-purple-400" />
               <span>Telemetry Live</span>
             </span>
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-            Continuous availability probes across India, Asia Pacific, Europe & Americas with SLA compliance tracker.
+          <p className="text-xs sm:text-sm text-white font-medium mt-1.5 leading-relaxed drop-shadow-xs">
+            Continuous availability probes across <span className="text-emerald-300 font-bold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-400/30">India</span>, <span className="text-cyan-300 font-bold bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-400/30">Asia Pacific</span>, <span className="text-purple-300 font-bold bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-400/30">Europe</span> & <span className="text-amber-300 font-bold bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-400/30">Americas</span> with SLA compliance tracker.
           </p>
         </div>
 
@@ -376,18 +376,24 @@ export default function UptimeStatusContent() {
 
           {/* Region filter with India at the top! */}
           <div className="relative">
-            <MapPin className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+            {REGION_GROUPS.flatMap(g => g.regions).find(r => r.value === regionFilter)?.flag ? (
+              <span className="text-sm absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none leading-none select-none">
+                {REGION_GROUPS.flatMap(g => g.regions).find(r => r.value === regionFilter)?.flag}
+              </span>
+            ) : (
+              <Flag className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+            )}
             <select
               value={regionFilter}
               onChange={e => setRegionFilter(e.target.value)}
-              className="appearance-none bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-8 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer max-w-[200px] truncate"
+              className="appearance-none bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-8 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer max-w-[210px] truncate"
             >
               <option value="all">All Regions</option>
               {REGION_GROUPS.map(group => (
                 <optgroup key={group.group} label={group.group} className="font-bold text-zinc-900 dark:text-zinc-100">
                   {group.regions.map(r => (
-                    <option key={r} value={r} className="font-normal text-zinc-700 dark:text-zinc-300">
-                      {r}
+                    <option key={r.value} value={r.value} className="font-normal text-zinc-700 dark:text-zinc-300">
+                      {r.flag} {r.label}
                     </option>
                   ))}
                 </optgroup>
@@ -490,23 +496,23 @@ export default function UptimeStatusContent() {
           {REGIONAL_PROBES.map(probe => (
             <div
               key={probe.name}
-              className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/40 hover:border-purple-300 dark:hover:border-purple-800 transition-all"
+              className="p-3.5 rounded-xl border border-white/12 bg-zinc-900/90 hover:border-purple-400/50 transition-all shadow-sm"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-200 flex items-center space-x-1">
-                  <MapPin className="w-3 h-3 text-rose-500" />
+                <span className="text-xs font-bold text-white flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-rose-400" />
                   <span>{probe.name}</span>
                 </span>
-                <span className={`w-2 h-2 rounded-full ${probe.status === 'Operational' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${probe.status === 'Operational' ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]' : 'bg-amber-400'}`}></span>
               </div>
               <div className="flex items-baseline justify-between mt-2">
                 <div>
-                  <p className="text-[10px] text-zinc-400 font-semibold">Uptime SLA</p>
-                  <p className="text-xs font-mono font-black text-emerald-600 dark:text-emerald-400">{probe.uptime}</p>
+                  <p className="text-[10px] text-zinc-300 font-semibold uppercase tracking-wider">Uptime SLA</p>
+                  <p className="text-xs font-mono font-black text-emerald-400">{probe.uptime}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-zinc-400 font-semibold">Mean Ping</p>
-                  <p className="text-xs font-mono font-black text-zinc-900 dark:text-white">{probe.latency}</p>
+                  <p className="text-[10px] text-zinc-300 font-semibold uppercase tracking-wider">Mean Ping</p>
+                  <p className="text-xs font-mono font-black text-white">{probe.latency}</p>
                 </div>
               </div>
             </div>
@@ -515,9 +521,9 @@ export default function UptimeStatusContent() {
       </div>
 
       {/* ═══ RECENT INCIDENT HISTORY & ROOT CAUSE LOG ═══ */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-xs">
-        <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white mb-3 flex items-center space-x-2">
-          <Activity className="w-4 h-4 text-purple-600" />
+      <div className="bg-zinc-900/90 border border-white/12 rounded-2xl p-5 shadow-xs">
+        <h3 className="text-sm font-extrabold text-white mb-3 flex items-center space-x-2">
+          <Activity className="w-4 h-4 text-purple-400" />
           <span>Recent Outage & Incident Log</span>
         </h3>
         <div className="space-y-2.5">
@@ -531,14 +537,14 @@ export default function UptimeStatusContent() {
               .map((service, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 text-xs"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-white/10 bg-zinc-900/90 text-xs shadow-xs"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
                       service.status === 'Outage' ? 'bg-rose-500 animate-pulse' :
-                      service.status === 'Degraded' ? 'bg-amber-500' : 'bg-emerald-500'
+                      service.status === 'Degraded' ? 'bg-amber-500' : 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
                     }`} />
-                    <div className="w-6 h-6 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-zinc-800 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
                       <img
                         src={getFavicon(service.url)}
                         alt=""
@@ -550,21 +556,21 @@ export default function UptimeStatusContent() {
                       />
                     </div>
                     <div>
-                      <span className="font-bold text-zinc-900 dark:text-white">{service.name}</span>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">{service.lastIncident}</p>
+                      <span className="font-bold text-white text-xs">{service.name}</span>
+                      <p className="text-[11px] text-zinc-300 mt-0.5">{service.lastIncident}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                    <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold ${
                       service.status === 'Outage'
-                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                        ? 'bg-rose-950/70 text-rose-300 border border-rose-500/30'
                         : service.status === 'Degraded'
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                        ? 'bg-amber-950/70 text-amber-300 border border-amber-500/30'
+                        : 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30'
                     }`}>
                       {service.status}
                     </span>
-                    <p className="text-[10px] text-zinc-400 mt-0.5">{service.currentLatency > 0 ? `${service.currentLatency}ms` : '—'}</p>
+                    <p className="text-[10px] text-zinc-300 font-mono font-bold mt-0.5">{service.currentLatency > 0 ? `${service.currentLatency}ms` : '—'}</p>
                   </div>
                 </div>
               ))

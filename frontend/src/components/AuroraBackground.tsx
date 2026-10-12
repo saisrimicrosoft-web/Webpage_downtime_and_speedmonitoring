@@ -57,11 +57,12 @@ export default function AuroraBackground() {
   return (
     <div
       aria-hidden="true"
+      className="aurora-background transition-opacity duration-300"
       style={{
         position: 'fixed',
         inset: 0,
         pointerEvents: 'none',
-        zIndex: 0,
+        zIndex: -1,
         overflow: 'hidden',
       }}
     >
@@ -76,7 +77,7 @@ export default function AuroraBackground() {
           borderRadius: '40% 60% 55% 45%',
           background: 'radial-gradient(ellipse at 35% 35%, #ff4500 0%, #ff7a3d 30%, #ff3d8b 60%, transparent 78%)',
           filter: 'blur(75px)',
-          opacity: 0.22,
+          opacity: 0.16,
           animation: 'aurora-1 20s ease-in-out infinite alternate',
           willChange: 'transform',
         }} />
@@ -89,7 +90,7 @@ export default function AuroraBackground() {
           borderRadius: '60% 40% 45% 55%',
           background: 'radial-gradient(ellipse at 65% 30%, #7b3dff 0%, #2d6bff 50%, #22d3c5 75%, transparent 88%)',
           filter: 'blur(85px)',
-          opacity: 0.24,
+          opacity: 0.18,
           animation: 'aurora-2 17s ease-in-out infinite alternate',
           willChange: 'transform',
         }} />
@@ -102,7 +103,7 @@ export default function AuroraBackground() {
           borderRadius: '50% 50% 60% 40%',
           background: 'radial-gradient(ellipse at 50% 60%, #7b3dff 0%, #2d6bff 40%, transparent 70%)',
           filter: 'blur(65px)',
-          opacity: 0.12,
+          opacity: 0.08,
           animation: 'aurora-3 28s ease-in-out infinite alternate',
           willChange: 'transform',
         }} />

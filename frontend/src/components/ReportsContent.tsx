@@ -73,9 +73,11 @@ export default function ReportsContent() {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Analytics & Reports</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium max-w-xl">
-            Generate, schedule, and download comprehensive SLA and performance reports for your stakeholders.
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.4)]">
+            Analytics & Reports
+          </h1>
+          <p className="text-xs sm:text-sm text-white font-medium mt-1.5 max-w-xl leading-relaxed drop-shadow-xs">
+            Generate, schedule, and download comprehensive <span className="text-purple-300 font-bold bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-400/30">SLA compliance</span> and <span className="text-cyan-300 font-bold bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-400/30">performance analytics</span>.
           </p>
         </div>
         <div className="flex items-center flex-wrap gap-2.5">

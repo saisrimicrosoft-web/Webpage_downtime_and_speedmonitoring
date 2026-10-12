@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nexora — Sign in / Sign up</title>
+<script>document.documentElement.classList.add('js');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ─────────────────────────────────────────────
+   0.  RESET & GLOBAL
+───────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* ─────────────────────────────────────────────
+   1.  DESIGN TOKENS
+───────────────────────────────────────────── */
+:root{
+  --bg:#F6F4FF;--surface:#FFFFFF;--ink:#14123A;--muted:#5E5B80;
+  --line:#D6D0EE;--accent:#5232D6;--accent-ink:#FFFFFF;
+  --focus:rgba(82,50,214,.32);--danger:#B3261E;--ok:#17724A;
+
+  --night:#0B0C2E;--dusk:#2A1B6B;--flare:#FF6B3D;--star:#F4F2FF;
+
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E0F26;--surface:#171936;--ink:#F1EFFF;--muted:#A9A6CC;
+    --line:#2E3059;--accent:#7059F2;--focus:rgba(112,89,242,.5);
+    --danger:#FF8A80;--ok:#6FD9A0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E0F26;--surface:#171936;--ink:#F1EFFF;--muted:#A9A6CC;
+  --line:#2E3059;--accent:#7059F2;--focus:rgba(112,89,242,.5);
+  --danger:#FF8A80;--ok:#6FD9A0;
+}
+
+/* ─────────────────────────────────────────────
+   2.  PAGE LAYOUT
+───────────────────────────────────────────── */
+body{min-height:100dvh;background:var(--bg);color:var(--ink);font-family:var(--body)}
+.page{display:grid;grid-template-columns:1fr 1fr;min-height:100dvh}
+
+/* ─────────────────────────────────────────────
+   3.  STAGE (LEFT)
+───────────────────────────────────────────── */
+.stage{
+  position:relative;overflow:hidden;isolation:isolate;
+  padding:40px 56px clamp(130px,22%,210px);
+  color:var(--star);
+  background:
+    radial-gradient(60% 45% at 85% 8%,rgba(112,89,242,.42),transparent 70%),
+    radial-gradient(70% 40% at 10% 100%,rgba(255,107,61,.30),transparent 70%),
+    linear-gradient(180deg,#0B0C2E 0%,#17134F 62%,#2A1B6B 100%);
+}
+
+/* nebulae */
+.nebula{position:absolute;border-radius:50%;pointer-events:none;will-change:transform,opacity}
+.n1{width:62%;aspect-ratio:1;top:-8%;right:-12%;
+    background:radial-gradient(circle,rgba(112,89,242,.55),transparent 70%);
+    animation:breathe1 16s ease-in-out infinite alternate}
+.n2{width:55%;aspect-ratio:1;top:28%;left:-18%;
+    background:radial-gradient(circle,rgba(70,140,255,.30),transparent 70%);
+    animation:breathe2 22s ease-in-out infinite alternate}
+.n3{width:50%;aspect-ratio:1;bottom:-15%;left:5%;
+    background:radial-gradient(circle,rgba(255,107,61,.32),transparent 70%);
+    animation:breathe3 13s ease-in-out infinite alternate}
+@keyframes breathe1{from{transform:scale(.85) translate(0,0);opacity:.7}to{transform:scale(1.15) translate(3%,-4%);opacity:1}}
+@keyframes breathe2{from{transform:scale(1) translate(0,0);opacity:.6}to{transform:scale(1.2) translate(4%,6%);opacity:.9}}
+@keyframes breathe3{from{transform:scale(.9) translate(0,0);opacity:.65}to{transform:scale(1.12) translate(-3%,3%);opacity:.95}}
+
+/* milky way band */
+.mw{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(80deg,transparent 18%,rgba(200,210,255,.06) 38%,rgba(240,230,200,.04) 50%,rgba(180,200,255,.05) 62%,transparent 80%);
+    transform:rotate(-24deg) scaleY(1.4);filter:blur(18px)}
+
+/* aurora */
+.aurora{
+  position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:
+    radial-gradient(ellipse 80% 30% at 30% 60%,rgba(60,255,180,.18),transparent 65%),
+    radial-gradient(ellipse 60% 25% at 70% 55%,rgba(70,200,255,.14),transparent 65%),
+    radial-gradient(ellipse 50% 20% at 50% 50%,rgba(170,90,255,.10),transparent 65%);
+  filter:blur(28px);
+  -webkit-mask:linear-gradient(to bottom,transparent 0%,black 25%,black 75%,transparent 100%);
+  mask:linear-gradient(to bottom,transparent 0%,black 25%,black 75%,transparent 100%);
+  animation:auroraShift 14s ease-in-out infinite alternate;will-change:transform,opacity}
+@keyframes auroraShift{from{transform:translateY(-6%) scaleY(.95);opacity:.6}to{transform:translateY(6%) scaleY(1.05);opacity:1}}
+
+/* aurora curtains */
+.curtains{
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(94deg,
+    transparent 0,transparent 28px,
+    rgba(60,255,180,.025) 28px,rgba(60,255,180,.025) 38px,
+    transparent 38px,transparent 66px,
+    rgba(170,90,255,.018) 66px,rgba(170,90,255,.018) 72px);
+  filter:blur(6px);animation:curtainSkew 11s ease-in-out infinite alternate}
+@keyframes curtainSkew{from{transform:skewX(-2deg) translateX(-4px)}to{transform:skewX(2deg) translateX(4px)}}
+
+/* parallax star layers */
+.plx{position:absolute;inset:0;pointer-events:none;transition:transform .9s cubic-bezier(.25,.1,.25,1)}
+.drift{position:absolute;inset:0;will-change:transform}
+.drift1{animation:drift1 38s ease-in-out infinite alternate}
+.drift2{animation:drift2 26s ease-in-out infinite alternate}
+.drift3{animation:drift3 18s ease-in-out infinite alternate}
+@keyframes drift1{from{transform:translate(0,0)}to{transform:translate(-12px,-8px)}}
+@keyframes drift2{from{transform:translate(0,0)}to{transform:translate(10px,-12px)}}
+@keyframes drift3{from{transform:translate(0,0)}to{transform:translate(-8px,10px)}}
+.star{position:absolute;border-radius:50%;will-change:opacity,transform}
+.star.spark::before,.star.spark::after{
+  content:'';position:absolute;border-radius:2px;background:inherit;
+  top:50%;left:50%;transform:translate(-50%,-50%)}
+.star.spark::before{width:700%;height:1px;opacity:.35}
+.star.spark::after{width:1px;height:700%;opacity:.35}
+
+/* shooting stars */
+.shoot{
+  position:absolute;pointer-events:none;height:2px;border-radius:1px;
+  background:linear-gradient(to right,rgba(255,255,255,0),rgba(255,255,255,.9) 60%,#fff);
+  box-shadow:0 0 6px 1px rgba(255,255,255,.6);
+  transform-origin:100% 50%}
+
+/* planet */
+.planet{
+  position:absolute;left:-25%;right:-25%;aspect-ratio:1;
+  top:calc(100% - clamp(96px,15%,160px));border-radius:50%;
+  background:radial-gradient(circle at 50% 0%,#2B1E6E,#14123F 38%,#090921 70%);
+  box-shadow:
+    0 -4px 40px 8px rgba(255,107,61,.25),
+    0 -2px 80px 2px rgba(112,89,242,.18),
+    0 -1px 6px 1px rgba(255,140,60,.15);
+  pointer-events:none}
+.planet::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  box-shadow:inset 0 -6px 60px rgba(255,107,61,.12),
+             inset 0 -2px 20px rgba(170,90,255,.10);
+  animation:rimPulse 6s ease-in-out infinite alternate}
+@keyframes rimPulse{from{opacity:.6}to{opacity:1}}
+
+/* brand row */
+.brand{
+  position:relative;z-index:10;display:flex;align-items:center;
+  justify-content:space-between;width:100%}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--star)}
+.logo-icon{
+  width:30px;height:30px;border-radius:7px;
+  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);
+  position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{display:block}
+.logo-name{font-family:var(--display);font-weight:700;font-size:1.45rem;letter-spacing:-.02em;line-height:1}
+.replay-btn{
+  width:36px;height:36px;border-radius:50%;cursor:pointer;
+  border:1.5px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);
+  color:rgba(244,242,255,.7);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .2s,border-color .2s}
+.replay-btn:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4)}
+
+/* quote block */
+.quote-wrap{
+  position:absolute;left:56px;right:56px;
+  top:50%;transform:translateY(-52%);z-index:10;text-align:center}
+blockquote{
+  font-family:var(--display);font-weight:600;
+  font-size:clamp(1.4rem,3.1vw,3rem);line-height:1.1;letter-spacing:-.025em;
+  white-space:nowrap;color:var(--star)}
+.w{
+  display:inline-block;transition:opacity .7s,transform .7s,filter .7s;
+  opacity:0;transform:translateY(.45em);filter:blur(8px)}
+/* reduced motion: skip word hidden state */
+@media(prefers-reduced-motion:reduce){.w{opacity:1;transform:none;filter:none}}
+.stage.in .w{opacity:1;transform:translateY(0);filter:blur(0)}
+figcaption{
+  margin-top:.85rem;font-size:.95rem;color:rgba(244,242,255,.78);
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  opacity:0;transition:opacity .5s .8s}
+@media(prefers-reduced-motion:reduce){figcaption{opacity:1;transition:none}}
+.stage.in figcaption{opacity:1}
+.fig-line{display:block;width:36px;height:2px;background:var(--flare);border-radius:2px;flex-shrink:0}
+
+/* rocket wrapper */
+.rocket-wrap{
+  position:absolute;left:50%;bottom:0;z-index:10;
+  transform:translateX(-50%);pointer-events:none;width:280px}
+.rocket-exhaust{
+  position:absolute;top:50%;left:-80%;
+  width:260%;height:8px;margin-top:-4px;border-radius:4px;
+  background:linear-gradient(to right,rgba(255,107,61,0),rgba(255,107,61,.55) 35%,rgba(255,160,60,.3) 70%,rgba(255,200,80,.08));
+  filter:blur(4px)}
+.rocket-svg{display:block;width:100%}
+/* flame flicker (the flame group has id=flame) */
+#flame{animation:flicker .16s ease-in-out infinite alternate;transform-origin:0 40px}
+@keyframes flicker{from{transform:scaleX(1)}to{transform:scaleX(.78)}}
+@media(prefers-reduced-motion:reduce){
+  #flame{animation:none}
+  .nebula,.aurora,.curtains,.mw,.drift{animation:none}
+  .planet::after{animation:none}
+}
+
+/* ─────────────────────────────────────────────
+   4.  AUTH PANEL (RIGHT)
+───────────────────────────────────────────── */
+.panel{
+  background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:40px 32px}
+.card{width:100%;max-width:400px}
+
+/* tabs */
+.tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:0;
+  padding:4px;border-radius:12px;
+  background:color-mix(in srgb,var(--line) 40%,transparent);
+  border:1px solid var(--line);
+  margin-bottom:28px;position:relative}
+.tab-pill{
+  position:absolute;top:4px;bottom:4px;left:4px;
+  width:calc(50% - 4px);border-radius:9px;
+  background:var(--surface);
+  box-shadow:0 1px 4px rgba(0,0,0,.12);
+  transition:transform .28s cubic-bezier(.3,.8,.3,1);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.tab-pill{transition:none}}
+.tabs[data-active="signup"] .tab-pill{transform:translateX(100%)}
+.tab-btn{
+  position:relative;z-index:1;padding:10px 0;border:none;background:transparent;
+  font-family:var(--body);font-size:.875rem;font-weight:600;cursor:pointer;
+  border-radius:9px;color:var(--muted);transition:color .2s}
+.tab-btn[aria-selected="true"]{color:var(--ink)}
+.tab-btn:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+
+/* form panels */
+.form-panel{display:none}
+.form-panel.active{display:block}
+
+/* headings */
+.form-head{margin-bottom:24px}
+.form-h1{font-family:var(--display);font-size:1.95rem;font-weight:700;color:var(--ink);
+  line-height:1.1;letter-spacing:-.02em;margin-bottom:6px}
+.form-sub{font-size:.875rem;color:var(--muted)}
+
+/* social buttons */
+.socials{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.social-btn{
+  height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);font-family:var(--body);font-size:.875rem;font-weight:500;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:border-color .15s,background .15s}
+.social-btn:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+
+/* divider */
+.divider{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.div-line{flex:1;height:1px;background:var(--line)}
+.div-text{font-size:.8125rem;color:var(--muted);white-space:nowrap}
+
+/* fields */
+.field{margin-bottom:16px}
+.label-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+label.lbl{font-size:.8125rem;font-weight:600;color:var(--ink);display:block}
+.forgot-link{font-size:.8125rem;font-weight:500;color:var(--accent);text-decoration:none;background:none;border:none;cursor:pointer;font-family:var(--body);padding:0}
+.forgot-link:hover{text-decoration:underline}
+.input-wrap{position:relative}
+input.inp{
+  width:100%;height:46px;padding:0 46px 0 14px;
+  border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);color:var(--ink);font-family:var(--body);font-size:.9375rem;
+  outline:none;transition:border-color .15s,box-shadow .15s;appearance:none}
+input.inp:not(.has-toggle){padding-right:14px}
+input.inp:focus-visible{border-color:var(--accent);box-shadow:0 0 0 4px var(--focus)}
+input.inp.invalid{border-color:var(--danger)}
+input.inp.invalid:focus-visible{box-shadow:0 0 0 4px rgba(179,38,30,.2)}
+input.inp::placeholder{color:var(--muted);opacity:.7}
+.show-btn{
+  position:absolute;right:0;top:0;height:100%;width:46px;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:none;cursor:pointer;
+  font-family:var(--body);font-size:.8125rem;font-weight:500;color:var(--muted);
+  padding:0 12px}
+.show-btn:hover{color:var(--ink)}
+.field-err{font-size:.8125rem;color:var(--danger);margin-top:5px;display:none}
+.field-err.vis{display:block}
+
+/* strength meter */
+.strength-wrap{margin-top:8px}
+.strength-segs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:5px}
+.seg{height:3px;border-radius:2px;background:var(--line);transition:background .2s}
+.strength-hint{font-size:.8125rem;color:var(--muted)}
+
+/* checkbox */
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+.check-row input[type="checkbox"]{
+  width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
+.check-label{font-size:.8125rem;color:var(--muted);line-height:1.5}
+.check-label a{color:var(--accent);font-weight:600;text-decoration:none}
+.check-label a:hover{text-decoration:underline}
+.check-label a:focus-visible{outline:3px solid var(--focus);border-radius:2px}
+
+/* primary button */
+.btn-primary{
+  width:100%;height:48px;background:var(--accent);color:var(--accent-ink);
+  font-family:var(--body);font-size:.9375rem;font-weight:600;
+  border:none;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:filter .15s,transform .1s}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
+.btn-primary:active:not(:disabled){transform:translateY(1px)}
+.btn-primary:disabled{opacity:.65;cursor:not-allowed}
+.spinner{
+  width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none;border-top-color:#fff;opacity:.7}}
+
+/* status message */
+.status-msg{
+  margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.875rem;
+  background:color-mix(in srgb,var(--ok) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--ok) 30%,transparent);
+  color:var(--ok);display:none}
+.status-msg.vis{display:block}
+
+/* footer link */
+.form-footer{margin-top:20px;text-align:center;font-size:.875rem;color:var(--muted)}
+.form-footer button{
+  background:none;border:none;color:var(--accent);font-weight:600;
+  cursor:pointer;font-family:var(--body);font-size:.875rem;padding:0;text-decoration:none}
+.form-footer button:hover{text-decoration:underline}
+
+/* ─────────────────────────────────────────────
+   5.  RESPONSIVE
+───────────────────────────────────────────── */
+/* Portrait mobile / narrow */
+@media(max-width:860px) and (orientation:portrait),
+      (max-width:560px){
+  .page{grid-template-columns:1fr;grid-template-rows:auto auto}
+  .stage{
+    min-height:470px;padding:24px;padding-bottom:120px;
+    grid-row:1}
+  .panel{
+    grid-row:2;align-items:flex-start;padding:32px 20px 48px;
+    padding-left:max(20px,env(safe-area-inset-left));
+    padding-right:max(20px,env(safe-area-inset-right));
+    padding-bottom:max(48px,env(safe-area-inset-bottom))}
+  blockquote{font-size:clamp(1.2rem,5vw,1.6rem);white-space:normal}
+  .rocket-wrap{width:210px}
+  .quote-wrap{left:24px;right:24px}
+}
+/* Landscape phones/tablets */
+@media(max-height:640px) and (min-width:561px){
+  .stage{position:sticky;top:0;height:100dvh;padding:24px 36px clamp(80px,14%,120px);
+    padding-bottom:max(clamp(80px,14%,120px),env(safe-area-inset-bottom))}
+  blockquote{font-size:clamp(1.1rem,2.4vw,1.6rem)}
+  input.inp{height:42px}
+  .btn-primary{height:44px}
+  .social-btn{height:42px}
+  .panel{padding:28px 24px;align-items:flex-start}
+  .rocket-wrap{width:180px}
+  .form-h1{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+<main class="page">
+
+<!-- ══════════════════════════════════════════
+     LEFT — STAGE
+══════════════════════════════════════════ -->
+<section class="stage" aria-label="Nexora brand illustration">
+
+  <!-- atmospheric layers (all decorative) -->
+  <div class="nebula n1" aria-hidden="true"></div>
+  <div class="nebula n2" aria-hidden="true"></div>
+  <div class="nebula n3" aria-hidden="true"></div>
+  <div class="mw"        aria-hidden="true"></div>
+  <div class="aurora"    aria-hidden="true"></div>
+  <div class="curtains"  aria-hidden="true"></div>
+
+  <!-- starfield (populated by JS) -->
+  <div class="plx" id="plx1" aria-hidden="true" data-depth="6"></div>
+  <div class="plx" id="plx2" aria-hidden="true" data-depth="14"></div>
+  <div class="plx" id="plx3" aria-hidden="true" data-depth="26"></div>
+
+  <!-- planet -->
+  <div class="planet" aria-hidden="true"></div>
+
+  <!-- brand row -->
+  <header class="brand">
+    <a href="/" class="logo" aria-label="Nexora home">
+      <span class="logo-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M3 3L9 3L15 9L9 15H3L9 9L3 3Z" fill="white"/>
+          <circle cx="14" cy="4" r="2.2" fill="#FF6B3D"/>
+        </svg>
+      </span>
+      <span class="logo-name">Nexora</span>
+    </a>
+    <button class="replay-btn" id="replayBtn" aria-label="Replay animation">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13.65 2.35A7 7 0 1 0 14 8"/>
+        <polyline points="14 2 14 6 10 6"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- quote (words injected by JS) -->
+  <div class="quote-wrap" aria-hidden="true">
+    <figure>
+      <blockquote id="quoteBlock" aria-label=""Stay Online. Stay Ahead."">
+        <!-- words injected by JS -->
+      </blockquote>
+      <figcaption id="quoteCaption">
+        <span class="fig-line"></span>Team Nexora
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- rocket -->
+  <div class="rocket-wrap" id="rocketWrap" aria-hidden="true">
+    <div class="rocket-exhaust" id="exhaust"></div>
+    <svg class="rocket-svg" viewBox="0 0 220 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- body -->
+      <defs>
+        <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="80" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#EEEAFF"/>
+          <stop offset="100%" stop-color="#C4B8F0"/>
+        </linearGradient>
+        <linearGradient id="noseGrad" x1="160" y1="0" x2="220" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#FF8C42"/>
+          <stop offset="100%" stop-color="#FF6B3D"/>
+        </linearGradient>
+        <linearGradient id="flameGrad" x1="0" y1="30" x2="0" y2="80" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#FFFDE0"/>
+          <stop offset="40%" stop-color="#FFB830"/>
+          <stop offset="100%" stop-color="rgba(255,107,61,0)"/>
+        </linearGradient>
+        <radialGradient id="portGrad" cx="50%" cy="30%" r="60%">
+          <stop offset="0%" stop-color="#A0E8FF"/>
+          <stop offset="100%" stop-color="#2060C0"/>
+        </radialGradient>
+      </defs>
+      <!-- top fin -->
+      <path d="M155 12 L178 4 L178 26 Z" fill="#FF6B3D"/>
+      <!-- bottom fin -->
+      <path d="M155 68 L178 76 L178 54 Z" fill="#FF6B3D"/>
+      <!-- engine block -->
+      <rect x="145" y="22" width="22" height="36" rx="4" fill="#2A2060"/>
+      <!-- body -->
+      <rect x="60" y="18" width="100" height="44" rx="8" fill="url(#bodyGrad)"/>
+      <!-- purple band -->
+      <rect x="110" y="18" width="24" height="44" rx="0" fill="#5232D6" opacity=".7"/>
+      <!-- nose cone -->
+      <path d="M160 18 Q220 40 160 62 Z" fill="url(#noseGrad)"/>
+      <!-- porthole -->
+      <circle cx="88" cy="40" r="12" fill="url(#portGrad)"/>
+      <circle cx="85" cy="36" r="4" fill="white" opacity=".4"/>
+      <!-- flame group -->
+      <g id="flame">
+        <path d="M62 30 Q20 40 62 50 Q40 56 24 40 Q38 24 62 30 Z" fill="url(#flameGrad)" opacity=".9"/>
+        <path d="M62 34 Q36 40 62 46 Q44 50 30 40 Q42 30 62 34 Z" fill="white" opacity=".25"/>
+      </g>
+    </svg>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════════
+     RIGHT — AUTH PANEL
+══════════════════════════════════════════ -->
+<section class="panel" aria-label="Sign in or create your account">
+  <div class="card" role="main">
+
+    <!-- tab switcher -->
+    <div class="tabs" data-active="signin" id="tabs" role="tablist" aria-label="Authentication mode">
+      <div class="tab-pill" aria-hidden="true"></div>
+      <button class="tab-btn" id="tabSignin" role="tab" aria-selected="true"
+        aria-controls="panelSignin" tabindex="0">Sign in</button>
+      <button class="tab-btn" id="tabSignup" role="tab" aria-selected="false"
+        aria-controls="panelSignup" tabindex="-1">Sign up</button>
+    </div>
+
+    <!-- ── SIGN IN ── -->
+    <div class="form-panel active" id="panelSignin" role="tabpanel" aria-labelledby="tabSignin">
+      <div class="form-head">
+        <h1 class="form-h1">Welcome back</h1>
+        <p class="form-sub">Sign in to pick up where you left off.</p>
+      </div>
+
+      <div class="socials">
+        <button class="social-btn" type="button" aria-label="Continue with Google" onclick="socialMsg(this,'Google')">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Google
+        </button>
+        <button class="social-btn" type="button" aria-label="Continue with GitHub" onclick="socialMsg(this,'GitHub')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+          </svg>
+          GitHub
+        </button>
+      </div>
+
+      <div class="divider">
+        <div class="div-line"></div>
+        <span class="div-text">or use your email</span>
+        <div class="div-line"></div>
+      </div>
+
+      <form id="formSignin" novalidate>
+        <!-- Email -->
+        <div class="field">
+          <div class="label-row">
+            <label class="lbl" for="siEmail">Email</label>
+          </div>
+          <div class="input-wrap">
+            <input class="inp" id="siEmail" name="email" type="email"
+              placeholder="you@company.com" autocomplete="email" aria-describedby="siEmailErr"/>
+          </div>
+          <span class="field-err" id="siEmailErr" role="alert"></span>
+        </div>
+        <!-- Password -->
+        <div class="field">
+          <div class="label-row">
+            <label class="lbl" for="siPw">Password</label>
+            <button type="button" class="forgot-link"
+              onclick="showForgot()">Forgot password?</button>
+          </div>
+          <div class="input-wrap">
+            <input class="inp has-toggle" id="siPw" name="password" type="password"
+              placeholder="Your password" autocomplete="current-password" aria-describedby="siPwErr"/>
+            <button type="button" class="show-btn" aria-label="Show password"
+              onclick="togglePw('siPw',this)">Show</button>
+          </div>
+          <span class="field-err" id="siPwErr" role="alert"></span>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSignin">Sign in</button>
+        <div class="status-msg" id="statusSignin" role="status"></div>
+      </form>
+
+      <p class="form-footer">
+        New to Nexora?&nbsp;
+        <button onclick="switchTab('signup')">Create an account</button>
+      </p>
+    </div><!-- /panelSignin -->
+
+    <!-- ── SIGN UP ── -->
+    <div class="form-panel" id="panelSignup" role="tabpanel" aria-labelledby="tabSignup">
+      <div class="form-head">
+        <h1 class="form-h1">Create your Nexora account</h1>
+        <p class="form-sub">It takes less than a minute to get started.</p>
+      </div>
+
+      <form id="formSignup" novalidate>
+        <!-- Full name -->
+        <div class="field">
+          <div class="label-row">
+            <label class="lbl" for="suName">Full name</label>
+          </div>
+          <div class="input-wrap">
+            <input class="inp" id="suName" name="name" type="text"
+              placeholder="Ada Lovelace" autocomplete="name" aria-describedby="suNameErr"/>
+          </div>
+          <span class="field-err" id="suNameErr" role="alert"></span>
+        </div>
+        <!-- Work email -->
+        <div class="field">
+          <div class="label-row">
+            <label class="lbl" for="suEmail">Work email</label>
+          </div>
+          <div class="input-wrap">
+            <input class="inp" id="suEmail" name="email" type="email"
+              placeholder="you@company.com" autocomplete="work email" aria-describedby="suEmailErr"/>
+          </div>
+          <span class="field-err" id="suEmailErr" role="alert"></span>
+        </div>
+        <!-- Password + strength -->
+        <div class="field">
+          <div class="label-row">
+            <label class="lbl" for="suPw">Password</label>
+          </div>
+          <div class="input-wrap">
+            <input class="inp has-toggle" id="suPw" name="password" type="password"
+              placeholder="At least 8 characters" autocomplete="new-password"
+              aria-describedby="suPwErr" oninput="updateStrength(this.value)"/>
+            <button type="button" class="show-btn" aria-label="Show password"
+              onclick="togglePw('suPw',this)">Show</button>
+          </div>
+          <span class="field-err" id="suPwErr" role="alert"></span>
+          <div class="strength-wrap">
+            <div class="strength-segs" aria-hidden="true">
+              <div class="seg" id="seg0"></div>
+              <div class="seg" id="seg1"></div>
+              <div class="seg" id="seg2"></div>
+              <div class="seg" id="seg3"></div>
+            </div>
+            <span class="strength-hint" id="strengthHint">Use 8 or more characters with letters and numbers.</span>
+          </div>
+        </div>
+        <!-- Terms -->
+        <div class="check-row">
+          <input type="checkbox" id="suTerms" name="terms" aria-describedby="suTermsErr"/>
+          <label class="check-label" for="suTerms">
+            I agree to the <a href="#" onclick="return false">Terms of Service</a> and
+            <a href="#" onclick="return false">Privacy Policy</a>.
+          </label>
+        </div>
+        <span class="field-err" id="suTermsErr" role="alert" style="margin-top:-10px;margin-bottom:12px;display:none"></span>
+
+        <button type="submit" class="btn-primary" id="btnSignup">Create account</button>
+        <div class="status-msg" id="statusSignup" role="status"></div>
+      </form>
+
+      <p class="form-footer">
+        Already have an account?&nbsp;
+        <button onclick="switchTab('signin')">Sign in</button>
+      </p>
+    </div><!-- /panelSignup -->
+
+  </div><!-- /card -->
+</section><!-- /panel -->
+
+</main><!-- /page -->
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+/* ────────────────────────────────────────────
+   UTILITIES
+──────────────────────────────────────────── */
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+/* ────────────────────────────────────────────
+   QUOTE WORD REVEAL
+──────────────────────────────────────────── */
+const quoteText = '\u201cStay Online. Stay Ahead.\u201d';
+const quoteBlock = $('quoteBlock');
+const words = quoteText.split(' ');
+quoteBlock.innerHTML = words.map((w, i) =>
+  `<span class="w" aria-hidden="true" style="--i:${i}">${w}</span>`
+).join(' ');
+
+function revealQuote() {
+  if (reducedMotion) { document.querySelector('.stage').classList.add('in'); return; }
+  const stage = document.querySelector('.stage');
+  words.forEach((_, i) => {
+    const el = quoteBlock.querySelectorAll('.w')[i];
+    el.style.transitionDelay = `${i * 75}ms`;
+    el.style.transitionDuration = `${0.7 + (i % 2) * 0.1}s`;
+  });
+  stage.classList.add('in');
+}
+
+/* ────────────────────────────────────────────
+   STARFIELD
+──────────────────────────────────────────── */
+const TINTS = ['#F4F2FF','#F4F2FF','#F4F2FF','#CFC6FF','#FFD9C2'];
+
+function makeStar(minR, maxR, isSpark) {
+  const el = document.createElement('div');
+  el.className = 'star' + (isSpark ? ' spark' : '');
+  const r = minR + Math.random() * (maxR - minR);
+  const x = Math.random() * 100;
+  const y = Math.random() * 100;
+  const tint = TINTS[Math.floor(Math.random() * TINTS.length)];
+  const lo = 0.15 + Math.random() * 0.25;
+  const hi = 0.6 + Math.random() * 0.35;
+  const dur = 2 + Math.random() * 5;
+  const del = -(Math.random() * 7);
+  Object.assign(el.style, {
+    left: x + '%', top: y + '%',
+    width: r * 2 + 'px', height: r * 2 + 'px',
+    background: tint,
+    animation: reducedMotion ? 'none' :
+      `twinkle ${dur}s ${del}s ease-in-out infinite alternate`
+  });
+  if (isSpark) {
+    el.style.setProperty('--sz', r * 2 + 'px');
+    el.style.background = tint;
+  }
+  return el;
+}
+
+const layers = [
+  { id: 'plx1', count: 190, minR: 0.4, maxR: 0.8  },
+  { id: 'plx2', count: 100, minR: 0.7, maxR: 1.2  },
+  { id: 'plx3', count:  34, minR: 1.1, maxR: 1.6  },
+];
+
+layers.forEach(({ id, count, minR, maxR }) => {
+  const plx = $(id);
+  const driftClass = 'drift ' + id.replace('plx','drift');
+  const drift = document.createElement('div');
+  drift.className = driftClass;
+  for (let i = 0; i < count; i++) {
+    const isSpark = (id === 'plx3') && (i % 3 === 0);
+    drift.appendChild(makeStar(minR, maxR, isSpark));
+  }
+  plx.appendChild(drift);
+});
+
+/* inject twinkle keyframes */
+const styleEl = document.createElement('style');
+styleEl.textContent = `
+  @keyframes twinkle {
+    from { opacity: var(--lo, .2); transform: scale(.85); }
+    to   { opacity: var(--hi, .9); transform: scale(1.2); }
+  }
+`;
+document.head.appendChild(styleEl);
+
+/* parallax on pointer */
+const stage = document.querySelector('.stage');
+stage.addEventListener('pointermove', e => {
+  if (reducedMotion) return;
+  const r = stage.getBoundingClientRect();
+  const cx = (e.clientX - r.left) / r.width  - 0.5;
+  const cy = (e.clientY - r.top)  / r.height - 0.5;
+  [['plx1',6],['plx2',14],['plx3',26]].forEach(([id, depth]) => {
+    $(id).style.transform = `translate(${-cx*depth*2}px,${-cy*depth*2}px)`;
+  });
+});
+stage.addEventListener('pointerleave', () => {
+  ['plx1','plx2','plx3'].forEach(id => $(id).style.transform = '');
+});
+
+/* ────────────────────────────────────────────
+   SHOOTING STARS
+──────────────────────────────────────────── */
+function fireShoot() {
+  if (reducedMotion || document.hidden) return;
+  const shoot = (delay=0) => {
+    setTimeout(() => {
+      const el = document.createElement('i');
+      el.className = 'shoot';
+      const len = 110 + Math.random() * 130;
+      const angle = 145 + Math.random() * 20;
+      const dist = 260 + Math.random() * 260;
+      const dur = 900 + Math.random() * 600;
+      const stageR = stage.getBoundingClientRect();
+      el.style.cssText = `
+        width:${len}px;top:${10+Math.random()*35}%;left:${20+Math.random()*50}%;
+        transform:rotate(${angle}deg) translateX(0);`;
+      stage.appendChild(el);
+      el.animate([
+        { transform: `rotate(${angle}deg) translateX(0)`,  opacity: 0   },
+        { transform: `rotate(${angle}deg) translateX(${dist * 0.08}px)`, opacity: 1, offset: 0.06 },
+        { transform: `rotate(${angle}deg) translateX(${dist}px)`,        opacity: 0 }
+      ], { duration: dur, easing: 'ease-in', fill: 'forwards' })
+      .finished.then(() => el.remove());
+    }, delay);
+  };
+  shoot(0);
+  if (Math.random() < 0.5) shoot(250);
+}
+
+let shootInterval;
+function startShoots() {
+  clearInterval(shootInterval);
+  const next = () => {
+    fireShoot();
+    shootInterval = setTimeout(next, 600 + Math.random() * 1300);
+  };
+  setTimeout(next, 2200);
+}
+startShoots();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clearInterval(shootInterval);
+  else startShoots();
+});
+
+/* ────────────────────────────────────────────
+   ROCKET ANIMATION
+──────────────────────────────────────────── */
+const rocketWrap = $('rocketWrap');
+let rocketAnim = null;
+let quoteTimer  = null;
+
+function launchRocket() {
+  if (rocketAnim) { rocketAnim.cancel(); rocketAnim = null; }
+  clearTimeout(quoteTimer);
+
+  const stageH = stage.offsetHeight;
+  const startY = stageH * 0.18;   /* starts just below bottom (positive = visible) */
+  const endY   = -(stageH + 100); /* fully above the top */
+
+  rocketWrap.style.bottom = '0';
+  rocketWrap.style.display = 'block';
+
+  if (reducedMotion) {
+    revealQuote();
+    return;
+  }
+
+  rocketAnim = rocketWrap.animate([
+    { transform: `translateX(-50%) translateY(${startY}px)`, opacity: 0 },
+    { transform: `translateX(-50%) translateY(${startY}px)`, opacity: 1, offset: 0.04 },
+    { transform: `translateX(-50%) translateY(${endY}px)`,   opacity: 1 }
+  ], {
+    duration: 3200,
+    easing: 'cubic-bezier(.45,.05,.55,.95)',
+    fill: 'forwards'
+  });
+
+  /* reveal quote as rocket passes mid-stage */
+  quoteTimer = setTimeout(revealQuote, 1550);
+}
+
+function replayAll() {
+  const stage = document.querySelector('.stage');
+  stage.classList.add('reset');
+  stage.classList.remove('in');
+  /* clear word delays so they re-animate cleanly */
+  quoteBlock.querySelectorAll('.w').forEach(w => {
+    w.style.transitionDelay   = '';
+    w.style.transitionDuration = '';
+  });
+  $('quoteCaption').style.transition = 'none';
+  void stage.offsetWidth; /* force reflow */
+  stage.classList.remove('reset');
+  $('quoteCaption').style.transition = '';
+  launchRocket();
+}
+
+$('replayBtn').addEventListener('click', replayAll);
+
+document.fonts.ready.then(() => setTimeout(launchRocket, 250));
+
+/* ────────────────────────────────────────────
+   TAB SWITCHER
+──────────────────────────────────────────── */
+function switchTab(mode) {
+  const tabs     = $('tabs');
+  const siBtn    = $('tabSignin');
+  const suBtn    = $('tabSignup');
+  const siPanel  = $('panelSignin');
+  const suPanel  = $('panelSignup');
+  const isSignin = mode === 'signin';
+
+  tabs.dataset.active = mode;
+  siBtn.setAttribute('aria-selected', isSignin ? 'true' : 'false');
+  suBtn.setAttribute('aria-selected', isSignin ? 'false' : 'true');
+  siBtn.tabIndex = isSignin ? 0 : -1;
+  suBtn.tabIndex = isSignin ? -1 : 0;
+  siPanel.classList.toggle('active', isSignin);
+  suPanel.classList.toggle('active', !isSignin);
+
+  history.replaceState(null, '', '#' + mode);
+
+  /* focus heading in new panel */
+  const heading = (isSignin ? siPanel : suPanel).querySelector('.form-h1');
+  if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus(); }
+}
+
+/* Keyboard navigation: ArrowLeft / ArrowRight */
+[$('tabSignin'), $('tabSignup')].forEach(btn => {
+  btn.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      switchTab(btn.id === 'tabSignin' ? 'signup' : 'signin');
+      (btn.id === 'tabSignin' ? $('tabSignup') : $('tabSignin')).focus();
+    }
+  });
+  btn.addEventListener('click', () => switchTab(btn.id === 'tabSignin' ? 'signin' : 'signup'));
+});
+
+/* load from hash */
+(function() {
+  const h = location.hash.replace('#','');
+  if (h === 'signup') switchTab('signup');
+})();
+
+/* ────────────────────────────────────────────
+   SHOW / HIDE PASSWORD
+──────────────────────────────────────────── */
+function togglePw(inputId, btn) {
+  const inp = $(inputId);
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  btn.textContent = showing ? 'Show' : 'Hide';
+  btn.setAttribute('aria-label', (showing ? 'Show' : 'Hide') + ' password');
+}
+
+/* ────────────────────────────────────────────
+   PASSWORD STRENGTH
+──────────────────────────────────────────── */
+const SEG_COLORS = ['', '#B3261E', '#E0902B', '#7AB648', '#17724A'];
+
+function strengthScore(v) {
+  if (!v) return 0;
+  let score = 1;
+  if (v.length >= 8) score++;
+  if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score++;
+  if (/\d/.test(v)) score++;
+  if (/[^A-Za-z0-9]/.test(v) || v.length >= 12) score++;
+  return Math.min(4, score);
+}
+
+function updateStrength(val) {
+  const score = strengthScore(val);
+  for (let i = 0; i < 4; i++) {
+    $('seg' + i).style.background = i < score ? SEG_COLORS[score] : 'var(--line)';
+  }
+  const hint = $('strengthHint');
+  if (!val) hint.textContent = 'Use 8 or more characters with letters and numbers.';
+  else hint.textContent = ['','Too short','Could be stronger','Looking good','Strong password'][score] || '';
+}
+
+/* ────────────────────────────────────────────
+   VALIDATION
+──────────────────────────────────────────── */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function setError(inputId, errId, msg) {
+  const inp = $(inputId), err = $(errId);
+  if (msg) {
+    inp && inp.classList.add('invalid');
+    err.textContent = msg;
+    err.classList.add('vis');
+    err.style.display = 'block';
+  } else {
+    inp && inp.classList.remove('invalid');
+    err.classList.remove('vis');
+    err.style.display = 'none';
+  }
+}
+
+function clearOnInput(inputId, errId) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.addEventListener('input', () => setError(inputId, errId, ''));
+}
+clearOnInput('siEmail','siEmailErr');
+clearOnInput('siPw','siPwErr');
+clearOnInput('suName','suNameErr');
+clearOnInput('suEmail','suEmailErr');
+clearOnInput('suPw','suPwErr');
+
+function validateSignin() {
+  let firstErr = null;
+  const email = $('siEmail').value.trim();
+  const pw    = $('siPw').value;
+
+  if (!email) {
+    setError('siEmail','siEmailErr','Enter your email address.');
+    if (!firstErr) firstErr = 'siEmail';
+  } else if (!EMAIL_RE.test(email)) {
+    setError('siEmail','siEmailErr','Enter a valid email, like you@company.com.');
+    if (!firstErr) firstErr = 'siEmail';
+  } else setError('siEmail','siEmailErr','');
+
+  if (!pw) {
+    setError('siPw','siPwErr','Enter your password.');
+    if (!firstErr) firstErr = 'siPw';
+  } else setError('siPw','siPwErr','');
+
+  if (firstErr) { $(firstErr).focus(); return false; }
+  return true;
+}
+
+function validateSignup() {
+  let firstErr = null;
+  const name  = $('suName').value.trim();
+  const email = $('suEmail').value.trim();
+  const pw    = $('suPw').value;
+  const terms = $('suTerms').checked;
+
+  if (!name) {
+    setError('suName','suNameErr','Enter your full name.');
+    if (!firstErr) firstErr = 'suName';
+  } else setError('suName','suNameErr','');
+
+  if (!email) {
+    setError('suEmail','suEmailErr','Enter your work email.');
+    if (!firstErr) firstErr = 'suEmail';
+  } else if (!EMAIL_RE.test(email)) {
+    setError('suEmail','suEmailErr','Enter a valid email, like you@company.com.');
+    if (!firstErr) firstErr = 'suEmail';
+  } else setError('suEmail','suEmailErr','');
+
+  if (pw.length < 8) {
+    setError('suPw','suPwErr','Use at least 8 characters.');
+    if (!firstErr) firstErr = 'suPw';
+  } else if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) {
+    setError('suPw','suPwErr','Add at least one letter and one number.');
+    if (!firstErr) firstErr = 'suPw';
+  } else setError('suPw','suPwErr','');
+
+  const termsErr = $('suTermsErr');
+  if (!terms) {
+    termsErr.textContent = 'Accept the Terms and Privacy Policy to continue.';
+    termsErr.classList.add('vis');
+    termsErr.style.display = 'block';
+    if (!firstErr) firstErr = 'suTerms';
+  } else {
+    termsErr.classList.remove('vis');
+    termsErr.style.display = 'none';
+  }
+  $('suTerms').addEventListener('change', () => {
+    termsErr.classList.remove('vis'); termsErr.style.display = 'none';
+  }, { once: true });
+
+  if (firstErr) { $(firstErr).focus(); return false; }
+  return true;
+}
+
+/* ────────────────────────────────────────────
+   FORM SUBMIT (demo)
+──────────────────────────────────────────── */
+function setLoading(btn, labelEl, loading, text) {
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>${text}`;
+  } else {
+    btn.disabled = false;
+    btn.textContent = labelEl;
+  }
+}
+
+$('formSignin').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validateSignin()) return;
+  const btn = $('btnSignin');
+  setLoading(btn, null, true, 'Signing in\u2026');
+  await new Promise(r => setTimeout(r, 1300)); /* ← replace with real API call */
+  setLoading(btn, 'Sign in', false);
+  const status = $('statusSignin');
+  status.textContent = 'Signed in. Taking you to your workspace\u2026';
+  status.classList.add('vis');
+});
+
+$('formSignup').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validateSignup()) return;
+  const email = $('suEmail').value.trim();
+  const btn   = $('btnSignup');
+  setLoading(btn, null, true, 'Creating account\u2026');
+  await new Promise(r => setTimeout(r, 1300)); /* ← replace with real API call */
+  setLoading(btn, 'Create account', false);
+  const status = $('statusSignup');
+  status.textContent = `Account created. We sent a confirmation link to ${email}.`;
+  status.classList.add('vis');
+});
+
+/* ────────────────────────────────────────────
+   SOCIAL (demo)
+──────────────────────────────────────────── */
+function socialMsg(btn, name) {
+  const orig = btn.innerHTML;
+  btn.textContent = `${name} sign-in not enabled`;
+  btn.disabled = true;
+  setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2200);
+}
+
+/* ────────────────────────────────────────────
+   FORGOT PASSWORD (demo)
+──────────────────────────────────────────── */
+function showForgot() {
+  const status = $('statusSignin');
+  status.textContent = 'Password reset is handled by your workspace admin.';
+  status.classList.add('vis');
+}
+</script>
+</body>
+</html>

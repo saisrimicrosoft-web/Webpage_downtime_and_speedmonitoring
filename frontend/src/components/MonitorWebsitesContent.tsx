@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, Filter, ChevronDown, RefreshCw, Plus, Globe, CheckCircle,
   AlertOctagon, TrendingUp, Eye, Pause, Play, Trash2, Edit3,
-  ShieldCheck, AlertTriangle, XCircle, MapPin, ExternalLink, MoreVertical
+  ShieldCheck, AlertTriangle, XCircle, MapPin, ExternalLink, MoreVertical, Flag
 } from 'lucide-react';
 import AddWebsiteModal from './AddWebsiteModal';
 import MonitorWebsiteDrawer from './MonitorWebsiteDrawer';
@@ -32,94 +32,100 @@ export interface MonitoredSite {
 }
 
 /* ──────────────── REGION GROUPS & DATA CENTRES ──────────────── */
+export interface RegionItem {
+  value: string;
+  label: string;
+  flag: string;
+}
+
 export interface RegionGroup {
   group: string;
-  regions: string[];
+  regions: RegionItem[];
 }
 
 export const REGION_GROUPS: RegionGroup[] = [
   {
     group: '🇮🇳 India (Primary)',
     regions: [
-      'India (All)',
-      'India - Mumbai',
-      'India - Hyderabad',
-      'India - Bengaluru',
-      'India - Delhi NCR',
-      'India - Chennai',
-      'India - Pune',
-      'India - Kolkata',
+      { value: 'India (All)', label: 'India (All)', flag: '🇮🇳' },
+      { value: 'India - Mumbai', label: 'India - Mumbai', flag: '🇮🇳' },
+      { value: 'India - Hyderabad', label: 'India - Hyderabad', flag: '🇮🇳' },
+      { value: 'India - Bengaluru', label: 'India - Bengaluru', flag: '🇮🇳' },
+      { value: 'India - Delhi NCR', label: 'India - Delhi NCR', flag: '🇮🇳' },
+      { value: 'India - Chennai', label: 'India - Chennai', flag: '🇮🇳' },
+      { value: 'India - Pune', label: 'India - Pune', flag: '🇮🇳' },
+      { value: 'India - Kolkata', label: 'India - Kolkata', flag: '🇮🇳' },
     ],
   },
   {
-    group: '🌏 Asia Pacific',
+    group: '🇸🇬 🇯🇵 🇦🇺 Asia Pacific',
     regions: [
-      'AP-Southeast Singapore',
-      'AP-Northeast Tokyo',
-      'AP-Northeast Osaka',
-      'AP-Northeast Seoul',
-      'AP-East Hong Kong',
-      'AP-Southeast Jakarta',
-      'AP-Southeast Bangkok',
-      'AP-Southeast Sydney',
-      'AP-Southeast Melbourne',
-      'AP-Southeast Auckland',
+      { value: 'AP-Southeast Singapore', label: 'Singapore (AP-Southeast)', flag: '🇸🇬' },
+      { value: 'AP-Northeast Tokyo', label: 'Japan - Tokyo (AP-Northeast)', flag: '🇯🇵' },
+      { value: 'AP-Northeast Osaka', label: 'Japan - Osaka (AP-Northeast)', flag: '🇯🇵' },
+      { value: 'AP-Northeast Seoul', label: 'South Korea - Seoul (AP-Northeast)', flag: '🇰🇷' },
+      { value: 'AP-East Hong Kong', label: 'Hong Kong (AP-East)', flag: '🇭🇰' },
+      { value: 'AP-Southeast Jakarta', label: 'Indonesia - Jakarta (AP-Southeast)', flag: '🇮🇩' },
+      { value: 'AP-Southeast Bangkok', label: 'Thailand - Bangkok (AP-Southeast)', flag: '🇹🇭' },
+      { value: 'AP-Southeast Sydney', label: 'Australia - Sydney (AP-Southeast)', flag: '🇦🇺' },
+      { value: 'AP-Southeast Melbourne', label: 'Australia - Melbourne (AP-Southeast)', flag: '🇦🇺' },
+      { value: 'AP-Southeast Auckland', label: 'New Zealand - Auckland (AP-Southeast)', flag: '🇳🇿' },
     ],
   },
   {
-    group: '🇺🇸 North America',
+    group: '🇺🇸 🇨🇦 North America',
     regions: [
-      'US-East N.Virginia',
-      'US-East Ohio',
-      'US-West Oregon',
-      'US-West California',
-      'US-Central Iowa',
-      'US-South Texas',
-      'CA-Central Montreal',
-      'CA-West Vancouver',
-      'CA-East Toronto',
+      { value: 'US-East N.Virginia', label: 'USA - N. Virginia (US-East)', flag: '🇺🇸' },
+      { value: 'US-East Ohio', label: 'USA - Ohio (US-East)', flag: '🇺🇸' },
+      { value: 'US-West Oregon', label: 'USA - Oregon (US-West)', flag: '🇺🇸' },
+      { value: 'US-West California', label: 'USA - California (US-West)', flag: '🇺🇸' },
+      { value: 'US-Central Iowa', label: 'USA - Iowa (US-Central)', flag: '🇺🇸' },
+      { value: 'US-South Texas', label: 'USA - Texas (US-South)', flag: '🇺🇸' },
+      { value: 'CA-Central Montreal', label: 'Canada - Montreal (CA-Central)', flag: '🇨🇦' },
+      { value: 'CA-West Vancouver', label: 'Canada - Vancouver (CA-West)', flag: '🇨🇦' },
+      { value: 'CA-East Toronto', label: 'Canada - Toronto (CA-East)', flag: '🇨🇦' },
     ],
   },
   {
     group: '🇪🇺 Europe',
     regions: [
-      'EU-West London',
-      'EU-Central Frankfurt',
-      'EU-West Ireland',
-      'EU-South Paris',
-      'EU-West Amsterdam',
-      'EU-North Stockholm',
-      'EU-South Milan',
-      'EU-South Madrid',
-      'EU-East Warsaw',
-      'EU-Central Zurich',
+      { value: 'EU-West London', label: 'UK - London (EU-West)', flag: '🇬🇧' },
+      { value: 'EU-Central Frankfurt', label: 'Germany - Frankfurt (EU-Central)', flag: '🇩🇪' },
+      { value: 'EU-West Ireland', label: 'Ireland - Dublin (EU-West)', flag: '🇮🇪' },
+      { value: 'EU-South Paris', label: 'France - Paris (EU-South)', flag: '🇫🇷' },
+      { value: 'EU-West Amsterdam', label: 'Netherlands - Amsterdam (EU-West)', flag: '🇳🇱' },
+      { value: 'EU-North Stockholm', label: 'Sweden - Stockholm (EU-North)', flag: '🇸🇪' },
+      { value: 'EU-South Milan', label: 'Italy - Milan (EU-South)', flag: '🇮🇹' },
+      { value: 'EU-South Madrid', label: 'Spain - Madrid (EU-South)', flag: '🇪🇸' },
+      { value: 'EU-East Warsaw', label: 'Poland - Warsaw (EU-East)', flag: '🇵🇱' },
+      { value: 'EU-Central Zurich', label: 'Switzerland - Zurich (EU-Central)', flag: '🇨🇭' },
     ],
   },
   {
-    group: '🌍 Middle East & Africa',
+    group: '🇦🇪 🇿🇦 Middle East & Africa',
     regions: [
-      'ME-Central UAE Dubai',
-      'ME-South Bahrain',
-      'ME-Central Riyadh',
-      'AF-South Cape Town',
-      'AF-South Johannesburg',
-      'AF-North Cairo',
-      'AF-West Lagos',
-      'AF-East Nairobi',
+      { value: 'ME-Central UAE Dubai', label: 'UAE - Dubai (ME-Central)', flag: '🇦🇪' },
+      { value: 'ME-South Bahrain', label: 'Bahrain (ME-South)', flag: '🇧🇭' },
+      { value: 'ME-Central Riyadh', label: 'Saudi Arabia - Riyadh (ME-Central)', flag: '🇸🇦' },
+      { value: 'AF-South Cape Town', label: 'South Africa - Cape Town (AF-South)', flag: '🇿🇦' },
+      { value: 'AF-South Johannesburg', label: 'South Africa - Johannesburg (AF-South)', flag: '🇿🇦' },
+      { value: 'AF-North Cairo', label: 'Egypt - Cairo (AF-North)', flag: '🇪🇬' },
+      { value: 'AF-West Lagos', label: 'Nigeria - Lagos (AF-West)', flag: '🇳🇬' },
+      { value: 'AF-East Nairobi', label: 'Kenya - Nairobi (AF-East)', flag: '🇰🇪' },
     ],
   },
   {
-    group: '🌎 South America',
+    group: '🇧🇷 🇨🇱 South America',
     regions: [
-      'SA-East São Paulo',
-      'SA-West Santiago',
-      'SA-North Bogotá',
-      'SA-South Buenos Aires',
+      { value: 'SA-East São Paulo', label: 'Brazil - São Paulo (SA-East)', flag: '🇧🇷' },
+      { value: 'SA-West Santiago', label: 'Chile - Santiago (SA-West)', flag: '🇨🇱' },
+      { value: 'SA-North Bogotá', label: 'Colombia - Bogotá (SA-North)', flag: '🇨🇴' },
+      { value: 'SA-South Buenos Aires', label: 'Argentina - Buenos Aires (SA-South)', flag: '🇦🇷' },
     ],
   },
 ];
 
-const ALL_REGIONS = REGION_GROUPS.flatMap(g => g.regions);
+const ALL_REGIONS = REGION_GROUPS.flatMap(g => g.regions.map(r => r.value));
 
 /* ──────────────── HELPERS ──────────────── */
 
@@ -134,6 +140,51 @@ function relativeTime(isoString: string): string {
   if (diffHr < 24) return `${diffHr}h ago`;
   const diffDay = Math.floor(diffHr / 24);
   return `${diffDay}d ago`;
+}
+
+function getRegionFlag(regionName: string): string {
+  if (!regionName) return '🚩';
+  const all = REGION_GROUPS.flatMap(g => g.regions);
+  const found = all.find(r =>
+    r.value.toLowerCase() === regionName.toLowerCase() ||
+    r.label.toLowerCase() === regionName.toLowerCase() ||
+    regionName.toLowerCase().includes(r.value.toLowerCase()) ||
+    r.value.toLowerCase().includes(regionName.toLowerCase())
+  );
+  if (found) return found.flag;
+  if (/india|mumbai|delhi|bengaluru|bangalore|hyderabad|chennai|pune|kolkata/i.test(regionName)) return '🇮🇳';
+  if (/singapore/i.test(regionName)) return '🇸🇬';
+  if (/tokyo|osaka|japan/i.test(regionName)) return '🇯🇵';
+  if (/seoul|korea/i.test(regionName)) return '🇰🇷';
+  if (/hong kong/i.test(regionName)) return '🇭🇰';
+  if (/jakarta|indonesia/i.test(regionName)) return '🇮🇩';
+  if (/bangkok|thailand/i.test(regionName)) return '🇹🇭';
+  if (/sydney|melbourne|australia/i.test(regionName)) return '🇦🇺';
+  if (/auckland|new zealand/i.test(regionName)) return '🇳🇿';
+  if (/virginia|ohio|oregon|california|iowa|texas|us/i.test(regionName)) return '🇺🇸';
+  if (/montreal|vancouver|toronto|canada/i.test(regionName)) return '🇨🇦';
+  if (/london|uk/i.test(regionName)) return '🇬🇧';
+  if (/frankfurt|germany/i.test(regionName)) return '🇩🇪';
+  if (/ireland|dublin/i.test(regionName)) return '🇮🇪';
+  if (/paris|france/i.test(regionName)) return '🇫🇷';
+  if (/amsterdam|netherlands/i.test(regionName)) return '🇳🇱';
+  if (/stockholm|sweden/i.test(regionName)) return '🇸🇪';
+  if (/milan|italy/i.test(regionName)) return '🇮🇹';
+  if (/madrid|spain/i.test(regionName)) return '🇪🇸';
+  if (/warsaw|poland/i.test(regionName)) return '🇵🇱';
+  if (/zurich|switzerland/i.test(regionName)) return '🇨🇭';
+  if (/dubai|uae/i.test(regionName)) return '🇦🇪';
+  if (/bahrain/i.test(regionName)) return '🇧🇭';
+  if (/riyadh|saudi/i.test(regionName)) return '🇸🇦';
+  if (/cape town|johannesburg|south africa/i.test(regionName)) return '🇿🇦';
+  if (/cairo|egypt/i.test(regionName)) return '🇪🇬';
+  if (/lagos|nigeria/i.test(regionName)) return '🇳🇬';
+  if (/nairobi|kenya/i.test(regionName)) return '🇰🇪';
+  if (/são paulo|sao paulo|brazil/i.test(regionName)) return '🇧🇷';
+  if (/santiago|chile/i.test(regionName)) return '🇨🇱';
+  if (/bogotá|bogota|colombia/i.test(regionName)) return '🇨🇴';
+  if (/buenos aires|argentina/i.test(regionName)) return '🇦🇷';
+  return '🚩';
 }
 
 function websiteToMonitoredSite(w: Website): MonitoredSite {
@@ -218,6 +269,8 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
 
   // Regions for filter dropdown — full global list
   const regions = ALL_REGIONS;
+  const selectedRegion = REGION_GROUPS.flatMap(g => g.regions).find(r => r.value === regionFilter);
+  const selectedRegionFlag = selectedRegion?.flag;
 
   // Filtered list
   const filtered = websites.filter(site => {
@@ -362,70 +415,90 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
         {/* ═══ TOOLBAR ═══ */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Monitor Websites</h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
-              Manage monitored websites, probes, SSL certificates and alert rules.
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.4)]">
+              Monitor Websites
+            </h1>
+            <p className="text-xs sm:text-sm text-white font-medium mt-1.5 leading-relaxed drop-shadow-xs">
+              Manage <span className="text-purple-300 font-bold bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-400/30">monitored websites</span>, <span className="text-cyan-300 font-bold bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-400/30">probes</span>, <span className="text-emerald-300 font-bold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-400/30">SSL certificates</span>, and alert rules.
             </p>
           </div>
           <div className="flex items-center flex-wrap gap-2.5">
             {/* Search */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-purple-300" />
               <input
                 type="text"
                 placeholder="Search website..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 font-medium"
+                className="w-56 bg-zinc-900/90 border border-purple-500/40 hover:border-purple-400/70 focus:border-purple-400 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-400/60 font-medium shadow-md shadow-purple-950/40 transition-all"
               />
             </div>
 
             {/* Status filter */}
             <div className="relative">
-              <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Filter className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-purple-300" />
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="appearance-none bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-8 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+                className="appearance-none bg-zinc-900/90 border border-purple-500/40 hover:border-purple-400/70 rounded-xl pl-9 pr-8 py-2 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-purple-400/60 cursor-pointer shadow-md shadow-purple-950/40 transition-all"
               >
-                <option value="all">All Status</option>
-                <option value="online">Online</option>
-                <option value="down">Down</option>
-                <option value="slow">Slow</option>
-                <option value="maintenance">Maintenance</option>
+                <option value="all" className="bg-zinc-900 text-white">All Status</option>
+                <option value="online" className="bg-zinc-900 text-white">Online</option>
+                <option value="down" className="bg-zinc-900 text-white">Down</option>
+                <option value="slow" className="bg-zinc-900 text-white">Slow</option>
+                <option value="maintenance" className="bg-zinc-900 text-white">Maintenance</option>
               </select>
-              <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 pointer-events-none" />
             </div>
 
             {/* Region filter */}
             <div className="relative">
-              <MapPin className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              {selectedRegionFlag ? (
+                <span className="text-sm absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none leading-none select-none">
+                  {selectedRegionFlag}
+                </span>
+              ) : (
+                <Flag className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-purple-300 pointer-events-none" />
+              )}
               <select
                 value={regionFilter}
                 onChange={e => setRegionFilter(e.target.value)}
-                className="appearance-none bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-8 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer max-w-[200px] truncate"
+                className="appearance-none bg-zinc-900/90 border border-purple-500/40 hover:border-purple-400/70 rounded-xl pl-9 pr-8 py-2 text-xs font-semibold text-white focus:outline-none focus:ring-2 focus:ring-purple-400/60 cursor-pointer max-w-[210px] truncate shadow-md shadow-purple-950/40 transition-all"
               >
-                <option value="all">All Regions</option>
+                <option value="all" className="bg-zinc-900 text-white font-semibold">All Regions</option>
                 {REGION_GROUPS.map(group => (
-                  <optgroup key={group.group} label={group.group} className="font-bold text-zinc-900 dark:text-zinc-100">
+                  <optgroup key={group.group} label={group.group} className="font-bold text-purple-300 bg-zinc-900">
                     {group.regions.map(r => (
-                      <option key={r} value={r} className="font-normal text-zinc-700 dark:text-zinc-300">
-                        {r}
+                      <option key={r.value} value={r.value} className="font-normal text-white bg-zinc-900">
+                        {r.flag} {r.label}
                       </option>
                     ))}
                   </optgroup>
                 ))}
               </select>
-              <ChevronDown className="w-3 h-3 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 pointer-events-none" />
             </div>
+
+            {/* Refresh button — placed a little bit away from all region tab */}
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh websites list"
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-zinc-900/90 hover:bg-zinc-800 border border-purple-500/40 hover:border-purple-300 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-purple-950/40 cursor-pointer active:scale-95 disabled:opacity-50 ml-2"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-purple-300 ${loading ? 'animate-spin' : ''}`} />
+              <span className="tracking-wide">Refresh</span>
+            </button>
 
             {/* Add button */}
             <button
               onClick={onOpenAddModal}
-              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-purple-500/25 transition-all cursor-pointer active:scale-95"
+              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black shadow-[0_0_24px_rgba(147,51,234,0.65)] hover:shadow-[0_0_30px_rgba(168,85,247,0.85)] border border-purple-300/60 hover:border-white transition-all cursor-pointer active:scale-95 ml-1"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Website</span>
+              <Plus className="w-4 h-4 text-white stroke-[3]" />
+              <span className="tracking-wide">Add Website</span>
             </button>
           </div>
         </div>
@@ -557,7 +630,9 @@ export default function MonitorWebsitesContent({ onOpenAddModal }: Props) {
                     {/* Region */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center space-x-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                        <span className="text-sm leading-none flex-shrink-0" title={site.region}>
+                          {getRegionFlag(site.region)}
+                        </span>
                         <span className="text-zinc-500 dark:text-zinc-400 font-medium text-[11px]">{site.region}</span>
                       </div>
                     </td>

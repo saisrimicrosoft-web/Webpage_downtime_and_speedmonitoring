@@ -8,6 +8,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/context/ProfileContext';
+import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import {
   getSettings, saveSettings, getExportUrl
 } from '@/lib/api';
@@ -59,8 +60,10 @@ function SettingRow({ label, children, htmlFor }: { label: string; children: Rea
 /* ─────────────────────────── MAIN COMPONENT ─────────────────────────── */
 export default function SettingsContent() {
   const { signOut, user } = useAuth();
-  const { updateProfile, name: contextName, email: contextEmail } = useProfile();
+  const { updateProfile, setAvatarUrl, avatarUrl, name: contextName, email: contextEmail } = useProfile();
+  const { theme: currentGlobalTheme, setTheme: setGlobalTheme } = useTheme();
   const router = useRouter();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -71,13 +74,34 @@ export default function SettingsContent() {
   const [email, setEmail] = useState(contextEmail || user?.email || user?.user_metadata?.email || '');
   const [phone, setPhone] = useState(user?.user_metadata?.phone || '');
   const [profilePhoto, setProfilePhoto] = useState(
-    user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(contextName || user?.user_metadata?.name || 'User')}&background=8b5cf6&color=fff`
+    avatarUrl || user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(contextName || user?.user_metadata?.name || 'User')}&background=8b5cf6&color=fff`
   );
 
   // Appearance
-  const [theme, setTheme] = useState('System');
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('nexora_theme') as ThemeMode | null;
+      if (stored === 'Light') return 'Light';
+      if (stored === 'Dark') return 'Dark';
+    }
+    return currentGlobalTheme === 'Light' ? 'Light' : 'Dark';
+  });
   const [fontSize, setFontSize] = useState('medium');
   const [language, setLanguage] = useState('English');
+
+  // Keep theme in sync with global theme
+  useEffect(() => {
+    if (currentGlobalTheme && (currentGlobalTheme === 'Light' || currentGlobalTheme === 'Dark')) {
+      setTheme(currentGlobalTheme);
+    }
+  }, [currentGlobalTheme]);
+
+  // Keep avatar in sync with context
+  useEffect(() => {
+    if (avatarUrl) {
+      setProfilePhoto(avatarUrl);
+    }
+  }, [avatarUrl]);
 
   // Notifications
   const [emailNotif, setEmailNotif] = useState(true);
@@ -103,20 +127,29 @@ export default function SettingsContent() {
           const loadedName = data.profile?.name || contextName || user?.user_metadata?.name || '';
           const loadedEmail = data.profile?.email || contextEmail || user?.email || '';
           const loadedPhone = data.profile?.phone || user?.user_metadata?.phone || '';
+          const loadedAvatar = data.profile?.avatar_url || avatarUrl || user?.user_metadata?.avatar_url || '';
 
           if (loadedName) setName(loadedName);
           if (loadedEmail) setEmail(loadedEmail);
           if (loadedPhone) setPhone(loadedPhone);
-          if (loadedName || loadedEmail) updateProfile(loadedName, loadedEmail);
-
-          if (user?.user_metadata?.avatar_url) {
-            setProfilePhoto(user.user_metadata.avatar_url);
+          if (loadedAvatar) {
+            setProfilePhoto(loadedAvatar);
+            setAvatarUrl(loadedAvatar);
           } else if (loadedName) {
             setProfilePhoto(`https://ui-avatars.com/api/?name=${encodeURIComponent(loadedName)}&background=8b5cf6&color=fff`);
           }
-          
+          if (loadedName || loadedEmail) updateProfile(loadedName, loadedEmail, loadedAvatar);
+
           // Appearance
-          setTheme(data.appearance?.theme || 'System');
+          if (data.appearance?.theme) {
+            const loadedTheme: ThemeMode = data.appearance.theme === 'Light' ? 'Light' : 'Dark';
+            setTheme(loadedTheme);
+            if (loadedTheme === 'Light' && currentGlobalTheme !== 'Light') {
+              setGlobalTheme('Light');
+            } else if (loadedTheme === 'Dark' && currentGlobalTheme !== 'Dark') {
+              setGlobalTheme('Dark');
+            }
+          }
           setFontSize(data.appearance?.fontSize || 'medium');
           setLanguage(data.appearance?.language || 'English');
 
@@ -139,7 +172,7 @@ export default function SettingsContent() {
       }
     }
     load();
-  }, [user, contextName, contextEmail, updateProfile]);
+  }, [user, contextName, contextEmail, updateProfile, avatarUrl, setAvatarUrl, setGlobalTheme]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -153,7 +186,8 @@ export default function SettingsContent() {
     const success = await saveSettings(payload);
     setSaving(false);
     if (success) {
-      updateProfile(name, email);
+      updateProfile(name, email, profilePhoto);
+      setGlobalTheme(theme);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     }
@@ -230,15 +264,39 @@ export default function SettingsContent() {
     }
   };
 
-  const handlePhotoUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = () => {
-      alert('Profile photo updated!');
-      setProfilePhoto(`https://ui-avatars.com/api/?name=${name || 'User'}&background=10b981&color=fff`);
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, WebP, etc.).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Photo size must be less than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const dataUrl = uploadEvent.target?.result as string;
+      if (dataUrl) {
+        setProfilePhoto(dataUrl);
+        setAvatarUrl(dataUrl);
+        updateProfile(name, email, dataUrl);
+      }
     };
-    input.click();
+    reader.readAsDataURL(file);
+    // Reset input value so same file can be re-selected if desired
+    e.target.value = '';
+  };
+
+  const handleRemovePhoto = () => {
+    const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=8b5cf6&color=fff`;
+    setProfilePhoto(fallback);
+    setAvatarUrl('');
+    updateProfile(name, email, '');
   };
 
   if (loading) {
@@ -251,11 +309,42 @@ export default function SettingsContent() {
         return (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 fade-in duration-300">
             <SectionCard title="Profile Information">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoChange}
+                accept="image/*"
+                className="hidden"
+              />
               <div className="flex items-center gap-6 py-4 border-b border-zinc-50 dark:border-zinc-800/60">
-                <img src={profilePhoto} alt="Profile" className="w-16 h-16 rounded-full border border-zinc-200 dark:border-zinc-700" />
-                <button onClick={handlePhotoUpload} className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-bold border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
-                  Change Photo
-                </button>
+                <div className="relative">
+                  <img
+                    src={profilePhoto}
+                    alt="Profile"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-purple-500 shadow-md ring-2 ring-purple-500/20"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=8b5cf6&color=fff`;
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:via-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer active:scale-95"
+                  >
+                    Change Photo
+                  </button>
+                  {profilePhoto && !profilePhoto.includes('ui-avatars.com') && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="px-3.5 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-semibold border border-zinc-200 dark:border-zinc-700 transition-colors cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               </div>
               <SettingRow label="Name" htmlFor="profile-name">
                 <input id="profile-name" value={name} onChange={e => setName(e.target.value)}
@@ -279,11 +368,17 @@ export default function SettingsContent() {
           <div className="space-y-6 animate-in slide-in-from-bottom-2 fade-in duration-300">
             <SectionCard title="Appearance Preferences">
               <SettingRow label="Theme">
-                <select value={theme} onChange={e => setTheme(e.target.value)}
-                  className="w-48 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer">
-                  <option value="Light">Light</option>
+                <select
+                  value={theme}
+                  onChange={e => {
+                    const newTheme = e.target.value as ThemeMode;
+                    setTheme(newTheme);
+                    setGlobalTheme(newTheme);
+                  }}
+                  className="w-48 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+                >
                   <option value="Dark">Dark</option>
-                  <option value="System">System</option>
+                  <option value="Light">Light</option>
                 </select>
               </SettingRow>
               <SettingRow label="Font size">
@@ -428,9 +523,11 @@ export default function SettingsContent() {
     <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-5xl mx-auto">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Settings</h1>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
-          Manage your personal preferences and account security.
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.4)]">
+          Account & System Settings
+        </h1>
+        <p className="text-xs sm:text-sm text-white font-medium mt-1.5 leading-relaxed drop-shadow-xs">
+          Manage your <span className="text-purple-300 font-bold bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-400/30">personal preferences</span>, notification channels, and <span className="text-cyan-300 font-bold bg-cyan-950/40 px-1.5 py-0.5 rounded border border-cyan-400/30">account security</span>.
         </p>
       </div>
 

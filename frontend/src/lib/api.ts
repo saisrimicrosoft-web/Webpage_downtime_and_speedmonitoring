@@ -327,7 +327,11 @@ export async function getSettings(): Promise<Record<string, unknown>> {
         phone,
       },
       appearance: {
-        theme:    dbSettings?.theme     ?? metaSettings.theme     ?? localCache?.appearance?.theme     ?? 'System',
+        theme:    (typeof window !== 'undefined' && localStorage.getItem('nexora_theme') === 'Light' ? 'Light' : null)
+          ?? (dbSettings?.theme === 'Light' ? 'Light' : null)
+          ?? (metaSettings.theme === 'Light' ? 'Light' : null)
+          ?? (localCache?.appearance?.theme === 'Light' ? 'Light' : null)
+          ?? 'Dark',
         fontSize: dbSettings?.font_size ?? metaSettings.fontSize ?? localCache?.appearance?.fontSize ?? 'medium',
         language: dbSettings?.language  ?? metaSettings.language  ?? localCache?.appearance?.language  ?? 'English',
       },
@@ -404,7 +408,7 @@ export async function saveSettings(data: unknown): Promise<boolean> {
 
       await supabase.from('user_settings').upsert({
         user_id:         user.id,
-        theme:           payload.appearance?.theme     ?? 'System',
+        theme:           payload.appearance?.theme     ?? 'Dark',
         font_size:       payload.appearance?.fontSize ?? 'medium',
         language:        payload.appearance?.language ?? 'English',
         email_notif:     payload.notifications?.email     ?? true,

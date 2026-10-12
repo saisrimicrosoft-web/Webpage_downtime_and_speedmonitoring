@@ -93,40 +93,67 @@ export default function DashboardClient() {
           <div className="px-4 sm:px-6 lg:px-8 py-6">
             <div className="mb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div>
-                <h1 className="text-xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.4)]">
                   Website Monitoring Dashboard
                 </h1>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium max-w-xl">
-                  Monitor uptime, downtime, response time, SSL health, and website performance in real time.
+                <p className="text-xs sm:text-sm text-white font-medium mt-1.5 leading-relaxed drop-shadow-xs">
+                  Monitor{' '}
+                  <span className="text-emerald-300 font-bold inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-400/40 px-1.5 py-0.5 rounded-md shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    uptime
+                  </span>
+                  ,{' '}
+                  <span className="text-rose-300 font-bold inline-flex items-center bg-rose-500/20 border border-rose-400/40 px-1.5 py-0.5 rounded-md shadow-xs">
+                    downtime
+                  </span>
+                  ,{' '}
+                  <span className="text-amber-300 font-bold inline-flex items-center bg-amber-500/20 border border-amber-400/40 px-1.5 py-0.5 rounded-md shadow-xs">
+                    response time
+                  </span>
+                  ,{' '}
+                  <span className="text-cyan-300 font-bold inline-flex items-center bg-cyan-500/20 border border-cyan-400/40 px-1.5 py-0.5 rounded-md shadow-xs">
+                    SSL health
+                  </span>
+                  , and website performance in{' '}
+                  <span className="text-purple-300 font-bold">real time</span>.
                 </p>
               </div>
-              <div className="flex items-center flex-wrap gap-2">
+              <div className="flex items-center flex-wrap gap-2.5">
                 <button
                   onClick={() => store.refresh()}
                   disabled={store.loading}
-                  className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white border border-purple-300/40 hover:border-white rounded-xl text-xs font-bold transition-all shadow-[0_0_18px_rgba(147,51,234,0.45)] disabled:opacity-50 cursor-pointer active:scale-95"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${store.loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 text-white ${store.loading ? 'animate-spin' : ''}`} />
                   <span>Sync Now</span>
                 </button>
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="inline-flex items-center space-x-2 px-4 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black shadow-[0_0_24px_rgba(147,51,234,0.65)] hover:shadow-[0_0_30px_rgba(168,85,247,0.85)] border border-purple-300/60 hover:border-white transition-all cursor-pointer active:scale-95"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Website</span>
+                  <Plus className="w-4 h-4 text-white stroke-[3]" />
+                  <span className="tracking-wide">Add Website</span>
                 </button>
               </div>
             </div>
 
-            <div className="mb-5">
-              <span className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
+            <div className="mb-6">
+              <span className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md shadow-xs ${
                 isSupabaseConfigured
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border-blue-200 dark:border-blue-800'
-                  : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 shadow-emerald-900/30'
+                  : 'bg-amber-950/60 text-amber-300 border-amber-500/40 shadow-amber-900/30'
               }`}>
-                <Database className="w-3 h-3" />
-                <span>{isSupabaseConfigured ? 'Supabase Realtime Active' : 'Configure NEXT_PUBLIC_SUPABASE_URL in .env.local'}</span>
+                {isSupabaseConfigured ? (
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  </span>
+                ) : (
+                  <Database className="w-3.5 h-3.5 text-amber-300" />
+                )}
+                <span className="tracking-wide">
+                  {isSupabaseConfigured ? 'Supabase Realtime Active' : 'Configure NEXT_PUBLIC_SUPABASE_URL in .env.local'}
+                </span>
               </span>
             </div>
 
@@ -138,7 +165,10 @@ export default function DashboardClient() {
             />
 
             <div className="mt-8 mb-12">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">Monitored Websites</h2>
+              <h2 className="text-lg font-extrabold text-white mb-4 flex items-center gap-2 drop-shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]"></span>
+                <span>Monitored Websites</span>
+              </h2>
               {store.loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin text-purple-500" />

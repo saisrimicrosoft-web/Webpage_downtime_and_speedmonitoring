@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
           phone,
           avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=8b5cf6&color=fff`,
           settings: {
-            theme: 'System',
+            theme: 'Dark',
             fontSize: 'medium',
             language: 'English',
             emailNotif: true,
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
           },
           body: JSON.stringify({
             user_id: user.id,
-            theme: 'System',
+            theme: 'Dark',
             font_size: 'medium',
             language: 'English',
             email_notif: true,

@@ -47,7 +47,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const { name, email: profileEmail } = useProfile();
+  const { name, email: profileEmail, avatarUrl } = useProfile();
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -163,9 +163,17 @@ export default function DashboardLayout({
             onClick={() => setProfileOpen(v => !v)}
             className="w-full flex items-center space-x-2.5 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {sidebarInitials}
-            </div>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={sidebarEmail}
+                className="w-8 h-8 rounded-xl object-cover ring-1 ring-purple-500/40 shadow-xs flex-shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {sidebarInitials}
+              </div>
+            )}
             <div className="flex-1 min-w-0 text-left">
               <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">{sidebarEmail}</p>
             </div>
@@ -214,11 +222,11 @@ export default function DashboardLayout({
                 <Menu className="w-5 h-5" />
               </button>
               <div className="hidden sm:flex relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-purple-300/80" />
                 <input
                   type="text"
                   placeholder="Search websites, regions, alerts..."
-                  className="w-72 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 font-medium"
+                  className="w-72 bg-zinc-900/80 border border-zinc-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-300 focus:outline-none focus:ring-2 focus:ring-purple-500/60 focus:border-purple-400 font-medium transition-all"
                 />
               </div>
             </div>
@@ -228,36 +236,44 @@ export default function DashboardLayout({
               {onOpenAddModal && (
                 <button
                   onClick={onOpenAddModal}
-                  className="hidden sm:inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-purple-500/25 transition-all cursor-pointer active:scale-95"
+                  className="hidden sm:inline-flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black shadow-[0_0_24px_rgba(147,51,234,0.65)] hover:shadow-[0_0_30px_rgba(168,85,247,0.85)] border border-purple-300/60 hover:border-white transition-all cursor-pointer active:scale-95"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Monitor New Website</span>
+                  <Plus className="w-4 h-4 text-white stroke-[3]" />
+                  <span className="tracking-wide">Monitor New Website</span>
                 </button>
               )}
 
               {/* Notifications bell */}
-              <button className="relative p-2 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer">
+              <button className="relative p-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-zinc-900"></span>
               </button>
 
               {/* User avatar — updates live from ProfileContext */}
-              <div className="flex items-center space-x-2 pl-2 border-l border-zinc-200 dark:border-zinc-800 ml-1">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
-                  {initials}
-                </div>
+              <div className="flex items-center space-x-2 pl-2 border-l border-zinc-200 dark:border-zinc-700/80 ml-1">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="w-8 h-8 rounded-xl object-cover ring-1 ring-purple-500/40 shadow-xs"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-xs">
+                    {initials}
+                  </div>
+                )}
                 <div className="hidden sm:block">
-                  <p className="text-xs font-bold text-zinc-900 dark:text-white leading-tight">{displayName}</p>
-                  <p className="text-[10px] text-zinc-500">{displaySub}</p>
+                  <p className="text-xs font-bold text-zinc-900 dark:text-white leading-tight drop-shadow-xs">{displayName}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-purple-200/90 font-medium">{displaySub}</p>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 hidden sm:block" />
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-300 hidden sm:block" />
               </div>
             </div>
           </div>
         </header>
 
         {/* ─── PAGE CONTENT ─── */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto relative z-10">
           {children}
         </main>
       </div>
