@@ -33,10 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadData() {
         const range = timeRangeSelector.value;
         try {
+            const token = localStorage.getItem('token');
+            const headers = { 'Authorization': `Bearer ${token}` };
             const [summaryRes, websitesRes, incidentsRes] = await Promise.all([
-                fetch(`/api/uptime/summary?range=${range}`),
-                fetch(`/api/uptime/websites?range=${range}`),
-                fetch(`/api/uptime/incidents?range=${range}`)
+                fetch(`/api/uptime/summary?range=${range}`, { headers }),
+                fetch(`/api/uptime/websites?range=${range}`, { headers }),
+                fetch(`/api/uptime/incidents?range=${range}`, { headers })
             ]);
 
             const summary = await summaryRes.json();
@@ -272,7 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Fetch history data for chart
             const range = timeRangeSelector.value;
-            const res = await fetch(`/api/uptime/websites/${encodeURIComponent(url)}/history?range=${range}`);
+            const token = localStorage.getItem('token');
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const res = await fetch(`/api/uptime/websites/${encodeURIComponent(url)}/history?range=${range}`, { headers });
             const history = await res.json();
             
             const labels = history.map(h => {
@@ -320,8 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const badgeClass = inc.status === 'Ongoing' ? 'badge-danger' : 'badge-success';
             const duration = formatDuration(inc.duration_seconds);
             
-            const startStr = inc.started_at ? new Date(inc.started_at).toLocaleString() : '--';
-            const endStr = inc.resolved_at ? new Date(inc.resolved_at).toLocaleString() : '--';
+            const startStr = inc.started_at ? window.TimeUtils.formatLocalTime(inc.started_at) : '--';
+            const endStr = inc.resolved_at ? window.TimeUtils.formatLocalTime(inc.resolved_at) : '--';
             
             html += `
                 <tr>

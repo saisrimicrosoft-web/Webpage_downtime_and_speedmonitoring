@@ -15,7 +15,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Nexoxa Monitor',
+  title: 'Nexora Monitor',
   description: 'Website Uptime, Downtime & Speed Monitoring',
 };
 

@@ -1,3 +1,4 @@
+from app.utils.time_utils import to_utc_iso
 """
 Incident model — Groups consecutive check failures into a single incident.
 
@@ -79,9 +80,9 @@ class Incident(db.Model):
             'url': self.url,
             'status': self.status,
             'severity': self.severity,
-            'started_at': self.started_at.isoformat() if self.started_at else None,
-            'detected_at': self.detected_at.isoformat() if self.detected_at else None,
-            'recovered_at': self.recovered_at.isoformat() if self.recovered_at else None,
+            'started_at': to_utc_iso(self.started_at),
+            'detected_at': to_utc_iso(self.detected_at),
+            'recovered_at': to_utc_iso(self.recovered_at),
             'duration_seconds': self.duration_seconds,
             'duration_display': self.duration_display,
             'region': self.region,
@@ -89,5 +90,5 @@ class Incident(db.Model):
             'response_ms': self.response_ms,
             'error_message': self.error_message,
             'failure_count': self.failure_count,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'created_at': to_utc_iso(self.created_at),
         }

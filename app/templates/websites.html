@@ -141,9 +141,7 @@
                     </td>
                     <td class="cell-time">
                         {% if w.checked_at %}
-                            <time datetime="{{ w.checked_at.isoformat() }}" title="{{ w.checked_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}">
-                                {{ w.checked_at.strftime('%Y-%m-%d %H:%M') }}
-                            </time>
+                            <span class="time-local" data-time="{{ w.checked_at.isoformat() }}"></span>
                         {% else %}
                             <span class="muted">Never</span>
                         {% endif %}

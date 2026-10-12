@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Speed | Nexora{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/performance.css') }}">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Unbounded:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="performance-page">
+    <div class="perf-bg-glows">
+        <div class="glow cyan"></div>
+        <div class="glow violet"></div>
+        <div class="glow pink"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="perf-header">
+        <div class="perf-header-text">
+            <span class="eyebrow">SPEED LAB</span>
+            <h1 class="gradient-text">Performance Speed</h1>
+            <p class="subtitle">How fast your websites answer, in plain words. Lower is better.</p>
+        </div>
+        <div class="perf-header-controls">
+            <div class="time-range-segmented" role="radiogroup" aria-label="Time range">
+                <button class="segment" data-range="24h" role="radio" aria-checked="false">24h</button>
+                <button class="segment" data-range="7d" role="radio" aria-checked="true">7d</button>
+                <button class="segment" data-range="30d" role="radio" aria-checked="false">30d</button>
+            </div>
+            <button id="perf-export-btn" class="btn btn-export">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Export report
+            </button>
+        </div>
+    </header>
+
+    <!-- Empty / Error States -->
+    <div id="perf-state-container" style="display: none;"></div>
+
+    <!-- Main Content -->
+    <div id="perf-main-content">
+        <!-- Top Row: Gauge & Terrain -->
+        <div class="perf-top-row">
+            <!-- Gauge Card -->
+            <div class="glass-card gauge-card">
+                <div class="card-header">
+                    <h2>Speed Score</h2>
+                </div>
+                <div class="gauge-container" id="speed-gauge-container" role="img" aria-label="Speed score gauge">
+                    <!-- SVG Gauge injected via JS -->
+                    <div class="gauge-value" id="gauge-score">--</div>
+                    <div class="gauge-label" id="gauge-label">Loading...</div>
+                </div>
+                <div class="card-footer">
+                    <p class="footnote" id="gauge-footnote">Measuring sites</p>
+                </div>
+            </div>
+
+            <!-- Terrain Card -->
+            <div class="glass-card terrain-card">
+                <div class="card-header">
+                    <h2>Response Time Terrain</h2>
+                </div>
+                <div class="terrain-container" id="terrain-container" role="img" aria-label="Ridge line chart of response times">
+                    <!-- SVG injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Metric Tiles -->
+        <div class="metric-tiles-grid">
+            <div class="glass-card tile">
+                <h3 class="tile-title">Average Response</h3>
+                <div class="tile-value"><span id="tile-avg-ms" class="mono">--</span> <span class="unit">ms</span></div>
+                <div class="tile-trend" id="tile-avg-trend"></div>
+            </div>
+            <div class="glass-card tile">
+                <h3 class="tile-title">Fastest</h3>
+                <div class="tile-value" id="tile-fastest-name">--</div>
+                <div class="tile-trend"><span id="tile-fastest-ms" class="mono">--</span> ms</div>
+            </div>
+            <div class="glass-card tile">
+                <h3 class="tile-title">Slowest</h3>
+                <div class="tile-value" id="tile-slowest-name">--</div>
+                <div class="tile-trend"><span id="tile-slowest-ms" class="mono">--</span> ms</div>
+            </div>
+            <div class="glass-card tile">
+                <h3 class="tile-title">Slow Checks</h3>
+                <div class="tile-value"><span id="tile-slow-pct" class="mono">--</span><span class="unit">%</span></div>
+                <div class="tile-trend">Over 2000ms</div>
+            </div>
+            <div class="glass-card tile">
+                <h3 class="tile-title">P95 Response</h3>
+                <div class="tile-value"><span id="tile-p95-ms" class="mono">--</span> <span class="unit">ms</span></div>
+                <div class="tile-trend">95% of requests are faster</div>
+            </div>
+        </div>
+
+        <!-- Speed Lanes & Heatmap -->
+        <div class="perf-bottom-row">
+            <div class="glass-card lanes-card">
+                <div class="card-header">
+                    <h2>Speed Lanes</h2>
+                </div>
+                <div class="lanes-container" id="lanes-container">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+            
+            <div class="glass-card heatmap-card">
+                <div class="card-header">
+                    <h2>When is it slow?</h2>
+                </div>
+                <div class="heatmap-scroll-container">
+                    <div class="heatmap-container" id="heatmap-container">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                <div class="heatmap-legend">
+                    <span>Fast</span>
+                    <div class="legend-color" style="background:var(--cyan)"></div>
+                    <div class="legend-color" style="background:var(--ok)"></div>
+                    <div class="legend-color" style="background:var(--amber)"></div>
+                    <div class="legend-color" style="background:var(--hot)"></div>
+                    <div class="legend-color" style="background:#444"></div>
+                    <span>Slow</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="insights-section">
+            <h2 class="insights-title">Insights</h2>
+            <div class="insights-grid" id="insights-container">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drawer -->
+<div class="perf-drawer-overlay" id="perf-drawer-overlay" aria-hidden="true">
+    <div class="perf-drawer" id="perf-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1">
+        <div class="drawer-header">
+            <h2 id="drawer-title">Site Details</h2>
+            <button class="drawer-close" id="drawer-close" aria-label="Close details">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="drawer-content">
+            <div class="drawer-stats">
+                <div class="d-stat"><span class="d-label">Min</span><span class="d-val mono" id="drawer-min">--</span></div>
+                <div class="d-stat"><span class="d-label">Avg</span><span class="d-val mono" id="drawer-avg">--</span></div>
+                <div class="d-stat"><span class="d-label">P95</span><span class="d-val mono" id="drawer-p95">--</span></div>
+                <div class="d-stat"><span class="d-label">Max</span><span class="d-val mono" id="drawer-max">--</span></div>
+            </div>
+            <div class="drawer-chart-container">
+                <canvas id="drawer-chart"></canvas>
+            </div>
+            <h3>Recent Checks</h3>
+            <div class="recent-checks-list" id="recent-checks-list">
+                <!-- Injected via JS -->
+            </div>
+            <div class="drawer-actions">
+                <button class="btn btn-primary" id="drawer-check-now">Check Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tooltip" class="perf-tooltip" style="display:none"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/performance.js') }}"></script>
+{% endblock %}

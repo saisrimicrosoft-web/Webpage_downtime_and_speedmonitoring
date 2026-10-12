@@ -775,15 +775,24 @@ const UptimeApp = (() => {
     }
 
     // ── Time Formatting Utilities ────────────────────────────────
+    function getSafeIso(isoStr) {
+        if (!isoStr) return null;
+        let safe = isoStr;
+        if (!safe.endsWith('Z') && !safe.includes('+')) safe += 'Z';
+        return safe;
+    }
+
     function formatTime(isoStr) {
         if (!isoStr) return '—';
-        const d = new Date(isoStr);
+        const d = new Date(getSafeIso(isoStr));
+        if (isNaN(d.getTime())) return '—';
         return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     }
 
     function formatTimeFull(isoStr) {
         if (!isoStr) return '—';
-        const d = new Date(isoStr);
+        const d = new Date(getSafeIso(isoStr));
+        if (isNaN(d.getTime())) return '—';
         return d.toLocaleString('en-US', {
             year: 'numeric', month: 'short', day: 'numeric',
             hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
@@ -792,7 +801,8 @@ const UptimeApp = (() => {
 
     function formatTimeShort(isoStr) {
         if (!isoStr) return '';
-        const d = new Date(isoStr);
+        const d = new Date(getSafeIso(isoStr));
+        if (isNaN(d.getTime())) return '';
         return d.toLocaleString('en-US', {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
         });
@@ -800,7 +810,8 @@ const UptimeApp = (() => {
 
     function formatDateLabel(isoStr) {
         if (!isoStr) return '';
-        const d = new Date(isoStr);
+        const d = new Date(getSafeIso(isoStr));
+        if (isNaN(d.getTime())) return '';
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 

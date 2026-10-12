@@ -2,7 +2,7 @@ import os
 import csv
 import zipfile
 import io
-from flask import Blueprint, jsonify, request, current_app, Response
+from flask import Blueprint, g, jsonify, request, current_app, Response
 from app.models.setting import Setting
 from app.models.user import User
 from app.models.check import Check
@@ -15,15 +15,17 @@ import uuid
 import smtplib
 from email.message import EmailMessage
 import requests
+from app.utils.auth import require_auth
 
 settings_api_bp = Blueprint('settings_api', __name__)
 
 @settings_api_bp.route('/settings', methods=['GET'])
+@require_auth
 def get_settings():
     try:
         s = SettingsService.get_all()
         from app.models.user import User
-        user = User.query.first()
+        user = User.query.get(g.current_user_id)
         profile_data = user.to_dict() if user else {}
         if user and user.avatar_path:
             profile_data['avatar'] = user.avatar_path
@@ -36,6 +38,7 @@ def get_settings():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings', methods=['PUT'])
+@require_auth
 def update_setting():
     try:
         data = request.json
@@ -82,9 +85,10 @@ def update_setting():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/profile', methods=['GET'])
+@require_auth
 def get_profile():
     try:
-        user = User.query.first()
+        user = User.query.get(g.current_user_id)
         if not user:
             return jsonify({'error': 'User not found'}), 404
         return jsonify(user.to_dict())
@@ -92,10 +96,11 @@ def get_profile():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/profile', methods=['PUT'])
+@require_auth
 def update_profile():
     try:
         data = request.json
-        user = User.query.first()
+        user = User.query.get(g.current_user_id)
         errors = {}
         
         name = data.get('name', '').strip()
@@ -121,10 +126,11 @@ def update_profile():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/profile/password', methods=['PUT'])
+@require_auth
 def change_password():
     try:
         data = request.json
-        user = User.query.first()
+        user = User.query.get(g.current_user_id)
         errors = {}
         
         current_pw = data.get('current_password', '')
@@ -146,6 +152,7 @@ def change_password():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/profile/avatar', methods=['POST'])
+@require_auth
 def upload_avatar():
     try:
         if 'avatar' not in request.files:
@@ -167,7 +174,7 @@ def upload_avatar():
         if size > 2 * 1024 * 1024:
             return jsonify({'error': 'File must be under 2MB'}), 400
 
-        user = User.query.first()
+        user = User.query.get(g.current_user_id)
         
         # Delete old
         if user.avatar_path:
@@ -194,9 +201,10 @@ def upload_avatar():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/profile/avatar', methods=['DELETE'])
+@require_auth
 def remove_avatar():
     try:
-        user = User.query.first()
+        user = User.query.get(g.current_user_id)
         if user.avatar_path:
             old_path = os.path.join(current_app.root_path, user.avatar_path.lstrip('/'))
             if os.path.exists(old_path):
@@ -211,6 +219,7 @@ def remove_avatar():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/notifications/test', methods=['POST'])
+@require_auth
 def test_notification():
     try:
         s = SettingsService.get_all()
@@ -237,6 +246,7 @@ def test_notification():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/data/export', methods=['GET'])
+@require_auth
 def export_all():
     try:
         memory_file = io.BytesIO()
@@ -271,6 +281,7 @@ def export_all():
         return jsonify({'error': str(e)}), 500
 
 @settings_api_bp.route('/settings/data/purge', methods=['POST'])
+@require_auth
 def purge_data():
     try:
         data = request.json

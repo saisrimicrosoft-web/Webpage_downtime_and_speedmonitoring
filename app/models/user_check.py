@@ -1,3 +1,4 @@
+from app.utils.time_utils import to_utc_iso
 """
 UserCheck model — a single check result scoped to a Monitor (and therefore a User).
 Parallel to the legacy Check model but linked via monitor_id for user isolation.
@@ -28,7 +29,7 @@ class UserCheck(db.Model):
         return {
             'id':               self.id,
             'monitor_id':       self.monitor_id,
-            'timestamp':        self.timestamp.isoformat() if self.timestamp else None,
+            'timestamp':        to_utc_iso(self.timestamp),
             'status':           self.status,
             'is_up':            self.is_up,
             'http_status_code': self.http_status_code,

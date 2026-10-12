@@ -61,7 +61,7 @@ class UserMonitorService:
             monitor_id       = monitor.id,
             status           = 'up' if is_up else 'down',
             http_status_code = status_code,
-            response_time_ms = response_ms,
+            response_time_ms = response_ms if is_up else None,
             error_message    = error_msg,
             ssl_days_left    = ssl_days,
         )

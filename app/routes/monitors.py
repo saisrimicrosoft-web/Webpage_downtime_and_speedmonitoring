@@ -92,6 +92,27 @@ def create_monitor():
     )
     db.session.add(monitor)
     db.session.commit()
+    
+    # Trigger an immediate background check
+    import threading
+    from flask import current_app
+    from app.services.user_monitor_service import UserMonitorService
+
+    def initial_check(app_context, mon_id):
+        with app_context:
+            try:
+                m = Monitor.query.get(mon_id)
+                if m:
+                    UserMonitorService.check_monitor(m)
+            except Exception as e:
+                pass
+
+    threading.Thread(
+        target=initial_check, 
+        args=(current_app.app_context(), monitor.id),
+        daemon=True
+    ).start()
+
     return jsonify(monitor.to_dict()), 201
 
 
@@ -151,6 +172,32 @@ def delete_monitor(monitor_id):
 
 
 # ── RUN check immediately ────────────────────────────────────────────────────
+
+@monitors_bp.route('/check_all', methods=['POST'])
+@require_auth
+def check_all_monitors():
+    from app.services.user_monitor_service import UserMonitorService
+    import threading
+    from flask import current_app
+    
+    def run_checks(app_context, user_id):
+        with app_context:
+            monitors = Monitor.query.filter_by(user_id=user_id, is_active=True).all()
+            for m in monitors:
+                try:
+                    UserMonitorService.check_monitor(m)
+                except:
+                    pass
+                    
+    # Run in background to avoid long blocking if many monitors
+    threading.Thread(
+        target=run_checks, 
+        args=(current_app.app_context(), g.current_user_id),
+        daemon=True
+    ).start()
+    
+    return jsonify({'status': 'started'}), 202
+
 
 @monitors_bp.route('/<int:monitor_id>/check', methods=['POST'])
 @require_auth

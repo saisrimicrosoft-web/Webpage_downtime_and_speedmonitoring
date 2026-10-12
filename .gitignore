@@ -1,5 +1,10 @@
 # Secrets
 .env
+.env*.local
+
+# Build artifacts & deployment
+.next/
+.vercel/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

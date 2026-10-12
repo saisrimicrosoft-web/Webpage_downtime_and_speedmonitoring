@@ -1,0 +1,290 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Rewrite `src/lib/supabase.ts` with real Supabase client": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720372120
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720386602
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720573620
+      }
+    ],
+    "1.2 Rewrite `src/lib/api.ts` with Supabase-backed functions": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720373389
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720578457
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720754836
+      }
+    ],
+    "2. Checkpoint — data layer complete": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720373654
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720760167
+      }
+    ],
+    "3.1 Remove `SAMPLE_WEBSITES` and add Supabase fetch": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720373870
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720783640
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721411414
+      }
+    ],
+    "4.1 Remove `SAMPLE_SERVICES`, `generateHeartbeats` and add Supabase fetch": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720374055
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720783770
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721411850
+      }
+    ],
+    "5.1 Remove `MOCK_INCIDENT` import and add Supabase fetch": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720374262
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720783999
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721412284
+      }
+    ],
+    "6.1 Remove `SAMPLE_PERFORMANCE` and add Supabase fetch": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720374462
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720784249
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721412707
+      }
+    ],
+    "7. Checkpoint — all tabs using live data": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720374653
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721417800
+      }
+    ],
+    "8.1 Rewrite `DashboardShell.tsx`": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720374806
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721423347
+      }
+    ],
+    "8.2 Rewrite `DashboardClient.tsx` dashboard tab": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720374994
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721423502
+      }
+    ],
+    "8.3 Add comment to `AddWebsiteModal.tsx`": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720375186
+      },
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721423718
+      }
+    ],
+    "9.1 Delete `src/lib/flaskApi.ts`": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720375362
+      }
+    ],
+    "9.2 Remove Flask proxy rewrite from `next.config.ts`": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720375547
+      }
+    ],
+    "9.3 Delete dead API route directories": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720375749
+      }
+    ],
+    "9.4 Remove dead dependencies from `package.json`": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720375895
+      }
+    ],
+    "10.1 Rewrite `src/context/AuthContext.tsx` as a no-op stub": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720376033
+      },
+      {
+        "executionId": "63f010c6-8281-4b17-81f5-96e963fd3bb2",
+        "chatSessionId": "sess_4b3af900-608a-454c-8e6d-a0bbcc4b0e8b",
+        "timestamp": 1791742287180
+      }
+    ],
+    "10.2 Rewrite `src/components/AuthGuard.tsx` to bypass auth": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720376196
+      },
+      {
+        "executionId": "63f010c6-8281-4b17-81f5-96e963fd3bb2",
+        "chatSessionId": "sess_4b3af900-608a-454c-8e6d-a0bbcc4b0e8b",
+        "timestamp": 1791742298600
+      }
+    ],
+    "10.3 Rewrite `src/middleware.ts` to remove NextAuth": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720376381
+      },
+      {
+        "executionId": "63f010c6-8281-4b17-81f5-96e963fd3bb2",
+        "chatSessionId": "sess_4b3af900-608a-454c-8e6d-a0bbcc4b0e8b",
+        "timestamp": 1791742315457
+      }
+    ],
+    "11. Final checkpoint — full build verification": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720376543
+      },
+      {
+        "executionId": "63f010c6-8281-4b17-81f5-96e963fd3bb2",
+        "chatSessionId": "sess_4b3af900-608a-454c-8e6d-a0bbcc4b0e8b",
+        "timestamp": 1791742652225
+      },
+      {
+        "executionId": "63f010c6-8281-4b17-81f5-96e963fd3bb2",
+        "chatSessionId": "sess_4b3af900-608a-454c-8e6d-a0bbcc4b0e8b",
+        "timestamp": 1791743032812
+      }
+    ],
+    "1. Rewrite the Supabase client and api.ts data layer": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791720754977
+      }
+    ],
+    "3. Replace mock data in MonitorWebsitesContent": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721411636
+      }
+    ],
+    "4. Replace mock data in UptimeStatusContent": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721412054
+      }
+    ],
+    "5. Replace mock incident in DowntimeAlertsContent": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721412589
+      }
+    ],
+    "6. Replace mock data in PerformanceSpeedContent": [
+      {
+        "executionId": "1e10207f-497d-4202-862b-73e1dae513e1",
+        "chatSessionId": "sess_ee1c8fe2-a725-4242-a7f9-8527e28a180e",
+        "timestamp": 1791721412898
+      }
+    ],
+    "10. Simplify auth layer": [
+      {
+        "executionId": "63f010c6-8281-4b17-81f5-96e963fd3bb2",
+        "chatSessionId": "sess_4b3af900-608a-454c-8e6d-a0bbcc4b0e8b",
+        "timestamp": 1791742315687
+      }
+    ]
+  }
+}

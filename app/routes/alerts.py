@@ -283,7 +283,7 @@ def test_channel(id):
 def get_pulse():
     # 30-minute buckets for last 18 hours (36 buckets)
     hours = int(request.args.get('hours', 18))
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     start_time = now - timedelta(hours=hours)
     
     # query failed checks

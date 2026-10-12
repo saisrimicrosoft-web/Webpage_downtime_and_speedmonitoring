@@ -1,3 +1,4 @@
+from app.utils.time_utils import to_utc_iso
 """
 UserIncident model — downtime/degraded incident scoped to a Monitor.
 """
@@ -40,8 +41,8 @@ class UserIncident(db.Model):
         return {
             'id':               self.id,
             'monitor_id':       self.monitor_id,
-            'started_at':       self.started_at.isoformat() if self.started_at else None,
-            'resolved_at':      self.resolved_at.isoformat() if self.resolved_at else None,
+            'started_at':       to_utc_iso(self.started_at),
+            'resolved_at':      to_utc_iso(self.resolved_at),
             'duration_seconds': self.duration_seconds,
             'duration_display': self.duration_display,
             'reason':           self.reason,

@@ -1,3 +1,4 @@
+from app.utils.time_utils import to_utc_iso
 """
 User model — stores registered accounts with bcrypt-hashed passwords.
 """
@@ -26,7 +27,7 @@ class User(db.Model):
             'email':      self.email,
             'avatar_url': self.avatar_url,
             'avatar_path': self.avatar_path,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'created_at': to_utc_iso(self.created_at),
         }
 
     def __repr__(self):

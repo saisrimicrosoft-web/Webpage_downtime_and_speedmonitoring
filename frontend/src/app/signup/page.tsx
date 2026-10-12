@@ -72,7 +72,7 @@ export default function SignupPage() {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg mb-3">
             <Activity className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Nexoxa Monitor</h1>
+          <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Nexora Monitor</h1>
           <p className="text-sm text-zinc-500 mt-1">Create your free account</p>
         </div>
 

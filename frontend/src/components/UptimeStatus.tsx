@@ -203,7 +203,7 @@ const IncidentLog = ({ monitorId, now }: { monitorId: string; now: number }) => 
 export default function UptimeStatus() {
   const [selectedMonitor, setSelectedMonitor] = useState<string>('checkout');
   const [range, setRange] = useState<'24h' | '7d' | '30d' | '90d'>('90d');
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);

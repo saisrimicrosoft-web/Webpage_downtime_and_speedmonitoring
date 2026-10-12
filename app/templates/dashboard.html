@@ -140,7 +140,7 @@
                 <option value="warning">Expiring Soon</option>
             </select>
 
-            <button class="btn btn-sm" onclick="window.location.reload()" aria-label="Refresh data">
+            <button class="btn btn-sm" id="refresh-btn" onclick="forceRefresh(this)" aria-label="Refresh data">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
                     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
@@ -228,7 +228,7 @@
                     </td>
                     <td class="cell-time">
                         {% if w.checked_at %}
-                            {{ w.checked_at.strftime('%H:%M:%S') }}
+                            <span class="time-relative" data-time="{{ w.checked_at.isoformat() }}"></span>
                         {% else %}
                             <span class="muted">Never</span>
                         {% endif %}
@@ -326,5 +326,16 @@ if (filterSsl) filterSsl.addEventListener('change', applyFilters);
 setTimeout(() => {
     window.location.reload();
 }, 60000);
+async function forceRefresh(btn) {
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+    btn.disabled = true;
+    try {
+        await fetch('/api/monitors/check_all', { method: 'POST' });
+        // Give it a second to allow background thread to finish checking
+        setTimeout(() => window.location.reload(), 1500);
+    } catch (e) {
+        window.location.reload();
+    }
+}
 </script>
 {% endblock %}
